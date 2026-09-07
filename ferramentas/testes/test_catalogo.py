@@ -105,3 +105,61 @@ def test_append_only_recusa_versao_sumida():
 
 def test_append_only_passa_sem_anterior():
     conferir_append_only(montar([avaliacao()], pronta(), 1757100000), None)
+
+
+def test_nivel_e_oficial_vem_da_versao_mais_recente_por_avaliado_em():
+    # `Avaliacao.versoes` preserva a ordem do TOML. `[-1]` seria a última do
+    # arquivo, não a de maior `avaliado_em`. Uma versão antiga `com-notas`
+    # acrescentada ao fim daria a um MOD novo `oficial` um selo melhor do que
+    # merece. O selo é o que alguém lê para decidir instalar — deixá-lo
+    # depender da ordem de edição de um arquivo daria a quem edita um poder
+    # que a avaliação não lhe deu.
+    # Caso 1: versão oficial é a mais recente por data, mas aparece primeiro na lista.
+    a = Avaliacao(
+        id="x/y", autor="x", nome="y",
+        repo="https://github.com/x/y",
+        titulo="Y", resumo="Resumo.",
+        versoes=[
+            Versao("2.2.0", "a" * 40, "oficial", [], 1757000002),
+            Versao("2.1.0", "b" * 40, "com-notas", ["nota"], 1757000000),
+        ],
+    )
+    p = {
+        ("x/y", "2.2.0"): VersaoPronta("2.2.0", 1, 1757000002, "a" * 64, [], ["mod.json"], "oficial", []),
+        ("x/y", "2.1.0"): VersaoPronta("2.1.0", 1, 1757000000, "b" * 64, [], ["mod.json"], "com-notas", ["nota"]),
+    }
+    m = montar([a], p, 1757100000)["mods"][0]
+    assert m["nivel"] == "oficial"
+    assert m["oficial"] is True
+
+    # Caso 2: versão com-notas é a mais recente por data, aparece por último.
+    a2 = Avaliacao(
+        id="x/z", autor="x", nome="z",
+        repo="https://github.com/x/z",
+        titulo="Z", resumo="Resumo.",
+        versoes=[
+            Versao("2.1.0", "c" * 40, "oficial", [], 1757000000),
+            Versao("2.2.0", "d" * 40, "com-notas", ["nota"], 1757000002),
+        ],
+    )
+    p2 = {
+        ("x/z", "2.1.0"): VersaoPronta("2.1.0", 1, 1757000000, "c" * 64, [], ["mod.json"], "oficial", []),
+        ("x/z", "2.2.0"): VersaoPronta("2.2.0", 1, 1757000002, "d" * 64, [], ["mod.json"], "com-notas", ["nota"]),
+    }
+    m2 = montar([a2], p2, 1757100000)["mods"][0]
+    assert m2["nivel"] == "com-notas"
+    assert m2["oficial"] is False
+
+
+def test_arquivos_fora_de_ordem_saem_ordenados():
+    # A ordem existe para que dois catálogos sejam comparáveis com diff.
+    # Arquivos passados desordenados devem sair ordenados.
+    p = {
+        ("juli/cinza-frio", "2.1.0"): VersaoPronta(
+            versao="2.1.0", api=1, publicado_em=1757000000, hash="a" * 64,
+            alcanca=[], arquivos=["mod.json", "cliente/main.js"],  # Fora de ordem
+            nivel="verificado", notas=[],
+        )
+    }
+    v = montar([avaliacao()], p, 1757100000)["mods"][0]["versoes"][0]
+    assert v["arquivos"] == ["cliente/main.js", "mod.json"]

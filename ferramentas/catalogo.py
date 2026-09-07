@@ -56,9 +56,14 @@ def montar(
         if not versoes:
             continue
 
-        # O nível e as notas do MOD são os da versão mais recente avaliada: é
-        # o que a tela mostra, e é sobre ela que a decisão de instalar é feita.
-        ultima = a.versoes[-1]
+        # O nível e as notas do MOD são os da versão avaliada mais
+        # recentemente, e «mais recente» é por `avaliado_em` — nunca pela
+        # posição no arquivo. `Avaliacao.versoes` preserva a ordem do TOML,
+        # então uma versão antiga acrescentada ao fim passaria a decidir o
+        # selo. É o selo que alguém lê para decidir instalar: deixá-lo
+        # depender da ordem de edição de um arquivo daria a quem edita um
+        # poder que a avaliação não lhe deu.
+        ultima = max(a.versoes, key=lambda v: v.avaliado_em)
         mods.append(
             {
                 "id": a.id,
