@@ -35,6 +35,7 @@ Decidida no spec §1; travada aqui.
 | `ferramentas/hash_conteudo.py` | a definição do `content_hash`, e nada mais |
 | `ferramentas/avaliacoes.py` | ler e validar `avaliacoes/*.toml` |
 | `ferramentas/fonte.py` | buscar um commit fixado e devolver os pares `(caminho, bytes)` |
+| `ferramentas/recusa.py` | a exceção `Recusado`, e só ela |
 | `ferramentas/manifesto.py` | validar `mod.json` com as cinco recusas do Rust |
 | `ferramentas/catalogo.py` | montar `catalogo.json`, cobrar *append-only* |
 | `ferramentas/revogacoes.py` | `revogacoes.toml` → `revogacoes.json` |
@@ -489,13 +490,14 @@ as duas implementações não se separem em silêncio."
 ### Task 3: `manifesto.py` — as cinco recusas, espelhadas
 
 **Files:**
+- Create: `ferramentas/recusa.py`
 - Create: `ferramentas/manifesto.py`
 - Test: `ferramentas/testes/test_manifesto.py`
 
 **Interfaces:**
 - Consumes: nada.
 - Produces:
-  - `class Recusado(Exception)` com atributo `codigo: str`
+  - `recusa.Recusado(Exception)` com atributos `codigo: str` e `detalhe: str` — **em `recusa.py` e não aqui**, porque todo módulo do gerador a levanta e nenhum deles valida manifesto
   - `ler(texto: str) -> Manifesto`
   - `@dataclass Manifesto` com `schema: int`, `id: str`, `version: str`, `api: int`, `repo: str`, `reach: list[str]`, `client: str | None`, `server: str | None`
   - `ESQUEMA_DO_MANIFESTO = 1`, `VERSAO_DA_API = 1`
@@ -513,7 +515,7 @@ identificador cru para quem lê."""
 
 import pytest
 
-from ferramentas.manifesto import Recusado, ler
+from ferramentas.recusa import Recusado, ler
 
 VALIDO = """
 {
@@ -598,7 +600,28 @@ def test_so_a_metade_do_servidor_basta():
 
 Esperado: `ModuleNotFoundError: No module named 'ferramentas.manifesto'`.
 
-- [ ] **Step 3: Escrever a implementação**
+- [ ] **Step 3: Escrever `ferramentas/recusa.py`**
+
+```python
+"""Uma recusa nomeada, e nada mais.
+
+Mora sozinha porque todo módulo do gerador a levanta e nenhum outro valida
+manifesto: se ela morasse em `manifesto.py`, `assinar.py` importaria o
+validador de `mod.json` para poder recusar um cabeçalho de cache.
+
+`codigo` vem sempre de uma lista fechada, e `detalhe` nomeia o que
+consertar. Nenhum dos dois é uma frase para tela — quem escreve a frase é o
+`site/frases.js` (ADR 0012)."""
+
+
+class Recusado(Exception):
+    def __init__(self, codigo: str, detalhe: str = ""):
+        super().__init__(f"{codigo}: {detalhe}" if detalhe else codigo)
+        self.codigo = codigo
+        self.detalhe = detalhe
+```
+
+- [ ] **Step 4: Escrever `ferramentas/manifesto.py`**
 
 ```python
 """O que um MOD declara sobre si, e o que o produto recusa.
@@ -615,6 +638,8 @@ o identificador cru para quem lê."""
 import json
 from dataclasses import dataclass, field
 
+from ferramentas.recusa import Recusado
+
 ESQUEMA_DO_MANIFESTO = 1
 VERSAO_DA_API = 1
 
@@ -624,15 +649,6 @@ VERSAO_DA_API = 1
 # que estava lá, e o autor nunca descobre.
 CHAVES = {"schema", "id", "version", "api", "repo", "reach", "state", "client", "server"}
 OBRIGATORIAS = {"schema", "id", "version", "api", "repo"}
-
-
-class Recusado(Exception):
-    """Uma recusa nomeada. `codigo` vem de uma lista fechada."""
-
-    def __init__(self, codigo: str, detalhe: str = ""):
-        super().__init__(f"{codigo}: {detalhe}" if detalhe else codigo)
-        self.codigo = codigo
-        self.detalhe = detalhe
 
 
 @dataclass(frozen=True)
@@ -701,7 +717,7 @@ def ler(texto: str) -> Manifesto:
     )
 ```
 
-- [ ] **Step 4: Rodar e ver passar**
+- [ ] **Step 5: Rodar e ver passar**
 
 ```bash
 .venv/bin/pytest ferramentas/testes/test_manifesto.py -q
@@ -709,10 +725,10 @@ def ler(texto: str) -> Manifesto:
 
 Esperado: `18 passed`.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add ferramentas/manifesto.py ferramentas/testes/test_manifesto.py
+git add ferramentas/recusa.py ferramentas/manifesto.py ferramentas/testes/test_manifesto.py
 git commit -m "Validação de mod.json espelhando as cinco recusas do Rust
 
 Um manifesto que o gerador aceita e o cliente recusa vira um MOD que falha
@@ -744,7 +760,7 @@ na máquina de quem instalou — o pior lugar para descobrir."
 import pytest
 
 from ferramentas.avaliacoes import NIVEIS, ler, ler_todas
-from ferramentas.manifesto import Recusado
+from ferramentas.recusa import Recusado
 
 COMMIT = "4f9a1c0e8b7d6a5f4e3d2c1b0a9f8e7d6c5b4a39"
 
@@ -871,7 +887,7 @@ import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from ferramentas.manifesto import Recusado
+from ferramentas.recusa import Recusado
 
 # `negado` não está aqui de propósito: um MOD negado não entra no catálogo, e
 # o catálogo diz o que existe, não o que foi rejeitado (ADR 0044, adendo).
@@ -1012,7 +1028,7 @@ import subprocess
 import pytest
 
 from ferramentas.fonte import materializar
-from ferramentas.manifesto import Recusado
+from ferramentas.recusa import Recusado
 
 
 def git(diretorio, *args):
@@ -1105,7 +1121,7 @@ servida se já estiver em `publicado/`, porque lá os caminhos são imutáveis."
 import subprocess
 from pathlib import Path
 
-from ferramentas.manifesto import Recusado
+from ferramentas.recusa import Recusado
 
 # Nomes que nunca são parte de um MOD, e que entrariam no hash calculado em
 # disco pelo servidor sem entrarem na lista `arquivos` do catálogo. O
@@ -1230,7 +1246,7 @@ import pytest
 
 from ferramentas.avaliacoes import Avaliacao, Versao
 from ferramentas.catalogo import ESQUEMA, VersaoPronta, conferir_append_only, montar
-from ferramentas.manifesto import Recusado
+from ferramentas.recusa import Recusado
 
 COMMIT = "4f9a1c0e8b7d6a5f4e3d2c1b0a9f8e7d6c5b4a39"
 
@@ -1356,7 +1372,7 @@ alguém buscou o catálogo."""
 from dataclasses import dataclass, field
 
 from ferramentas.avaliacoes import Avaliacao
-from ferramentas.manifesto import Recusado
+from ferramentas.recusa import Recusado
 
 ESQUEMA = 1
 
@@ -1556,7 +1572,7 @@ from pathlib import Path
 
 import pytest
 
-from ferramentas.manifesto import Recusado
+from ferramentas.recusa import Recusado
 from ferramentas.revogacoes import carregar_listas, montar
 
 RAIZ = Path(__file__).resolve().parents[2]
@@ -1658,7 +1674,7 @@ import json
 import tomllib
 from pathlib import Path
 
-from ferramentas.manifesto import Recusado
+from ferramentas.recusa import Recusado
 
 ESQUEMA = 1
 
@@ -1756,7 +1772,7 @@ import subprocess
 import pytest
 
 from ferramentas.assinar import assinar, conferir_cache_do_par
-from ferramentas.manifesto import Recusado
+from ferramentas.recusa import Recusado
 
 pytestmark = pytest.mark.skipif(shutil.which("minisign") is None, reason="minisign não instalado")
 
@@ -1873,7 +1889,7 @@ import re
 import subprocess
 from pathlib import Path
 
-from ferramentas.manifesto import Recusado
+from ferramentas.recusa import Recusado
 
 
 def assinar(arquivo: Path, chave_secreta: Path, comentario: str) -> Path:
@@ -2011,7 +2027,7 @@ import subprocess
 import pytest
 
 from ferramentas.gerar import gerar
-from ferramentas.manifesto import Recusado
+from ferramentas.recusa import Recusado
 
 pytestmark = pytest.mark.skipif(shutil.which("minisign") is None, reason="minisign não instalado")
 
@@ -2139,6 +2155,14 @@ def test_o_site_e_copiado_para_publicado(mundo):
     assert (raiz / "publicado" / "app.js").is_file()
 
 
+def test_os_testes_do_site_nao_vao_para_publicado(mundo):
+    # Um teste servido em produção é código que ninguém revisa como código
+    # servido — e conta contra o teto de 20 000 arquivos do Pages.
+    raiz, secreta, _ = mundo
+    gerar(raiz, secreta, agora=1757100000)
+    assert not (raiz / "publicado" / "testes").exists()
+
+
 def test_a_chave_privada_nunca_vai_para_publicado(mundo):
     raiz, secreta, _ = mundo
     gerar(raiz, secreta, agora=1757100000)
@@ -2206,7 +2230,7 @@ from ferramentas import manifesto as manifestos
 from ferramentas import revogacoes as retiradas
 from ferramentas.fonte import materializar
 from ferramentas.hash_conteudo import conteudo
-from ferramentas.manifesto import Recusado
+from ferramentas.recusa import Recusado
 
 
 def _escrever_json(caminho: Path, dados: dict) -> None:
@@ -2283,7 +2307,11 @@ def gerar(raiz: Path, chave_secreta: Path, agora: int | None = None) -> dict:
 
     # O site, e o `_headers` junto — a conferência de cache lê o arquivo que
     # acabou de ser copiado, e não uma cópia na memória.
-    shutil.copytree(raiz / "site", estufa, dirs_exist_ok=True)
+    # `testes/` fica de fora: um teste servido em produção é código que
+    # ninguém revisa como código servido, e o Pages tem teto de arquivos.
+    shutil.copytree(
+        raiz / "site", estufa, dirs_exist_ok=True, ignore=shutil.ignore_patterns("testes")
+    )
     headers = (estufa / "_headers").read_text(encoding="utf-8")
     assinatura.conferir_cache_do_par(headers, "/catalogo.json")
     assinatura.conferir_cache_do_par(headers, "/revogacoes.json")
@@ -2341,7 +2369,7 @@ mkdir -p site && touch site/index.html site/app.js
 .venv/bin/pytest ferramentas/testes/test_gerar.py -q
 ```
 
-Esperado: `9 passed`.
+Esperado: `10 passed`.
 
 - [ ] **Step 6: Rodar a suíte inteira do Python**
 
@@ -2349,7 +2377,7 @@ Esperado: `9 passed`.
 .venv/bin/pytest -q
 ```
 
-Esperado: `75 passed`.
+Esperado: `76 passed`.
 
 - [ ] **Step 7: Commit**
 
@@ -2851,7 +2879,6 @@ chama da falha mais difícil de diagnosticar do desenho."
   - `cruzarRevogacoes(mods, revogacoes) -> mods` — acrescenta `revogada` a cada versão e `temRevogada` ao mod
   - `filtrar(mods, { nivel, api, busca }) -> mods`
   - `ordenar(mods, ordem) -> mods` — ordens `"recentes"`, `"nome"`, `"nivel"`
-  - `produtoRevogado(revogacoes, versao) -> object | null`
   - `ORDENS`
 
 **A busca é local, e é o ADR inteiro.** *«Com API, o indexador aprende cada termo que alguém digitou; com catálogo, aprende que alguém buscou o catálogo.»* Se alguma vez esta função virar um `fetch`, a propriedade morreu.
@@ -2862,9 +2889,7 @@ chama da falha mais difícil de diagnosticar do desenho."
 import { test } from "node:test";
 import assert from "node:assert/strict";
 
-import {
-  cruzarRevogacoes, filtrar, ordenar, produtoRevogado, versaoMaisRecente,
-} from "../catalogo.js";
+import { cruzarRevogacoes, filtrar, ordenar, versaoMaisRecente } from "../catalogo.js";
 
 const MODS = [
   {
@@ -2960,10 +2985,6 @@ test("ordenar não altera o original", () => {
   assert.deepEqual(MODS.map((m) => m.id), antes);
 });
 
-test("produtoRevogado acha a versão do produto", () => {
-  assert.equal(produtoRevogado(REVOGACOES, "0.11.2").corrigido_em, "0.11.3");
-  assert.equal(produtoRevogado(REVOGACOES, "0.11.3"), null);
-});
 ```
 
 - [ ] **Step 2: Rodar e ver falhar**
@@ -3031,11 +3052,6 @@ export function cruzarRevogacoes(mods, revogacoes) {
   });
 }
 
-/** A revogação da versão do produto de quem está lendo, se houver (ADR 0045). */
-export function produtoRevogado(revogacoes, versao) {
-  return (revogacoes?.versoes_do_produto ?? []).find((r) => r.versao === versao) ?? null;
-}
-
 /**
  * Filtra por nível, por API e por busca. Campos ausentes não filtram.
  *
@@ -3080,7 +3096,7 @@ export function ordenar(mods, ordem) {
 node --test site/testes/catalogo.test.js
 ```
 
-Esperado: `# pass 14`.
+Esperado: `# pass 13`.
 
 - [ ] **Step 5: Commit**
 
@@ -3232,7 +3248,7 @@ há servidor com regras. Rota desconhecida cai no catálogo, não em branco."
 
 **Interfaces:**
 - Consumes: nada.
-- Produces: a casca que `tela.js` preenche. IDs que a Task 15 usa: `#topo`, `#busca`, `#aba-catalogo`, `#aba-revogacoes`, `#aba-publicar`, `#aviso`, `#corpo`, `#selo-integridade`.
+- Produces: a casca que `tela.js` preenche. IDs que a Task 15 usa: `#topo`, `#busca`, `#aba-catalogo`, `#aba-revogacoes`, `#aba-publicar`, `#aviso`, `#corpo`.
 
 **Copie `tokens.css` e `fontes.css` do projeto de design sem alterar uma linha.** Eles são a paleta congelada em M0.12 e a procedência das três faces; qualquer edição aqui é uma segunda fonte da verdade.
 
@@ -4186,7 +4202,7 @@ carregar();
 node --test site/testes/
 ```
 
-Esperado: `# pass 41`.
+Esperado: `# pass 40`.
 
 - [ ] **Step 7: Ver funcionando de verdade**
 
@@ -4230,7 +4246,7 @@ A Task 9 precisa que `site/` exista, mas só como diretório — o Step 5 dela c
 ## Verificação final
 
 ```bash
-.venv/bin/pytest -q          # 75 passed
+.venv/bin/pytest -q          # 76 passed
 node --test site/testes/     # 41 pass
 cd /Users/dev-alexandre/SEELE && cargo test -p seele-proto --test vetores_de_hash
 ```
