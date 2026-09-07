@@ -42,7 +42,7 @@ def gerar(raiz: Path, chave_secreta: Path, agora: int | None = None) -> dict:
     anterior = json.loads(anterior_bruto.read_text(encoding="utf-8")) if anterior_bruto.is_file() else None
 
     listas = retiradas.carregar_listas(raiz)
-    todas = leitura.ler_todas(raiz / "avaliacoes")
+    todas = leitura.ler_todas(raiz / "avaliacoes", listas)
     cache = raiz / ".cache-de-repos"
 
     # Monta num diretório novo e troca no fim: um `gerar.py` que falha no meio

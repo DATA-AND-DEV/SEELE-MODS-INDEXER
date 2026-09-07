@@ -275,6 +275,88 @@ def test_espelho_que_e_um_arquivo_comum_vira_clone(repo, tmp_path, contagem):
     assert contagem.clones == 1, "e um espelho de verdade tomou o lugar dele"
 
 
+def test_espelho_vazio_nao_escapa_do_cache(repo, tmp_path, contagem):
+    # Um clone interrompido com Ctrl-C deixa um diretório vazio: `is_dir()` é
+    # `True`, então nada seria clonado, e o git rodaria com `cwd` ali. Sem
+    # `GIT_CEILING_DIRECTORIES`, a descoberta de repositório sobe a árvore até
+    # achar o repositório envolvente — medido: `git fetch --all` rodou nele e
+    # criou refs lá. O envolvente tem um remoto para a origem de propósito:
+    # é isso que torna a contaminação visível como refs novas, e não como
+    # nada acontecendo.
+    origem, commit = repo
+    envolvente = tmp_path / "envolvente"
+    envolvente.mkdir()
+    git(envolvente, "init", "-q", "-b", "principal")
+    git(envolvente, "config", "user.email", "teste@exemplo")
+    git(envolvente, "config", "user.name", "Teste")
+    (envolvente / "arquivo.txt").write_text("do envolvente\n", encoding="utf-8")
+    git(envolvente, "add", "-A")
+    git(envolvente, "commit", "-q", "-m", "do envolvente")
+    git(envolvente, "remote", "add", "origin", str(origem))
+    refs_antes = git(envolvente, "for-each-ref")
+
+    cache = envolvente / "cache"
+    cache.mkdir()
+    espelho_de(origem, cache).mkdir()  # o "clone interrompido": diretório vazio
+
+    arquivos = materializar(str(origem), commit, cache)
+
+    assert len(arquivos) == 2
+    assert dict(arquivos)["mod.json"] == b'{"schema":1}'
+    refs_depois = git(envolvente, "for-each-ref")
+    assert refs_depois == refs_antes, "o repositório envolvente não pode ganhar refs novas"
+    assert not (envolvente / ".git" / "FETCH_HEAD").exists(), "nem ser tocado por um fetch"
+    assert contagem.reconstrucoes == 1, "o diretório vazio foi descartado e reclonado"
+
+
+def test_descarte_repetido_nao_esconde_a_causa_real_do_clone(repo, tmp_path, contagem):
+    # Espelho é um arquivo comum, e a origem sumiu: o primeiro descarte apaga
+    # o arquivo, o clone falha com a mensagem certa, e a retentativa manda
+    # descartar de novo — sobre um caminho que já não existe. Sem o conserto,
+    # o `FileNotFoundError` vira `git-falhou` sobre o descarte, escondendo o
+    # diagnóstico verdadeiro: quem publica é mandado investigar o cache do
+    # próprio build quando o errado é a URL.
+    origem, commit = repo
+    cache = tmp_path / "cache"
+    cache.mkdir()
+    espelho_de(origem, cache).write_text("não sou um espelho")
+    origem.rename(tmp_path / "origem-sumiu")
+
+    with pytest.raises(Recusado) as erro:
+        materializar(str(origem), commit, cache)
+
+    assert erro.value.codigo == "git-falhou"
+    assert "clone --quiet --mirror" in erro.value.detalhe, erro.value.detalhe
+    assert "does not exist" in erro.value.detalhe, erro.value.detalhe
+    assert "descarte do espelho" not in erro.value.detalhe, erro.value.detalhe
+    assert contagem.reconstrucoes == 2, "o primeiro descarte apagou; o segundo achou vazio"
+    assert contagem.clones == 2, "e os dois clones falharam, contra a mesma origem sumida"
+
+
+def test_link_simbolico_no_espelho_e_removido_sem_apagar_o_alvo(repo, tmp_path):
+    # A única peça de segurança deste arquivo: o descarte tem que remover o
+    # link, nunca segui-lo. Um mutante que fizesse o descarte seguir o link
+    # apagaria um diretório inteiro fora do cache, e nada aqui o pegaria sem
+    # este teste — é o mesmo padrão que já derrubou quatro rodadas de revisão.
+    origem, commit = repo
+    cache = tmp_path / "cache"
+    cache.mkdir()
+
+    alvo = tmp_path / "alvo-fora-do-cache"
+    (alvo / "sub").mkdir(parents=True)
+    (alvo / "raiz.txt").write_text("raiz", encoding="utf-8")
+    (alvo / "sub" / "dentro.txt").write_text("dentro", encoding="utf-8")
+
+    espelho_de(origem, cache).symlink_to(alvo, target_is_directory=True)
+
+    arquivos = materializar(str(origem), commit, cache)
+
+    assert len(arquivos) == 2
+    assert not espelho_de(origem, cache).is_symlink(), "o link foi removido"
+    assert (alvo / "raiz.txt").read_text(encoding="utf-8") == "raiz", "o alvo sobreviveu"
+    assert (alvo / "sub" / "dentro.txt").read_text(encoding="utf-8") == "dentro"
+
+
 def test_descarte_impossivel_da_git_falhou(repo, tmp_path, contagem):
     # `_descartar` protege o destino do apagamento, mas o apagamento em si
     # pode falhar — permissão, arquivo travado. Uma falha ao descartar tem que

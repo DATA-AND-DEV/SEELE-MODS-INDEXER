@@ -23,19 +23,27 @@ SUFIXOS_RECUSADOS = (".swp", ".swo", ".orig", ".rej", ".pyc")
 PASTAS_RECUSADAS = frozenset({".git", "__pycache__", "node_modules", ".idea", ".vscode"})
 
 
-def _env_git() -> dict:
+def _env_git(cache: Path) -> dict:
     """Ambiente para chamadas ao git com idioma forçado a inglês.
 
     As mensagens do git passam por gettext: num sistema em português elas
     mudariam de texto, e qualquer leitura nossa do stderr deixaria de valer.
-    `LC_ALL=C` fixa o idioma para que o que lemos hoje continue lendo amanhã."""
+    `LC_ALL=C` fixa o idioma para que o que lemos hoje continue lendo amanhã.
+
+    `GIT_CEILING_DIRECTORIES=cache` é a segunda metade: um espelho que é um
+    diretório vazio (clone interrompido) não tem `.git` nenhum, e sem a
+    cerca o git sobe a árvore de diretórios procurando um repositório —
+    achando, sempre que o cache mora dentro de um. Medido: `git fetch --all`
+    rodou no repositório de quem publica e criou refs lá. A cerca é o próprio
+    diretório do cache: a busca para nele, nunca acima."""
     env = os.environ.copy()
     env["LC_ALL"] = "C"
     env["LANGUAGE"] = ""
+    env["GIT_CEILING_DIRECTORIES"] = str(cache.resolve())
     return env
 
 
-def _rodar_git(diretorio: Path, *args: str, texto: bool = True):
+def _rodar_git(diretorio: Path, *args: str, cache: Path, texto: bool = True):
     """A única porta por onde o git é chamado.
 
     Passar por um só lugar é o que permite a um teste contar quantos clones e
@@ -47,13 +55,13 @@ def _rodar_git(diretorio: Path, *args: str, texto: bool = True):
         cwd=diretorio,
         capture_output=True,
         text=texto,
-        env=_env_git(),
+        env=_env_git(cache),
     )
 
 
-def _git(diretorio: Path, *args: str) -> str:
+def _git(diretorio: Path, *args: str, cache: Path) -> str:
     """Uma chamada de git cuja falha é sempre `git-falhou`."""
-    pronto = _rodar_git(diretorio, *args)
+    pronto = _rodar_git(diretorio, *args, cache=cache)
     if pronto.returncode != 0:
         raise Recusado("git-falhou", f"{' '.join(args)}: {pronto.stderr.strip()}")
     return pronto.stdout
@@ -86,6 +94,14 @@ def _descartar(cache: Path, espelho: Path) -> None:
             espelho.unlink()
         else:
             shutil.rmtree(espelho)
+    except FileNotFoundError:
+        # Já não existe — o descarte não tinha o que fazer, e isso é sucesso,
+        # não erro. Acontece quando `materializar` já descartou o espelho uma
+        # vez (arquivo comum apagado, clone que falhou) e a retentativa manda
+        # descartar de novo: sem este caso, o `FileNotFoundError` cairia no
+        # `except OSError` abaixo e substituiria o diagnóstico verdadeiro do
+        # clone («o repositório não existe») por um falso sobre o descarte.
+        return
     except OSError as erro:
         # Um espelho que não pode ser apagado (permissão, arquivo travado) não
         # tem conserto daqui. O que não pode acontecer é a exceção crua escapar
@@ -109,7 +125,7 @@ def _garantir_espelho(repo: str, cache: Path, espelho: Path) -> bool:
     if espelho.is_dir():
         return False
     espelho.parent.mkdir(parents=True, exist_ok=True)
-    _git(cache, "clone", "--quiet", "--mirror", repo, str(espelho))
+    _git(cache, "clone", "--quiet", "--mirror", repo, str(espelho), cache=cache)
     return True
 
 
@@ -134,9 +150,16 @@ def _uma_tentativa(repo: str, commit: str, cache: Path, espelho: Path) -> list[t
 
     # Saúde estrutural antes de perguntar pelo commit: um repositório quebrado
     # falha aqui, e a resposta é sobre o espelho, não sobre o commit.
-    saude = _rodar_git(espelho, "rev-parse", "--is-bare-repository")
-    if saude.returncode != 0:
-        raise Recusado("git-falhou", f"espelho inválido: {saude.stderr.strip()}")
+    #
+    # `--is-bare-repository` devolve `0` mesmo respondendo `false` — um
+    # diretório vazio dentro do cache, sem a cerca de `GIT_CEILING_DIRECTORIES`,
+    # escapa para um repositório acima e o git responde com sucesso sobre o
+    # repositório errado. Só a saída literal `true` prova que é o espelho.
+    saude = _rodar_git(espelho, "rev-parse", "--is-bare-repository", cache=cache)
+    saida = saude.stdout.strip() if saude.stdout else ""
+    if saude.returncode != 0 or saida != "true":
+        detalhe = saude.stderr.strip() or f"resposta inesperada: {saida!r}"
+        raise Recusado("git-falhou", f"espelho inválido: {detalhe}")
 
     # `cat-file -e` responde «existe e é um commit» sem baixar a árvore, e vem
     # **antes** do `fetch` de propósito: o commit é fixado, logo imutável, e um
@@ -144,10 +167,10 @@ def _uma_tentativa(repo: str, commit: str, cache: Path, espelho: Path) -> list[t
     # `materializar` roda uma vez por versão e não por repositório, buscar
     # sempre custaria uma ida à rede por versão do mesmo MOD. O caminho feliz
     # não toca a rede; o `fetch` é o conserto de quem não achou.
-    resultado = _rodar_git(espelho, "cat-file", "-e", f"{commit}^{{commit}}")
+    resultado = _rodar_git(espelho, "cat-file", "-e", f"{commit}^{{commit}}", cache=cache)
     if resultado.returncode != 0 and not recem_clonado:
-        _git(espelho, "fetch", "--quiet", "--all")
-        resultado = _rodar_git(espelho, "cat-file", "-e", f"{commit}^{{commit}}")
+        _git(espelho, "fetch", "--quiet", "--all", cache=cache)
+        resultado = _rodar_git(espelho, "cat-file", "-e", f"{commit}^{{commit}}", cache=cache)
 
     # Está medido que o git responde `fatal: Not a valid object name` tanto
     # para um commit que nunca existiu quanto para um cujo objeto foi apagado
@@ -164,7 +187,7 @@ def _uma_tentativa(repo: str, commit: str, cache: Path, espelho: Path) -> list[t
             raise Recusado("git-falhou", f"cat-file: {stderr}")
         raise Recusado("commit-ausente", f"{repo}@{commit}")
 
-    listagem = _git(espelho, "ls-tree", "-r", "-z", "--name-only", commit)
+    listagem = _git(espelho, "ls-tree", "-r", "-z", "--name-only", commit, cache=cache)
     caminhos = [c for c in listagem.split("\0") if c]
 
     estranhos = sorted(c for c in caminhos if _estranho(c))
@@ -175,7 +198,7 @@ def _uma_tentativa(repo: str, commit: str, cache: Path, espelho: Path) -> list[t
 
     arquivos: list[tuple[str, bytes]] = []
     for caminho in caminhos:
-        bruto = _rodar_git(espelho, "show", f"{commit}:{caminho}", texto=False)
+        bruto = _rodar_git(espelho, "show", f"{commit}:{caminho}", texto=False, cache=cache)
         if bruto.returncode != 0:
             raise Recusado("git-falhou", f"show {caminho}: {bruto.stderr.decode().strip()}")
         # `git` já entrega o caminho com barra; a troca é para o dia em que
