@@ -111,6 +111,13 @@ __pycache__/
 # tranca: a primeira é ela morar em ~/.minisign/, fora daqui.
 *.key
 chaves/*.key
+
+# Os dois diretórios de trabalho do `gerar.py`. Eles importam aqui mais do
+# que pareceria, porque o passo seguinte a rodar o gerador é `git add` do
+# `publicado/` — e um `git add -A` distraído levaria junto uma estufa
+# meio-montada e sem assinatura, ou dezenas de MB de espelhos de terceiros.
+.publicado-em-obras/
+.cache-de-repos/
 ```
 
 - [ ] **Step 5: Gerar o par de desenvolvimento**
@@ -655,6 +662,21 @@ VERSAO_DA_API = 1
 CHAVES = {"schema", "id", "version", "api", "repo", "reach", "state", "client", "server"}
 OBRIGATORIAS = {"schema", "id", "version", "api", "repo"}
 
+# O tipo de cada chave, porque o `serde` do Rust valida isso na
+# desserialização e nós precisamos falhar do mesmo jeito. Sem esta tabela um
+# `"schema": "1"` levanta `TypeError` cru em vez de `Recusado`, e um único
+# `mod.json` torto derruba a indexação inteira em vez de recusar aquele MOD.
+TIPOS = {
+    "schema": int, "id": str, "version": str, "api": int, "repo": str,
+    "reach": list, "state": int, "client": str, "server": str,
+}
+
+# Os únicos campos que o Rust declara `Option<T>`. Para os demais, um `null`
+# explícito não é «ausente»: é um manifesto que o `serde` recusaria.
+OPCIONAIS = {"state", "client", "server"}
+
+U32_MAX = 2**32 - 1
+
 
 @dataclass(frozen=True)
 class Manifesto:
@@ -677,8 +699,13 @@ def _bem_formado(identificador: str) -> bool:
     metades = identificador.split("/")
     if len(metades) != 2:
         return False
+    # Faixas ASCII explícitas, e não `islower`/`isdigit`: os métodos do Python
+    # são Unicode e aceitariam `x²` ou dígitos indo-arábicos, que
+    # `is_ascii_digit` do Rust recusa. Um id aceito aqui e recusado lá é um
+    # MOD que entra no catálogo e falha na máquina de quem instalou.
     return all(
-        metade and all(c.islower() and c.isascii() or c.isdigit() or c == "-" for c in metade)
+        metade
+        and all(("a" <= c <= "z") or ("0" <= c <= "9") or c == "-" for c in metade)
         for metade in metades
     )
 
@@ -699,6 +726,29 @@ def ler(texto: str) -> Manifesto:
     faltando = OBRIGATORIAS - set(cru)
     if faltando:
         raise Recusado("malformed", "falta: " + ", ".join(sorted(faltando)))
+
+    for chave, tipo in TIPOS.items():
+        if chave not in cru:
+            continue
+        valor = cru[chave]
+        if valor is None:
+            # `null` só equivale a ausente nos campos que o Rust declara
+            # `Option<T>`. Nos outros o `serde` recusa `null`, e aceitar aqui
+            # poria um `repo` nulo num catálogo append-only — sem conserto
+            # barato depois.
+            if chave in OPCIONAIS:
+                continue
+            raise Recusado("malformed", f"{chave} não pode ser nulo")
+        # `bool` é subclasse de `int` em Python, e `true` não é um u32 no Rust.
+        if isinstance(valor, bool) or not isinstance(valor, tipo):
+            raise Recusado("malformed", f"{chave} deveria ser {tipo.__name__}")
+        # `schema`, `api` e `state` são u32 lá: negativo ou acima do teto não
+        # desserializa, e publicar o que o cliente recusa é o defeito que este
+        # módulo inteiro existe para impedir.
+        if tipo is int and not (0 <= valor <= U32_MAX):
+            raise Recusado("malformed", f"{chave} fora da faixa de u32")
+    if any(not isinstance(item, str) for item in cru.get("reach", [])):
+        raise Recusado("malformed", "reach deveria ser uma lista de textos")
 
     if cru["schema"] > ESQUEMA_DO_MANIFESTO:
         raise Recusado("schema-too-new", f'esquema {cru["schema"]}, esta versão lê {ESQUEMA_DO_MANIFESTO}')
@@ -1425,9 +1475,14 @@ def montar(
         if not versoes:
             continue
 
-        # O nível e as notas do MOD são os da versão mais recente avaliada: é
-        # o que a tela mostra, e é sobre ela que a decisão de instalar é feita.
-        ultima = a.versoes[-1]
+        # O nível e as notas do MOD são os da versão avaliada mais
+        # recentemente, e «mais recente» é por `avaliado_em` — nunca pela
+        # posição no arquivo. `Avaliacao.versoes` preserva a ordem do TOML,
+        # então uma versão antiga acrescentada ao fim passaria a decidir o
+        # selo. É o selo que alguém lê para decidir instalar: deixá-lo
+        # depender da ordem de edição de um arquivo daria a quem edita um
+        # poder que a avaliação não lhe deu.
+        ultima = max(a.versoes, key=lambda v: v.avaliado_em)
         mods.append(
             {
                 "id": a.id,
@@ -1689,6 +1744,18 @@ def carregar_listas(raiz: Path) -> dict:
     return json.loads((raiz / "listas.json").read_text(encoding="utf-8"))
 
 
+def _exigir(bruta: dict, campos: tuple[str, ...], onde: str) -> None:
+    """Campo obrigatório ausente é recusa, e nunca valor-padrão.
+
+    `revogacoes.json` é o que impede um MOD furado de ser instalado. Uma
+    entrada que perde o `id` em silêncio vira uma revogação que não revoga
+    nada — e quem a escreveu acha que funcionou. De todos os arquivos deste
+    desenho, este é o pior para falhar calado."""
+    faltando = [campo for campo in campos if not bruta.get(campo)]
+    if faltando:
+        raise Recusado("revogacao-incompleta", f"{onde}: falta " + ", ".join(faltando))
+
+
 def _entrada(bruta: dict, listas: dict, onde: str) -> dict:
     motivo = bruta.get("motivo", "")
     if motivo not in listas["motivos"]:
@@ -1714,6 +1781,7 @@ def montar(texto_toml: str, listas: dict, gerado_em: int) -> dict:
     mods = []
     for bruta in cru.get("mods", []):
         onde = f'{bruta.get("id")} {bruta.get("versao")}'
+        _exigir(bruta, ("id", "versao", "desde"), onde)
         mods.append(
             {"id": bruta.get("id", ""), "versao": bruta.get("versao", ""), **_entrada(bruta, listas, onde)}
         )
@@ -1721,6 +1789,7 @@ def montar(texto_toml: str, listas: dict, gerado_em: int) -> dict:
     produto = []
     for bruta in cru.get("versoes_do_produto", []):
         onde = f'produto {bruta.get("versao")}'
+        _exigir(bruta, ("versao", "desde"), onde)
         produto.append({"versao": bruta.get("versao", ""), **_entrada(bruta, listas, onde)})
 
     return {
@@ -3733,9 +3802,15 @@ function elemento(etiqueta, classe, texto) {
 /**
  * Há quanto tempo, em texto curto.
  *
- * Nunca negativo: `publicado_em` vem do catálogo e `agora` do relógio de
- * quem lê, e um relógio atrasado produziria «há -2 d» — que parece defeito
- * nosso e não do relógio.
+ * Nunca negativo, e o `Math.max` é cinto e suspensório: o ramo `"agora"`
+ * abaixo já absorve qualquer valor negativo hoje, porque tudo menor que uma
+ * hora cai nele. O clamp garante o invariante **localmente**, sem depender
+ * da ordem dos ramos — se alguém acrescentar um ramo antes daquele, ele
+ * continua segurando, e sem ele a proteção seria acidental.
+ *
+ * O invariante importa porque `publicado_em` vem do catálogo e `agora` do
+ * relógio de quem lê: um relógio adiantado produz uma diferença negativa, e
+ * «há -2 d» na tela pareceria defeito nosso e não do relógio.
  */
 export function textoDaIdade(publicado_em, agora) {
   const segundos = Math.max(0, agora - publicado_em);
