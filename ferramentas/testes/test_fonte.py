@@ -78,3 +78,15 @@ def test_buscar_duas_vezes_da_o_mesmo(repo, tmp_path):
     origem, commit = repo
     cache = tmp_path / "cache"
     assert materializar(str(origem), commit, cache) == materializar(str(origem), commit, cache)
+
+
+def test_cache_corrompido_da_git_falhou_nao_commit_ausente(repo, tmp_path):
+    # Espelho corrompido (ou cache que não é repositório) deve ser git-falhou,
+    # não commit-ausente. Isso distingue "arquivo não existe" de "erro real".
+    origem, commit = repo
+    cache = tmp_path / "cache"
+    # Criar um cache que é um arquivo em vez de diretório, forçando erro no clone
+    cache.write_text("lixo")
+    with pytest.raises(Recusado) as erro:
+        materializar(str(origem), commit, cache)
+    assert erro.value.codigo == "git-falhou"

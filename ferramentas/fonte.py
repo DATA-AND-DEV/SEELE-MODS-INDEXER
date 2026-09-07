@@ -57,14 +57,30 @@ def materializar(repo: str, commit: str, cache: Path) -> list[tuple[str, bytes]]
     """Os pares `(caminho, bytes)` do commit, prontos para o `content_hash`.
 
     Levanta `Recusado` se o commit não existe ou se há arquivo estranho."""
-    cache.mkdir(parents=True, exist_ok=True)
+    try:
+        cache.mkdir(parents=True, exist_ok=True)
+    except (OSError, FileExistsError) as erro:
+        raise Recusado("git-falhou", f"cache criação: {erro}") from erro
+
     espelho = _espelho(repo, cache)
 
     # `cat-file -e` responde «existe e é um commit» sem baixar a árvore.
-    try:
-        _git(espelho, "cat-file", "-e", f"{commit}^{{commit}}")
-    except Recusado as erro:
-        raise Recusado("commit-ausente", f"{repo}@{commit}") from erro
+    # Precisamos distinguir entre "commit não existe" (mensagem "Not a valid object name")
+    # e "erro real do git" (repositório corrompido, permissão, etc).
+    resultado = subprocess.run(
+        ["git", "cat-file", "-e", f"{commit}^{{commit}}"],
+        cwd=espelho,
+        capture_output=True,
+        text=True,
+    )
+    if resultado.returncode != 0:
+        stderr_msg = resultado.stderr.strip()
+        if "Not a valid object name" in stderr_msg:
+            # Commit não existe no repositório
+            raise Recusado("commit-ausente", f"{repo}@{commit}")
+        else:
+            # Erro real do git (repositório inválido, corrompido, etc)
+            raise Recusado("git-falhou", f"cat-file: {stderr_msg}")
 
     listagem = _git(espelho, "ls-tree", "-r", "-z", "--name-only", commit)
     caminhos = [c for c in listagem.split("\0") if c]
