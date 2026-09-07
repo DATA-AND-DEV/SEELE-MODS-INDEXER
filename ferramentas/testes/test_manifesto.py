@@ -82,3 +82,62 @@ def test_so_a_metade_do_servidor_basta():
     m = ler('{"schema":1,"id":"a/b","version":"1","api":1,"repo":"r","server":"s.js"}')
     assert m.client is None
     assert m.server == "s.js"
+
+
+# Critical 1: ID com caracteres Unicode que Python aceita mas Rust recusa
+def test_id_com_superscript_dois_e_malformed_id():
+    # `²` (U+00B2) é aceito por `str.isdigit()` mas recusado por Rust
+    with pytest.raises(Recusado) as erro:
+        ler('{"schema":1,"id":"a/x²","version":"1","api":1,"repo":"r","client":"c.js"}')
+    assert erro.value.codigo == "malformed-id"
+
+
+def test_id_com_digito_indoarabico_e_malformed_id():
+    # `٣` (U+0663, ARABIC-INDIC DIGIT THREE) é aceito por `str.isdigit()` mas recusado por Rust
+    with pytest.raises(Recusado) as erro:
+        ler('{"schema":1,"id":"a/x٣","version":"1","api":1,"repo":"r","client":"c.js"}')
+    assert erro.value.codigo == "malformed-id"
+
+
+# Critical 2: Validação de tipos — sem ela, erros crus em vez de `Recusado`
+def test_schema_como_texto_e_malformed():
+    with pytest.raises(Recusado) as erro:
+        ler('{"schema":"1","id":"a/b","version":"1","api":1,"repo":"r","client":"c.js"}')
+    assert erro.value.codigo == "malformed"
+
+
+def test_id_como_numero_e_malformed():
+    with pytest.raises(Recusado) as erro:
+        ler('{"schema":1,"id":123,"version":"1","api":1,"repo":"r","client":"c.js"}')
+    assert erro.value.codigo == "malformed"
+
+
+def test_api_como_texto_e_malformed():
+    with pytest.raises(Recusado) as erro:
+        ler('{"schema":1,"id":"a/b","version":"1","api":"1","repo":"r","client":"c.js"}')
+    assert erro.value.codigo == "malformed"
+
+
+def test_reach_como_texto_em_vez_de_lista_e_malformed():
+    with pytest.raises(Recusado) as erro:
+        ler('{"schema":1,"id":"a/b","version":"1","api":1,"repo":"r","reach":"texto","client":"c.js"}')
+    assert erro.value.codigo == "malformed"
+
+
+def test_client_como_numero_e_malformed():
+    with pytest.raises(Recusado) as erro:
+        ler('{"schema":1,"id":"a/b","version":"1","api":1,"repo":"r","client":123}')
+    assert erro.value.codigo == "malformed"
+
+
+def test_schema_como_boolean_e_malformed():
+    # `bool` é subclasse de `int` em Python, mas não em Rust
+    with pytest.raises(Recusado) as erro:
+        ler('{"schema":true,"id":"a/b","version":"1","api":1,"repo":"r","client":"c.js"}')
+    assert erro.value.codigo == "malformed"
+
+
+def test_reach_com_item_nao_texto_e_malformed():
+    with pytest.raises(Recusado) as erro:
+        ler('{"schema":1,"id":"a/b","version":"1","api":1,"repo":"r","reach":[123],"client":"c.js"}')
+    assert erro.value.codigo == "malformed"

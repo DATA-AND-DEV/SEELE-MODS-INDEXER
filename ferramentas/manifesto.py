@@ -24,6 +24,15 @@ VERSAO_DA_API = 1
 CHAVES = {"schema", "id", "version", "api", "repo", "reach", "state", "client", "server"}
 OBRIGATORIAS = {"schema", "id", "version", "api", "repo"}
 
+# O tipo de cada chave, porque o `serde` do Rust valida isso na
+# desserialização e nós precisamos falhar do mesmo jeito. Sem esta tabela um
+# `"schema": "1"` levanta `TypeError` cru em vez de `Recusado`, e um único
+# `mod.json` torto derruba a indexação inteira em vez de recusar aquele MOD.
+TIPOS = {
+    "schema": int, "id": str, "version": str, "api": int, "repo": str,
+    "reach": list, "state": int, "client": str, "server": str,
+}
+
 
 @dataclass(frozen=True)
 class Manifesto:
@@ -46,8 +55,13 @@ def _bem_formado(identificador: str) -> bool:
     metades = identificador.split("/")
     if len(metades) != 2:
         return False
+    # Faixas ASCII explícitas, e não `islower`/`isdigit`: os métodos do Python
+    # são Unicode e aceitariam `x²` ou dígitos indo-arábicos, que
+    # `is_ascii_digit` do Rust recusa. Um id aceito aqui e recusado lá é um
+    # MOD que entra no catálogo e falha na máquina de quem instalou.
     return all(
-        metade and all(c.islower() and c.isascii() or c.isdigit() or c == "-" for c in metade)
+        metade
+        and all(("a" <= c <= "z") or ("0" <= c <= "9") or c == "-" for c in metade)
         for metade in metades
     )
 
@@ -68,6 +82,16 @@ def ler(texto: str) -> Manifesto:
     faltando = OBRIGATORIAS - set(cru)
     if faltando:
         raise Recusado("malformed", "falta: " + ", ".join(sorted(faltando)))
+
+    for chave, tipo in TIPOS.items():
+        if chave not in cru or cru[chave] is None:
+            continue
+        valor = cru[chave]
+        # `bool` é subclasse de `int` em Python, e `true` não é um u32 no Rust.
+        if isinstance(valor, bool) or not isinstance(valor, tipo):
+            raise Recusado("malformed", f"{chave} deveria ser {tipo.__name__}")
+    if any(not isinstance(item, str) for item in cru.get("reach", [])):
+        raise Recusado("malformed", "reach deveria ser uma lista de textos")
 
     if cru["schema"] > ESQUEMA_DO_MANIFESTO:
         raise Recusado("schema-too-new", f'esquema {cru["schema"]}, esta versão lê {ESQUEMA_DO_MANIFESTO}')
