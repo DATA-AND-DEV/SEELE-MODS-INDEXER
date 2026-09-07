@@ -1,0 +1,13 @@
+[project]
+name = "seele-mods-indexer"
+version = "0.1.0"
+requires-python = ">=3.11"
+# Sem `dependencies`, e isso é a decisão e não um esqueleto por preencher:
+# `gerar.py` roda na máquina de quem tem a chave privada, e cada dependência
+# ali é mais uma coisa que um invasor pode alcançar sem tocar na chave.
+
+[tool.pytest.ini_options]
+testpaths = ["ferramentas/testes"]
+
+[tool.setuptools]
+packages = ["ferramentas"]
