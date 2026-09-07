@@ -348,7 +348,7 @@ export function desenharAviso(no, integridade) {
   no.append(
     elemento(
       "p",
-      "rodape",
+      "aviso-nota",
       "Esta conferência acontece na mesma origem que serve o catálogo, então ela pega corrupção e cache velho — não adulteração. A conferência que decide acontece dentro do app, com a chave que veio compilada nele.",
     ),
   );

@@ -95,7 +95,14 @@ button:focus-visible { outline: var(--seele-b-forte) solid var(--seele-osso); ou
 }
 .aviso[data-estado="sem-conferir"] { color: var(--seele-sync-degradado); }
 .aviso p { margin: 0; max-width: 72ch; text-wrap: pretty; }
-.aviso .rodape { color: var(--seele-osso-apagado); font-size: 11px; margin-top: var(--seele-e1); }
+/* Classe própria, e não `.rodape`: aquela é a classe do rodapé da página
+   (mais abaixo neste arquivo), com `display:flex`, fundo de painel e borda
+   — nada disso serve ao texto miúdo do aviso, que é só uma segunda linha
+   de texto secundário. */
+.aviso-nota {
+  margin-top: var(--seele-e1); max-width: 72ch;
+  font-size: 11px; line-height: 1.6; color: var(--seele-osso-apagado);
+}
 
 /* ---- corpo ---- */
 .corpo { flex: 1 1 auto; min-width: 0; }
