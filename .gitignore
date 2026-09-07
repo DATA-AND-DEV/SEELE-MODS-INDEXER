@@ -6,3 +6,10 @@ __pycache__/
 # tranca: a primeira é ela morar em ~/.minisign/, fora daqui.
 *.key
 chaves/*.key
+
+# Os dois diretórios de trabalho do `gerar.py`. Eles importam aqui mais do
+# que pareceria, porque o passo seguinte a rodar o gerador é `git add` do
+# `publicado/` — e um `git add -A` distraído levaria junto uma estufa
+# meio-montada e sem assinatura, ou dezenas de MB de espelhos de terceiros.
+.publicado-em-obras/
+.cache-de-repos/

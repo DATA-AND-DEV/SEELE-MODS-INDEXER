@@ -1,6 +1,7 @@
 import json
 import shutil
 import subprocess
+from pathlib import Path
 
 import pytest
 
@@ -175,3 +176,157 @@ def test_trocar_o_commit_de_uma_versao_publicada_e_recusado(mundo):
     with pytest.raises(Recusado) as erro:
         gerar(raiz, secreta, agora=1757200000)
     assert erro.value.codigo == "versao-editada"
+
+
+def _autor_do_toml(raiz):
+    """O caminho do repositório do autor, lido de volta do TOML da avaliação."""
+    toml = raiz / "avaliacoes" / "juli" / "cinza-frio.toml"
+    repo = [l for l in toml.read_text(encoding="utf-8").splitlines() if l.startswith("repo")][0]
+    return Path(repo.split('"')[1])
+
+
+def _instantaneo(publicado):
+    """Todo arquivo sob `publicado/`, caminho relativo → bytes.
+
+    É a comparação byte a byte que prova atomicidade: qualquer arquivo a
+    mais, a menos, ou com um byte trocado aparece aqui."""
+    return {
+        str(p.relative_to(publicado)): p.read_bytes()
+        for p in publicado.rglob("*")
+        if p.is_file()
+    }
+
+
+def test_execucao_que_falha_no_meio_nao_altera_publicado(mundo, tmp_path):
+    # A estufa é onde a montagem nova acontece; só a troca no fim decide se
+    # ela vira publicado/. Sem um segundo MOD *novo e válido* no meio do
+    # caminho, uma escrita direta em publicado/ reescreveria o de sempre com
+    # os mesmos bytes e o teste passaria mesmo sem estufa nenhuma — por isso
+    # o mod novo entra em ordem alfabética antes do quebrado: ele é o que
+    # provaria vazar se a troca não fosse atômica.
+    raiz, secreta, _ = mundo
+    gerar(raiz, secreta, agora=1757100000)
+    publicado = raiz / "publicado"
+    antes = _instantaneo(publicado)
+
+    novo_autor = tmp_path / "repo-do-novo-autor"
+    (novo_autor / "cliente").mkdir(parents=True)
+    novo_mod_json = json.dumps(
+        {
+            "schema": 1, "id": "juli/novo-mod", "version": "1.0.0", "api": 1,
+            "repo": "https://github.com/juli/seele-novo-mod",
+            "reach": ["algo novo"],
+            "client": "cliente/main.js",
+        }
+    )
+    (novo_autor / "mod.json").write_text(novo_mod_json, encoding="utf-8")
+    (novo_autor / "cliente" / "main.js").write_text("// novo\n", encoding="utf-8")
+    git(novo_autor, "init", "-q", "-b", "principal")
+    git(novo_autor, "config", "user.email", "a@b")
+    git(novo_autor, "config", "user.name", "A")
+    git(novo_autor, "add", "-A")
+    git(novo_autor, "commit", "-q", "-m", "primeiro")
+    commit_novo = git(novo_autor, "rev-parse", "HEAD")
+
+    (raiz / "avaliacoes" / "juli" / "novo-mod.toml").write_text(
+        f"""
+id = "juli/novo-mod"
+repo = "{novo_autor}"
+titulo = "Novo Mod"
+resumo = "Um MOD novo, que seria escrito antes da falha."
+
+[[versoes]]
+versao = "1.0.0"
+commit = "{commit_novo}"
+nivel = "verificado"
+notas = []
+avaliado_em = 1757000000
+""",
+        encoding="utf-8",
+    )
+
+    autor = _autor_do_toml(raiz)
+    (raiz / "avaliacoes" / "juli" / "quebrado.toml").write_text(
+        f"""
+id = "juli/quebrado"
+repo = "{autor}"
+titulo = "Quebrado"
+resumo = "Aponta para um commit que não existe."
+
+[[versoes]]
+versao = "1.0.0"
+commit = "0000000000000000000000000000000000000000"
+nivel = "verificado"
+notas = []
+avaliado_em = 1757000000
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(Recusado):
+        gerar(raiz, secreta, agora=1757200000)
+
+    # "juli/novo-mod" ordena antes de "juli/quebrado" — se a montagem
+    # escrevesse direto em publicado/ em vez de numa estufa, os arquivos do
+    # MOD novo apareceriam aqui mesmo com a execução tendo falhado depois.
+    assert _instantaneo(publicado) == antes
+
+
+def test_cache_do_par_diferente_e_recusado(mundo):
+    # O guarda contra a falha que a documentação chama de mais difícil de
+    # diagnosticar do desenho inteiro: um catálogo novo com uma assinatura
+    # velha em cache porque os dois têm janelas de cache diferentes.
+    raiz, secreta, _ = mundo
+    (raiz / "site" / "_headers").write_text(
+        """/catalogo.json
+  Cache-Control: public, max-age=300
+
+/catalogo.json.minisig
+  Cache-Control: public, max-age=60
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(Recusado) as erro:
+        gerar(raiz, secreta, agora=1757100000)
+    assert erro.value.codigo == "cache-do-par-difere"
+
+
+def test_id_do_manifesto_diverge_da_avaliacao_e_recusado(mundo):
+    raiz, secreta, _ = mundo
+    autor = _autor_do_toml(raiz)
+    divergente = json.dumps({**json.loads(MOD_JSON), "id": "outro/nome"})
+    (autor / "mod.json").write_text(divergente, encoding="utf-8")
+    git(autor, "add", "-A")
+    git(autor, "commit", "-q", "-m", "id divergente")
+    novo = git(autor, "rev-parse", "HEAD")
+
+    toml = raiz / "avaliacoes" / "juli" / "cinza-frio.toml"
+    antigo = [l for l in toml.read_text(encoding="utf-8").splitlines() if l.startswith("commit")][0]
+    toml.write_text(
+        toml.read_text(encoding="utf-8").replace(antigo, f'commit = "{novo}"'), encoding="utf-8"
+    )
+
+    with pytest.raises(Recusado) as erro:
+        gerar(raiz, secreta, agora=1757100000)
+    assert erro.value.codigo == "id-nao-bate-com-o-manifesto"
+
+
+def test_version_do_manifesto_diverge_da_avaliacao_e_recusado(mundo):
+    raiz, secreta, _ = mundo
+    autor = _autor_do_toml(raiz)
+    divergente = json.dumps({**json.loads(MOD_JSON), "version": "9.9.9"})
+    (autor / "mod.json").write_text(divergente, encoding="utf-8")
+    git(autor, "add", "-A")
+    git(autor, "commit", "-q", "-m", "version divergente")
+    novo = git(autor, "rev-parse", "HEAD")
+
+    toml = raiz / "avaliacoes" / "juli" / "cinza-frio.toml"
+    antigo = [l for l in toml.read_text(encoding="utf-8").splitlines() if l.startswith("commit")][0]
+    toml.write_text(
+        toml.read_text(encoding="utf-8").replace(antigo, f'commit = "{novo}"'), encoding="utf-8"
+    )
+
+    with pytest.raises(Recusado) as erro:
+        gerar(raiz, secreta, agora=1757100000)
+    assert erro.value.codigo == "versao-nao-bate-com-o-manifesto"
