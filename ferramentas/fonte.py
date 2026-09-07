@@ -38,10 +38,10 @@ def _env_git() -> dict:
 def _rodar_git(diretorio: Path, *args: str, texto: bool = True):
     """A única porta por onde o git é chamado.
 
-    Passar por um só lugar é o que permite a um teste contar quantos clones
-    aconteceram — e a contagem é o que prova que a reconstrução do espelho
-    foi mesmo exercitada, em vez de o teste ter chegado ao mesmo código de
-    recusa por outro caminho."""
+    Passar por um só lugar é o que permite a um teste contar quantos clones e
+    quantos `fetch` aconteceram — e a contagem é o que prova que a
+    reconstrução do espelho foi mesmo exercitada, em vez de o teste ter
+    chegado ao mesmo código de recusa por outro caminho."""
     return subprocess.run(
         ["git", *args],
         cwd=diretorio,
@@ -60,20 +60,57 @@ def _git(diretorio: Path, *args: str) -> str:
 
 
 def _caminho_do_espelho(repo: str, cache: Path) -> Path:
-    """Onde o clone nu daquele repositório mora dentro do cache."""
-    return cache / (repo.rstrip("/").replace("/", "_").replace(":", "_") + ".git")
+    """Onde o clone nu daquele repositório mora dentro do cache.
+
+    `repo` vem de fora, então tudo que possa virar separador de caminho é
+    neutralizado — inclusive a contrabarra, que em POSIX é um caractere comum
+    de nome mas num Windows faria `..\\..\\` sair do cache. Só a barra não
+    basta: o clone abaixo cria diretórios com `parents=True` e não tem âncora
+    nenhuma, então o nome precisa já chegar aqui incapaz de subir."""
+    seguro = repo.rstrip("/").replace("/", "_").replace("\\", "_").replace(":", "_")
+    return cache / (seguro + ".git")
 
 
-def _clonar_ou_buscar(repo: str, cache: Path, espelho: Path) -> None:
-    """Deixa o espelho existindo e atualizado.
+def _descartar(cache: Path, espelho: Path) -> None:
+    """Apaga o espelho, com a âncora que impede apagar outra coisa.
+
+    O caminho é derivado do nome do repositório, que vem de fora; conferir que
+    ele é filho direto do cache antes de apagar é o que garante que um nome
+    hostil não vira um apagamento em outro lugar do disco. A conferência é
+    sobre o diretório-pai, e não sobre o alvo resolvido, para que um link
+    simbólico plantado ali seja removido como link — nunca seguido."""
+    if espelho.parent.resolve() != cache.resolve():
+        raise Recusado("git-falhou", f"espelho fora do cache: {espelho}")
+    try:
+        if espelho.is_symlink() or not espelho.is_dir():
+            espelho.unlink()
+        else:
+            shutil.rmtree(espelho)
+    except OSError as erro:
+        # Um espelho que não pode ser apagado (permissão, arquivo travado) não
+        # tem conserto daqui. O que não pode acontecer é a exceção crua escapar
+        # por cima do contrato: quem chama trata `Recusado`, e mais nada.
+        raise Recusado("git-falhou", f"descarte do espelho: {erro}") from erro
+
+
+def _garantir_espelho(repo: str, cache: Path, espelho: Path) -> bool:
+    """Deixa o espelho existindo, e diz se ele nasceu agora.
 
     Nu porque nada aqui precisa de árvore de trabalho: os bytes saem do
-    commit, e não do que estiver no disco."""
-    if espelho.exists():
-        _git(espelho, "fetch", "--quiet", "--all")
-    else:
-        espelho.parent.mkdir(parents=True, exist_ok=True)
-        _git(cache, "clone", "--quiet", "--mirror", repo, str(espelho))
+    commit, e não do que estiver no disco.
+
+    Um caminho que existe e não é um diretório não é um espelho — é lixo com o
+    nome certo. Chamar o git com `cwd` nele levantaria `NotADirectoryError`,
+    que é exceção crua e não recusa nomeada, e a reconstrução não salvaria
+    porque apagar também tropeçaria. Então ele é resolvido aqui, no mesmo
+    lugar em que o espelho é preparado: apagado e clonado de novo."""
+    if espelho.is_symlink() or (espelho.exists() and not espelho.is_dir()):
+        _descartar(cache, espelho)
+    if espelho.is_dir():
+        return False
+    espelho.parent.mkdir(parents=True, exist_ok=True)
+    _git(cache, "clone", "--quiet", "--mirror", repo, str(espelho))
+    return True
 
 
 def _estranho(caminho: str) -> bool:
@@ -85,7 +122,7 @@ def _estranho(caminho: str) -> bool:
 
 
 def _uma_tentativa(repo: str, commit: str, cache: Path, espelho: Path) -> list[tuple[str, bytes]]:
-    """Uma passada inteira sobre o espelho: buscar, conferir, ler.
+    """Uma passada inteira sobre o espelho: garantir, conferir, buscar, ler.
 
     Ela é inteira de propósito. O `fetch` está aqui dentro, e não fora, porque
     um espelho reaproveitado pode estar quebrado justamente no `fetch` — um
@@ -93,7 +130,7 @@ def _uma_tentativa(repo: str, commit: str, cache: Path, espelho: Path) -> list[t
     tentativa, ficaria também de fora da reconstrução que a conserta, e o
     espelho quebrado viraria um `git-falhou` que ninguém consegue explicar
     olhando para a origem, que está perfeita."""
-    _clonar_ou_buscar(repo, cache, espelho)
+    recem_clonado = _garantir_espelho(repo, cache, espelho)
 
     # Saúde estrutural antes de perguntar pelo commit: um repositório quebrado
     # falha aqui, e a resposta é sobre o espelho, não sobre o commit.
@@ -101,8 +138,17 @@ def _uma_tentativa(repo: str, commit: str, cache: Path, espelho: Path) -> list[t
     if saude.returncode != 0:
         raise Recusado("git-falhou", f"espelho inválido: {saude.stderr.strip()}")
 
-    # `cat-file -e` responde «existe e é um commit» sem baixar a árvore.
-    #
+    # `cat-file -e` responde «existe e é um commit» sem baixar a árvore, e vem
+    # **antes** do `fetch` de propósito: o commit é fixado, logo imutável, e um
+    # commit que já está no espelho não tem o que ser buscado. Como
+    # `materializar` roda uma vez por versão e não por repositório, buscar
+    # sempre custaria uma ida à rede por versão do mesmo MOD. O caminho feliz
+    # não toca a rede; o `fetch` é o conserto de quem não achou.
+    resultado = _rodar_git(espelho, "cat-file", "-e", f"{commit}^{{commit}}")
+    if resultado.returncode != 0 and not recem_clonado:
+        _git(espelho, "fetch", "--quiet", "--all")
+        resultado = _rodar_git(espelho, "cat-file", "-e", f"{commit}^{{commit}}")
+
     # Está medido que o git responde `fatal: Not a valid object name` tanto
     # para um commit que nunca existiu quanto para um cujo objeto foi apagado
     # do disco — byte a byte a mesma linha. Ler o stderr não separa os dois
@@ -110,7 +156,6 @@ def _uma_tentativa(repo: str, commit: str, cache: Path, espelho: Path) -> list[t
     # a distinção não é feita aqui: quem a faz é `materializar`, reconstruindo
     # o espelho e perguntando de novo a um clone novo, que não pode estar
     # corrompido de antes.
-    resultado = _rodar_git(espelho, "cat-file", "-e", f"{commit}^{{commit}}")
     if resultado.returncode != 0:
         stderr = resultado.stderr.strip()
         if stderr.startswith(("error:", "warning:")):
@@ -139,43 +184,40 @@ def _uma_tentativa(repo: str, commit: str, cache: Path, espelho: Path) -> list[t
     return arquivos
 
 
-def _descartar(cache: Path, espelho: Path) -> None:
-    """Apaga o espelho, com a âncora que impede apagar outra coisa.
-
-    O caminho é derivado do nome do repositório, que vem de fora; conferir que
-    ele está mesmo dentro do cache antes de um `rmtree` é o que garante que um
-    nome hostil não vira um apagamento em outro lugar do disco."""
-    if cache.resolve() not in espelho.resolve().parents:
-        raise Recusado("git-falhou", f"espelho fora do cache: {espelho}")
-    shutil.rmtree(espelho)
-
-
 def materializar(repo: str, commit: str, cache: Path) -> list[tuple[str, bytes]]:
     """Os pares `(caminho, bytes)` do commit, prontos para o `content_hash`.
 
     Levanta `Recusado` se o commit não existe ou se há arquivo estranho.
 
     A regra que governa este corpo cabe numa frase: **um espelho reaproveitado
-    nunca é confiável; qualquer falha sobre ele custa exatamente uma
-    reconstrução, e o veredito vem do clone novo.** Ela não tem exceções de
-    propósito — cada exceção seria uma etapa que alguém precisaria lembrar de
-    incluir na reconstrução, e foi exatamente esquecer o `fetch` que deixou o
-    `config` malformado sem conserto.
+    nunca é confiável, então qualquer falha do espelho custa exatamente uma
+    reconstrução, e o veredito vem do clone novo — mas uma recusa sobre o
+    conteúdo do commit não é falha do espelho, e não reconstrói.**
 
-    O que a regra compra é a diferença entre `commit-ausente` e `git-falhou`,
-    que o git não sabe dizer. Um `commit-ausente` falso manda quem publica
-    procurar um commit que está lá, e não há conserto do lado dele."""
+    A primeira metade não tem exceções de propósito: cada exceção seria uma
+    etapa que alguém precisaria lembrar de incluir na reconstrução, e foi
+    exatamente esquecer o `fetch` que deixou um `config` malformado sem
+    conserto. O que ela compra é a diferença entre `commit-ausente` e
+    `git-falhou`, que o git não sabe dizer — e um `commit-ausente` falso manda
+    quem publica procurar um commit que está lá, sem conserto do lado dele.
+
+    A segunda metade é o limite da primeira: o commit é fixado, e nenhum clone
+    novo muda o que está dentro dele. Reconstruir por causa de um arquivo
+    estranho gastaria um clone inteiro para chegar à mesmíssima recusa."""
     try:
         cache.mkdir(parents=True, exist_ok=True)
     except OSError as erro:
         raise Recusado("git-falhou", f"cache criação: {erro}") from erro
 
     espelho = _caminho_do_espelho(repo, cache)
-    veio_do_cache = espelho.exists()
+    veio_do_cache = espelho.exists() or espelho.is_symlink()
 
     try:
         return _uma_tentativa(repo, commit, cache, espelho)
-    except Recusado:
+    except Recusado as recusa:
+        if recusa.codigo == "arquivo-estranho":
+            # O espelho respondeu perfeitamente; quem está errado é o commit.
+            raise
         if not veio_do_cache:
             # O espelho já era novo nesta chamada. Não há passado para desfazer:
             # a falha é sobre o repositório do autor ou sobre o commit pedido, e
