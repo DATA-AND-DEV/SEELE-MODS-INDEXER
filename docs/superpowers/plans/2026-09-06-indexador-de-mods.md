@@ -285,9 +285,14 @@ def conteudo(arquivos: list[Arquivo]) -> str:
     indexador publica, e duas grafias fariam a comparação falhar por nada
     (`seele-core/src/mods.rs:180`).
     """
-    # Ordena pelos BYTES do caminho e não pelo str: `String::cmp` no Rust
-    # compara UTF-8, e `sorted` sem chave compararia pontos de código. As
-    # duas ordens divergem a partir de U+0080.
+    # A chave é os bytes do caminho porque é o que `String::cmp` compara no
+    # Rust. Em Python a ordem por ponto de código já daria o mesmo resultado
+    # — ordenar UTF-8 por byte é ordenar por ponto de código, e isso é uma
+    # propriedade de projeto do UTF-8, não uma coincidência. A chave fica
+    # assim mesmo por uma razão que não é redundante: `sorted` sem chave
+    # desempataria dois caminhos iguais pelos BYTES DO ARQUIVO, enquanto o
+    # `sort_by` do Rust compara só o caminho e deixa a ordem de entrada
+    # decidir. Caminho repetido não vem de disco, mas vem de um chamador.
     ordenados = sorted(arquivos, key=lambda par: par[0].encode("utf-8"))
 
     digestor = hashlib.sha256()
