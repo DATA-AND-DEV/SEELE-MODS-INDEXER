@@ -218,8 +218,8 @@ ela parece adulteração.
 
 ```
 repositório SEELE-MODS (público)
-  └── mods/<autor>/<nome>/<versao>/…      ← o MOD, como fonte
-  └── ferramentas/gerar.py                ← monta catalogo.json e assina
+  └── avaliacoes/<autor>/<nome>.toml      ← o veredito e o commit, e NÃO o código
+  └── ferramentas/gerar.py                ← busca o commit, monta e assina
   └── publicado/                          ← o que o Pages serve
 ```
 
