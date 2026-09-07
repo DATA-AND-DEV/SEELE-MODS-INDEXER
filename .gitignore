@@ -13,3 +13,6 @@ chaves/*.key
 # meio-montada e sem assinatura, ou dezenas de MB de espelhos de terceiros.
 .publicado-em-obras/
 .cache-de-repos/
+
+# Area de trabalho da execucao por subagentes. Nao e artefato do produto.
+.superpowers/
