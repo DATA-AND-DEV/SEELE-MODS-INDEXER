@@ -55,6 +55,8 @@ export const FALHAS = {
     "o catálogo e a assinatura dele não combinam. Quase sempre é cache: um dos dois chegou velho de um nó da CDN. Recarregue daqui a um minuto. Se continuar, não use este catálogo.",
   "hash-nao-bate":
     "os arquivos baixados não somam o número que o catálogo diz. Os dois números estão lado a lado abaixo.",
+  "comentario-adulterado":
+    "os bytes do catálogo batem com a assinatura, mas o comentário confiável — o texto que diz o que foi assinado — foi trocado depois. Isso não é cache: não use este catálogo.",
   "sem-ed25519":
     "este navegador não confere assinaturas Ed25519. O catálogo abaixo não foi conferido aqui — quem confere de verdade é o app.",
 };
