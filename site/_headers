@@ -1,0 +1,39 @@
+# As regras de cache, e os três números são decisões diferentes.
+#
+# /mods/* é eterno porque o caminho carrega a versão e o conteúdo nunca
+# muda. Um MOD baixado uma vez não é baixado de novo.
+/mods/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Cinco minutos é o atraso máximo entre aprovar um MOD e ele aparecer para
+# alguém. Curto o bastante para não parecer quebrado, longo o bastante para
+# a CDN valer.
+/catalogo.json
+  Cache-Control: public, max-age=300
+
+/catalogo.json.minisig
+  Cache-Control: public, max-age=300
+
+# Um minuto decide quanto tempo uma versão furada continua rodando depois de
+# você a retirar. Caro em requisições, barato em tudo o mais.
+/revogacoes.json
+  Cache-Control: public, max-age=60, must-revalidate
+
+/revogacoes.json.minisig
+  Cache-Control: public, max-age=60, must-revalidate
+
+# O site humano, pelo mesmo motivo do catálogo: é o atraso máximo entre
+# corrigir uma frase e alguém lê-la.
+/
+  Cache-Control: public, max-age=300
+
+/*.js
+  Cache-Control: public, max-age=300
+
+/*.css
+  Cache-Control: public, max-age=300
+
+# As fontes não mudam. Trinta dias e não um ano porque o caminho delas não
+# carrega versão — só /mods/* tem essa propriedade, e só ele ganha immutable.
+/fontes/*
+  Cache-Control: public, max-age=2592000
