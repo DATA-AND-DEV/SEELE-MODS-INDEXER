@@ -132,23 +132,28 @@ def test_nivel_e_oficial_vem_da_versao_mais_recente_por_avaliado_em():
     assert m["nivel"] == "oficial"
     assert m["oficial"] is True
 
-    # Caso 2: versão com-notas é a mais recente por data, aparece por último.
+    # Caso 2: versão com-notas é a mais recente por data (primeiro na lista),
+    # mas uma versão antiga oficial vem por ÚLTIMO no arquivo. Com a.versoes[-1]
+    # pegaria a versão antiga official (errado); com max por avaliado_em, pega
+    # a recente com-notas (certo). Esse é o sentido perigoso: o selo é o que
+    # alguém lê para decidir instalar.
     a2 = Avaliacao(
         id="x/z", autor="x", nome="z",
         repo="https://github.com/x/z",
         titulo="Z", resumo="Resumo.",
         versoes=[
-            Versao("2.1.0", "c" * 40, "oficial", [], 1757000000),
-            Versao("2.2.0", "d" * 40, "com-notas", ["nota"], 1757000002),
+            Versao("2.0.0", COMMIT, "com-notas", ["fala-com-terceiro"], 3000),
+            Versao("1.0.0", COMMIT, "oficial", [], 1000),
         ],
     )
     p2 = {
-        ("x/z", "2.1.0"): VersaoPronta("2.1.0", 1, 1757000000, "c" * 64, [], ["mod.json"], "oficial", []),
-        ("x/z", "2.2.0"): VersaoPronta("2.2.0", 1, 1757000002, "d" * 64, [], ["mod.json"], "com-notas", ["nota"]),
+        ("x/z", "2.0.0"): VersaoPronta("2.0.0", 1, 3000, "d" * 64, [], ["mod.json"], "com-notas", ["fala-com-terceiro"]),
+        ("x/z", "1.0.0"): VersaoPronta("1.0.0", 1, 1000, "c" * 64, [], ["mod.json"], "oficial", []),
     }
     m2 = montar([a2], p2, 1757100000)["mods"][0]
     assert m2["nivel"] == "com-notas"
     assert m2["oficial"] is False
+    assert m2["notas"] == ["fala-com-terceiro"]
 
 
 def test_arquivos_fora_de_ordem_saem_ordenados():
