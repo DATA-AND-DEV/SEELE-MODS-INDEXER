@@ -84,20 +84,16 @@ async function confere(publica, assinatura, mensagem) {
 }
 
 /**
- * Confere se `bytes` é o que a assinatura diz.
- *
- * Devolve `{ integro: true }` ou `{ integro: false, causa }`, e `causa` é um
- * identificador de lista fechada — a frase é do `frases.js`.
+ * A lógica de `verificar`, mas livre para lançar — `importKey`/`verify` do
+ * WebCrypto lançam `DataError` diante de material malformado (uma chave que
+ * não tem exatamente 32 bytes, por exemplo), e não é só o parsing que pode
+ * receber lixo: `analisarChave` confia no formato do minisign, mas nada
+ * impede um guard de tamanho de ter um buraco, hoje ou numa mudança futura.
+ * `verificar` é quem faz essa rede de segurança valer para toda entrada.
  */
-export async function verificar(bytes, textoDaAssinatura, textoDaChave) {
-  let chave;
-  let assinatura;
-  try {
-    chave = analisarChave(textoDaChave);
-    assinatura = analisarAssinatura(textoDaAssinatura);
-  } catch {
-    return { integro: false, causa: "assinatura-ilegivel" };
-  }
+async function nucleo(bytes, textoDaAssinatura, textoDaChave) {
+  const chave = analisarChave(textoDaChave);
+  const assinatura = analisarAssinatura(textoDaAssinatura);
 
   // O id da chave existe para dizer «esta assinatura não é para esta chave»
   // sem gastar uma verificação — e para nomear a causa com precisão.
@@ -128,4 +124,21 @@ export async function verificar(bytes, textoDaAssinatura, textoDaChave) {
   }
 
   return { integro: true };
+}
+
+/**
+ * Confere se `bytes` é o que a assinatura diz.
+ *
+ * Devolve `{ integro: true }` ou `{ integro: false, causa }`, e `causa` é um
+ * identificador de lista fechada — a frase é do `frases.js`. **Nunca lança:**
+ * quem chama isto é a tela, e uma exceção não tratada ali deixa a página em
+ * branco — o pior resultado possível, porque esconde exatamente a
+ * informação que explicaria a falha.
+ */
+export async function verificar(bytes, textoDaAssinatura, textoDaChave) {
+  try {
+    return await nucleo(bytes, textoDaAssinatura, textoDaChave);
+  } catch {
+    return { integro: false, causa: "assinatura-ilegivel" };
+  }
 }
