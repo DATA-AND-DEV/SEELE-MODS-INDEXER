@@ -26,9 +26,13 @@ function elemento(etiqueta, classe, texto) {
 /**
  * Há quanto tempo, em texto curto.
  *
- * Nunca negativo: `publicado_em` vem do catálogo e `agora` do relógio de
- * quem lê, e um relógio atrasado produziria «há -2 d» — que parece defeito
- * nosso e não do relógio.
+ * O `Math.max(0, …)` é cinto e suspensório, não a única defesa: hoje o
+ * ramo `segundos < 3600` já devolve "agora" para qualquer valor negativo,
+ * então o clamp não muda a saída de nenhum caso atual. Ele garante o
+ * invariante localmente — sem depender da ordem dos ramos abaixo — para
+ * que, se um dia alguém inserir um ramo antes deste, a proteção contra um
+ * relógio local atrasado (que produziria `agora - publicado_em` negativo)
+ * continue de pé, e não dependa de ninguém lembrar por quê.
  */
 export function textoDaIdade(publicado_em, agora) {
   const segundos = Math.max(0, agora - publicado_em);
