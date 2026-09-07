@@ -78,3 +78,58 @@ def test_carregar_listas_le_do_arquivo():
     listas = carregar_listas(RAIZ)
     assert "credencial-vazada" in listas["motivos"]
     assert "fala-com-terceiro" in listas["notas"]
+
+
+def test_mod_sem_id_e_recusado():
+    # Campo obrigatório ausente é recusa, nunca valor-padrão. Um MOD sem id
+    # é uma revogação que não revoga nada.
+    sem_id = UM_MOD.replace('id = "alguem/ruim"\n', "")
+    with pytest.raises(Recusado) as erro:
+        montar(sem_id, LISTAS, 1757100000)
+    assert erro.value.codigo == "revogacao-incompleta"
+    assert "id" in erro.value.detalhe
+
+
+def test_mod_sem_versao_e_recusado():
+    # Campo obrigatório ausente é recusa, nunca valor-padrão.
+    sem_versao = UM_MOD.replace('versao = "1.2.0"\n', "")
+    with pytest.raises(Recusado) as erro:
+        montar(sem_versao, LISTAS, 1757100000)
+    assert erro.value.codigo == "revogacao-incompleta"
+    assert "versao" in erro.value.detalhe
+
+
+def test_mod_sem_desde_e_recusado():
+    # Campo obrigatório ausente é recusa, nunca valor-padrão.
+    sem_desde = UM_MOD.replace("desde = 1757050000\n", "")
+    with pytest.raises(Recusado) as erro:
+        montar(sem_desde, LISTAS, 1757100000)
+    assert erro.value.codigo == "revogacao-incompleta"
+    assert "desde" in erro.value.detalhe
+
+
+def test_produto_sem_versao_e_recusado():
+    # Campo obrigatório ausente é recusa, nunca valor-padrão.
+    sem_versao = UM_PRODUTO.replace('versao = "0.11.2"\n', "")
+    with pytest.raises(Recusado) as erro:
+        montar(sem_versao, LISTAS, 1757100000)
+    assert erro.value.codigo == "revogacao-incompleta"
+    assert "versao" in erro.value.detalhe
+
+
+def test_produto_sem_desde_e_recusado():
+    # Campo obrigatório ausente é recusa, nunca valor-padrão.
+    sem_desde = UM_PRODUTO.replace("desde = 1757050000\n", "")
+    with pytest.raises(Recusado) as erro:
+        montar(sem_desde, LISTAS, 1757100000)
+    assert erro.value.codigo == "revogacao-incompleta"
+    assert "desde" in erro.value.detalhe
+
+
+def test_corrigido_em_realmente_nao_apertar_demais():
+    # Nem toda revogação tem conserto, então `corrigido_em` ausente é aceito
+    # como None, não recusado. Um MOD retirado a pedido do autor não tem
+    # versão para onde mandar quem lê.
+    sem_corrigido = UM_MOD.replace('corrigido_em = "1.2.1"\n', "")
+    r = montar(sem_corrigido, LISTAS, 1757100000)
+    assert r["mods"][0]["corrigido_em"] is None

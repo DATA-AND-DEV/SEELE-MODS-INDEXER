@@ -22,6 +22,18 @@ def carregar_listas(raiz: Path) -> dict:
     return json.loads((raiz / "listas.json").read_text(encoding="utf-8"))
 
 
+def _exigir(bruta: dict, campos: tuple[str, ...], onde: str) -> None:
+    """Campo obrigatório ausente é recusa, e nunca valor-padrão.
+
+    `revogacoes.json` é o que impede um MOD furado de ser instalado. Uma
+    entrada que perde o `id` em silêncio vira uma revogação que não revoga
+    nada — e quem a escreveu acha que funcionou. De todos os arquivos deste
+    desenho, este é o pior para falhar calado."""
+    faltando = [campo for campo in campos if not bruta.get(campo)]
+    if faltando:
+        raise Recusado("revogacao-incompleta", f"{onde}: falta " + ", ".join(faltando))
+
+
 def _entrada(bruta: dict, listas: dict, onde: str) -> dict:
     motivo = bruta.get("motivo", "")
     if motivo not in listas["motivos"]:
@@ -47,6 +59,7 @@ def montar(texto_toml: str, listas: dict, gerado_em: int) -> dict:
     mods = []
     for bruta in cru.get("mods", []):
         onde = f'{bruta.get("id")} {bruta.get("versao")}'
+        _exigir(bruta, ("id", "versao", "desde"), onde)
         mods.append(
             {"id": bruta.get("id", ""), "versao": bruta.get("versao", ""), **_entrada(bruta, listas, onde)}
         )
@@ -54,6 +67,7 @@ def montar(texto_toml: str, listas: dict, gerado_em: int) -> dict:
     produto = []
     for bruta in cru.get("versoes_do_produto", []):
         onde = f'produto {bruta.get("versao")}'
+        _exigir(bruta, ("versao", "desde"), onde)
         produto.append({"versao": bruta.get("versao", ""), **_entrada(bruta, listas, onde)})
 
     return {
