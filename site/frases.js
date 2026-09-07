@@ -37,6 +37,27 @@ export const NIVEIS = {
   "com-notas": "passou, com ressalvas que valem a leitura",
 };
 
+/**
+ * O rótulo curto de cada nível — o que cabe num selo e num botão de filtro.
+ *
+ * É um dicionário separado de `NIVEIS`, e não o mesmo texto cortado: rótulo
+ * e descrição são duas coisas. `NIVEIS` responde "o que isto atesta", e é o
+ * que a ficha técnica do MOD mostra em «NÍVEL» — lá a frase inteira lê bem.
+ * `ROTULOS_DE_NIVEL` responde "como isto se chama", e é o que cabe no selo
+ * do cartão e no botão da lateral, onde a descrição inteira transbordava.
+ *
+ * `revogada` mora só aqui: não é um nível de avaliação (não tem entrada em
+ * `NIVEIS` nem em `listas.json`), é o estado que o selo do cartão mostra
+ * quando a versão mais recente do MOD foi retirada. Sem um rótulo próprio,
+ * o selo caía no fallback de `frase()` e mostrava o identificador cru.
+ */
+export const ROTULOS_DE_NIVEL = {
+  oficial: "Oficial",
+  verificado: "Verificado",
+  "com-notas": "Com notas",
+  revogada: "Revogada",
+};
+
 /** As falhas da tela.
  *
  * A primeira é a que vai acontecer, e ela liga as duas coisas na mesma
@@ -61,7 +82,7 @@ export const FALHAS = {
     "este navegador não confere assinaturas Ed25519. O catálogo abaixo não foi conferido aqui — quem confere de verdade é o app.",
 };
 
-const GRUPOS = { motivos: MOTIVOS, notas: NOTAS, niveis: NIVEIS, falhas: FALHAS };
+const GRUPOS = { motivos: MOTIVOS, notas: NOTAS, niveis: NIVEIS, rotulos: ROTULOS_DE_NIVEL, falhas: FALHAS };
 
 /**
  * A frase de um identificador.

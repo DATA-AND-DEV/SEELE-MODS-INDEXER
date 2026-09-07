@@ -151,13 +151,21 @@ h1 {
   display: flex; flex-direction: column; gap: 10px; padding: var(--seele-e2);
   font: inherit; text-align: left; background: none; border: 0; cursor: pointer; min-width: 0;
 }
+/* O topo do cartão: nomes de um lado, selo do outro. Sem isto, os dois
+   `span` do topo ficam lado a lado por padrão (são inline) e o selo some
+   atrás do título. */
+.cartao-topo { display: flex; gap: 10px; align-items: flex-start; }
+/* O bloco de nomes: título embaixo do qual vem o id, um por linha — não
+   um ao lado do outro, que é o que `span` faz por padrão sem isto. */
+.cartao-nomes { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 0; }
 .cartao-titulo {
+  display: block;
   font-family: var(--seele-display); font-weight: var(--seele-cartela);
   font-size: 17px; line-height: 1.1; letter-spacing: 0.04em; color: var(--seele-osso);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .cartao-repo, .cartao-resumo { color: var(--seele-osso-apagado); }
-.cartao-repo { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cartao-repo { display: block; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cartao-resumo { font-size: 12px; line-height: 1.55; text-wrap: pretty; }
 
 .selo {

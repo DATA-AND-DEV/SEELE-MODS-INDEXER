@@ -64,7 +64,7 @@ export function linhasDaFicha(mod, versao) {
 }
 
 function selo(nivel) {
-  const no = elemento("span", "selo", frase("niveis", nivel).toUpperCase());
+  const no = elemento("span", "selo", frase("rotulos", nivel).toUpperCase());
   no.dataset.nivel = nivel;
   return no;
 }
@@ -75,13 +75,8 @@ function cartao(mod, agora, aoAbrir) {
   botao.type = "button";
   botao.addEventListener("click", () => aoAbrir(mod.id));
 
-  const topo = elemento("span");
-  topo.style.display = "flex";
-  topo.style.gap = "10px";
-  topo.style.alignItems = "flex-start";
-  const nomes = elemento("span");
-  nomes.style.flex = "1";
-  nomes.style.minWidth = "0";
+  const topo = elemento("span", "cartao-topo");
+  const nomes = elemento("span", "cartao-nomes");
   nomes.append(
     elemento("span", "cartao-titulo", mod.titulo),
     elemento("span", "cartao-repo", mod.id),
@@ -110,7 +105,7 @@ function telaCatalogo(estado, acoes) {
   const grupoNivel = elemento("div", "grupo");
   grupoNivel.append(elemento("span", "rotulo", "NÍVEL"));
   for (const nivel of [null, ...NIVEIS_DA_LATERAL]) {
-    const botao = elemento("button", "filtro", nivel ? frase("niveis", nivel) : "Todos");
+    const botao = elemento("button", "filtro", nivel ? frase("rotulos", nivel) : "Todos");
     botao.type = "button";
     botao.setAttribute("aria-pressed", String(estado.nivel === nivel));
     const conta = nivel

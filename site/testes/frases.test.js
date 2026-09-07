@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { FALHAS, MOTIVOS, NIVEIS, NOTAS, frase } from "../frases.js";
+import { FALHAS, MOTIVOS, NIVEIS, NOTAS, ROTULOS_DE_NIVEL, frase } from "../frases.js";
 
 const LISTAS = JSON.parse(
   readFileSync(fileURLToPath(new URL("../../listas.json", import.meta.url)), "utf-8"),
@@ -34,6 +34,25 @@ test("nenhuma frase sobra sem identificador", () => {
 test("os três níveis do catálogo têm frase", () => {
   for (const id of ["oficial", "verificado", "com-notas"]) {
     assert.ok(NIVEIS[id], `falta frase para o nível ${id}`);
+  }
+});
+
+// Rótulo e descrição são duas coisas (a mesma confusão que fez o selo do
+// cartão e os botões da lateral mostrarem a descrição inteira). O guarda
+// aqui é a mesma forma do que já existe acima para NIVEIS/MOTIVOS/NOTAS:
+// todo nível tem rótulo, e nenhum rótulo sobra sem nível — com `revogada`
+// incluído na conta, porque o selo do cartão passa esse identificador por
+// `frase("rotulos", …)` mesmo ele não sendo um nível de avaliação.
+test("os três níveis do catálogo, e a revogação, têm rótulo", () => {
+  for (const id of ["oficial", "verificado", "com-notas", "revogada"]) {
+    assert.ok(ROTULOS_DE_NIVEL[id], `falta rótulo para ${id}`);
+  }
+});
+
+test("nenhum rótulo de nível sobra sem nível (ou sem ser a revogação)", () => {
+  const validos = new Set(["oficial", "verificado", "com-notas", "revogada"]);
+  for (const id of Object.keys(ROTULOS_DE_NIVEL)) {
+    assert.ok(validos.has(id), `rótulo órfão: ${id}`);
   }
 });
 
