@@ -6,6 +6,7 @@ sumiu significa que aquela versão não pode ser republicada — ela continua
 servida se já estiver em `publicado/`, porque lá os caminhos são imutáveis."""
 
 import os
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -49,18 +50,24 @@ def _git(diretorio: Path, *args: str) -> str:
     return pronto.stdout
 
 
-def _espelho(repo: str, cache: Path) -> Path:
+def _espelho(repo: str, cache: Path) -> tuple[Path, bool]:
     """Um clone nu, reaproveitado entre execuções.
 
     Nu porque nada aqui precisa de árvore de trabalho: os bytes saem do
-    `git archive` de um commit, e não do que estiver no disco."""
+    `git archive` de um commit, e não do que estiver no disco.
+
+    Retorna (caminho, foi_reutilizado): foi_reutilizado é True se o espelho
+    existia antes e foi atualizado, False se foi clonado agora."""
     destino = cache / (repo.rstrip("/").replace("/", "_").replace(":", "_") + ".git")
-    if destino.exists():
+    foi_reutilizado = destino.exists()
+
+    if foi_reutilizado:
         _git(destino, "fetch", "--quiet", "--all")
     else:
         destino.parent.mkdir(parents=True, exist_ok=True)
         _git(cache, "clone", "--quiet", "--mirror", repo, str(destino))
-    return destino
+
+    return destino, foi_reutilizado
 
 
 def _estranho(caminho: str) -> bool:
@@ -80,8 +87,36 @@ def materializar(repo: str, commit: str, cache: Path) -> list[tuple[str, bytes]]
     except (OSError, FileExistsError) as erro:
         raise Recusado("git-falhou", f"cache criação: {erro}") from erro
 
-    espelho = _espelho(repo, cache)
+    espelho, foi_reutilizado = _espelho(repo, cache)
 
+    # Tentar obter os arquivos do commit. Se falhar num espelho reutilizado,
+    # re-clonar do zero: isso resolve a ambiguidade entre «commit não existe»
+    # e «espelho corrompido». O git conflaciona os dois na mensagem; por isso
+    # a distinção é feita por construção, não por inspeção. Um re-clone custa
+    # pouco no caminho de falha e conserta casos recuperáveis de graça.
+    try:
+        return _obter_arquivos(espelho, repo, commit)
+    except Recusado as erro:
+        if foi_reutilizado and erro.codigo in ("commit-ausente", "git-falhou"):
+            # Espelho reutilizado falhou: pode ser corrupção recuperável (objects
+            # sumidos, permissão, etc). Apagar e re-clonar do zero.
+            # Só faz sentido se a falha foi num espelho antigo; um clone novo
+            # que falha é erro definitivo, não recuperável.
+            shutil.rmtree(espelho)
+            espelho_novo, _ = _espelho(repo, cache)
+            # Agora o espelho é recém-clonado. Se falhar de novo, é erro real
+            # (commit genuinamente ausente ou repositório do autor inacessível).
+            return _obter_arquivos(espelho_novo, repo, commit)
+        else:
+            # Ou é um espelho recém-clonado que falhou (erro real definitivo),
+            # ou é um erro estrutural (mkdir).
+            raise
+
+
+def _obter_arquivos(espelho: Path, repo: str, commit: str) -> list[tuple[str, bytes]]:
+    """Obter os arquivos de um commit a partir de um espelho.
+
+    Levanta Recusado com código commit-ausente ou git-falhou."""
     # Verificar saúde estrutural do espelho. Um repositório git genuinamente
     # quebrado ou inacessível falha aqui, antes de tentar perguntar pelo commit.
     saude = subprocess.run(
@@ -94,14 +129,10 @@ def materializar(repo: str, commit: str, cache: Path) -> list[tuple[str, bytes]]
     if saude.returncode != 0:
         raise Recusado("git-falhou", f"espelho inválido: {saude.stderr.strip()}")
 
-    # Verificar existência do commit. Aqui usamos `cat-file -e` que não baixa
-    # a árvore. O git usa «Not a valid object name» como resposta genérica
-    # quando não consegue resolver um objeto — isso conflaciona dois cenários
-    # diferentes: SHA inválido (commit genuinamente ausente) e objeto
-    # corrompido/faltante (espelho corrompido). Como eles são indistinguíveis
-    # pela mensagem final, erramos para o lado seguro: qualquer `error:` ou
-    # `warning:` no stderr é `git-falhou` (erro real), só a ausência pura é
-    # `commit-ausente`. Documentamos aqui porque é limitação do git, não nossa.
+    # Verificar existência do commit com `cat-file -e`. O git diz «não achei»
+    # para dois casos diferentes: commit nunca existiu, ou objeto sumiu do disco.
+    # Como são indistinguíveis pela mensagem, eles viram commit-ausente aqui,
+    # e materializar tenta re-clonar se foi reutilizado.
     resultado = subprocess.run(
         ["git", "cat-file", "-e", f"{commit}^{{commit}}"],
         cwd=espelho,
@@ -114,15 +145,11 @@ def materializar(repo: str, commit: str, cache: Path) -> list[tuple[str, bytes]]
         if stderr_msg and any(
             stderr_msg.startswith(prefix) for prefix in ("error:", "warning:")
         ):
-            # Linha de erro específica: repositório corrompido, permissão, etc.
+            # Erro específico: permissão, I/O, etc.
             raise Recusado("git-falhou", f"cat-file: {stderr_msg}")
-        elif stderr_msg and "Not a valid object name" in stderr_msg:
-            # Commit não existe (ou objeto corrompido, indistinguível do anterior).
-            # Erra para commit-ausente quando a única mensagem é a fatal genérica.
-            raise Recusado("commit-ausente", f"{repo}@{commit}")
-        elif not stderr_msg:
-            # Falha silenciosa (exit code 1 sem mensagem): objeto faltante após
-            # verificação estrutural bem-sucedida. Trata como ausência.
+        else:
+            # Qualquer outra falha: "Not a valid object name", ou silenciosa.
+            # Git conflaciona ausência com sumido; re-clone resolve um deles.
             raise Recusado("commit-ausente", f"{repo}@{commit}")
 
     listagem = _git(espelho, "ls-tree", "-r", "-z", "--name-only", commit)

@@ -85,46 +85,74 @@ def test_mkdir_falho_da_git_falhou(repo, tmp_path):
     assert erro.value.codigo == "git-falhou"
 
 
-def test_espelho_corrompido_da_git_falhou_nao_commit_ausente(repo, tmp_path):
-    # Espelho genuinamente corrompido (objeto faltante) deve dar git-falhou,
-    # não commit-ausente. Comprova que não confundimos corrupção com ausência.
+def test_espelho_corrompido_no_cache_origem_saudavel_consegue_se_recuperar(repo, tmp_path):
+    # Espelho corrompido no cache, mas origem saudável — deve SUCEDER
+    # após re-clone. Este é o teste que prova que a estratégia de
+    # re-clonar funciona: corrupção recuperável não é erro final.
     origem, commit = repo
     cache = tmp_path / "cache"
 
-    # Primeira chamada clona o espelho e busca os arquivos — funciona.
+    # Primeira chamada: clona o espelho e busca os arquivos — funciona.
     arquivos_ok = materializar(str(origem), commit, cache)
     assert len(arquivos_ok) > 0
+    primeiro_result = arquivos_ok
 
-    # Encontrar e apagar o objeto do commit no espelho.
-    # Estrutura: cache/*.git/objects/XX/YYYY...
+    # Corromper o espelho: apagar um objeto solto.
     espelho_dir = cache / (str(origem).rstrip("/").replace("/", "_").replace(":", "_") + ".git")
     objetos_dir = espelho_dir / "objects"
-    assert objetos_dir.exists(), f"objects dir não existe em {objetos_dir}"
+    assert objetos_dir.exists()
 
-    # Apagar qualquer arquivo no diretório de objetos para corromper o espelho.
     apagados = 0
     for obj_file in objetos_dir.rglob("*"):
         if obj_file.is_file():
             obj_file.unlink()
             apagados += 1
+            break  # Apagar só um
     assert apagados > 0, "não conseguiu apagar nenhum objeto"
 
-    # Remover o repositório origem para evitar que o fetch o redownload.
-    # Agora o espelho é a única fonte e está corrompido.
-    import shutil
-    shutil.rmtree(origem)
-
-    # Segunda chamada: espelho corrompido, sem origem para fazer fetch.
-    # Deve falhar ao tentar acessar os objetos e dar git-falhou.
-    with pytest.raises(Recusado) as erro:
-        materializar(str(origem), commit, cache)
-    assert erro.value.codigo == "git-falhou", f"Esperava git-falhou mas foi {erro.value.codigo}"
+    # Segunda chamada: espelho está corrompido, mas origem saudável.
+    # A implementação deve re-clonar e conseguir os arquivos.
+    arquivos_recuperados = materializar(str(origem), commit, cache)
+    assert len(arquivos_recuperados) > 0
+    # Confirma que são os mesmos arquivos (conteúdo idêntico).
+    assert arquivos_recuperados == primeiro_result
 
 
 def test_commit_genuinamente_ausente_e_recusado(repo, tmp_path):
     # Commit que nunca existiu (SHA aleatório) levanta commit-ausente.
-    # Testa que a heurística distingue corrupção de ausência legítima.
+    # Prova que a segunda tentativa com re-clone não entra em laço.
     origem, _ = repo
     with pytest.raises(Recusado) as erro:
         materializar(str(origem), "b" * 40, tmp_path / "cache")
     assert erro.value.codigo == "commit-ausente"
+
+
+def test_origem_indisponivel_e_espelho_corrompido_da_git_falhou(repo, tmp_path):
+    # Origem indisponível (removida) + espelho corrompido no cache
+    # deve dar git-falhou: re-clone falha porque origem não existe.
+    origem, commit = repo
+    cache = tmp_path / "cache"
+
+    # Primeira chamada: clona o espelho e busca os arquivos — funciona.
+    arquivos_ok = materializar(str(origem), commit, cache)
+    assert len(arquivos_ok) > 0
+
+    # Corromper o espelho.
+    espelho_dir = cache / (str(origem).rstrip("/").replace("/", "_").replace(":", "_") + ".git")
+    objetos_dir = espelho_dir / "objects"
+    apagados = 0
+    for obj_file in objetos_dir.rglob("*"):
+        if obj_file.is_file():
+            obj_file.unlink()
+            apagados += 1
+            break
+    assert apagados > 0
+
+    # Remover origem para que re-clone falhe.
+    import shutil
+    shutil.rmtree(origem)
+
+    # Segunda chamada: espelho corrompido, origem removida, re-clone falha.
+    with pytest.raises(Recusado) as erro:
+        materializar(str(origem), commit, cache)
+    assert erro.value.codigo == "git-falhou"
