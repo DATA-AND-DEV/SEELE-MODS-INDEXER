@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MODS SEELE</title>
+<!-- Nenhum script externo, nenhuma folha externa, nenhum pixel. A CSP diz
+     em voz alta o que o resto do produto já garantia por construção. -->
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
+<link rel="stylesheet" href="fontes.css">
+<link rel="stylesheet" href="tokens.css">
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<div class="pagina">
+  <header class="topo" id="topo">
+    <button type="button" class="marca" data-ir="catalogo">
+      <svg viewBox="0 0 96 96" width="26" height="26" role="img" aria-label="SEELE">
+        <path d="M34 34L62 62" stroke="#EAE3CF" stroke-width="6"></path>
+        <rect x="12" y="12" width="24" height="24" fill="#F2521F"></rect>
+        <rect x="62" y="62" width="20" height="20" fill="none" stroke="#F2521F" stroke-width="6"></rect>
+      </svg>
+      <span><span class="marca-seele">SEELE</span> <span class="marca-mods">MODS</span></span>
+    </button>
+
+    <label class="campo-busca">
+      <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#908574" stroke-width="1.3" aria-hidden="true">
+        <circle cx="7" cy="7" r="3.6"></circle><path d="M9.7 9.7L13 13"></path>
+      </svg>
+      <input id="busca" type="search" placeholder="buscar mods, autores, repositórios"
+             spellcheck="false" autocomplete="off" aria-label="Buscar no catálogo">
+    </label>
+
+    <nav class="abas" aria-label="Seções">
+      <button type="button" class="aba" id="aba-catalogo" data-ir="catalogo">CATÁLOGO</button>
+      <button type="button" class="aba" id="aba-revogacoes" data-ir="revogacoes">REVOGAÇÕES</button>
+      <button type="button" class="aba" id="aba-publicar" data-ir="publicar">PUBLICAR</button>
+    </nav>
+  </header>
+
+  <div class="aviso" id="aviso" role="status" aria-live="polite"></div>
+
+  <main class="corpo" id="corpo"></main>
+
+  <footer class="rodape">
+    <span>mods.seele.app.br</span>
+    <span style="flex:1"></span>
+    <a href="chave.pub">CHAVE PÚBLICA</a>
+    <a href="catalogo.json">CATALOGO.JSON</a>
+    <a href="revogacoes.json">REVOGACOES.JSON</a>
+  </footer>
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>

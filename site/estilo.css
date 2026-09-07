@@ -1,0 +1,261 @@
+/* SEELE MODS — a pele, a partir de `MODS SEELE.dc.html`.
+   Zero border-radius, zero sombra, todo espaçamento múltiplo da célula
+   8px × 16px (tokens.css). Nenhuma cor literal: se um valor não estiver em
+   tokens.css, ele não entra aqui. */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--seele-negro-absoluto);
+  color: var(--seele-osso);
+  font-family: var(--seele-mono);
+  font-size: var(--seele-t-corpo);
+  line-height: 22px;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--seele-laranja-nerv); text-decoration: none; }
+a:hover { color: var(--seele-osso); }
+::selection { background: var(--seele-laranja-nerv); color: var(--seele-negro-absoluto); }
+
+input {
+  font: inherit;
+  color: var(--seele-osso);
+  background: var(--seele-negro-absoluto);
+  border: var(--seele-b) solid var(--seele-linha-forte);
+  padding: 9px 12px;
+}
+input:focus { outline: none; border-color: var(--seele-laranja-nerv); }
+input::placeholder { color: var(--seele-osso-apagado); }
+button:focus-visible { outline: var(--seele-b-forte) solid var(--seele-osso); outline-offset: 1px; }
+
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: var(--seele-negro-absoluto); }
+::-webkit-scrollbar-thumb {
+  background: var(--seele-linha-forte);
+  border: 3px solid var(--seele-negro-absoluto);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--seele-laranja-nerv); }
+
+.pagina { min-height: 100vh; display: flex; flex-direction: column; }
+
+/* ---- cabeçalho ---- */
+.topo {
+  position: sticky; top: 0; z-index: 6;
+  display: flex; flex-wrap: wrap; align-items: center; gap: var(--seele-e2);
+  padding: 12px clamp(20px, 4vw, 56px);
+  background: var(--seele-negro-painel);
+  border-bottom: var(--seele-b) solid var(--seele-linha);
+}
+.marca {
+  display: flex; align-items: center; gap: 12px;
+  padding: 0; background: none; border: 0; font: inherit; cursor: pointer;
+}
+.marca-seele, .marca-mods {
+  font-family: var(--seele-display); font-size: 17px; letter-spacing: 0.08em;
+}
+.marca-seele { font-weight: 900; color: var(--seele-laranja-nerv); }
+.marca-mods { font-weight: var(--seele-cartela); color: var(--seele-osso); }
+
+.campo-busca {
+  display: flex; align-items: center; gap: 9px;
+  flex: 1 1 240px; min-width: 0; max-width: 420px;
+  padding: 0 12px; min-height: 38px;
+  border: var(--seele-b) solid var(--seele-linha-forte);
+  background: var(--seele-negro-absoluto);
+}
+.campo-busca input { flex: 1; min-width: 0; border: none; background: none; padding: var(--seele-e1) 0; }
+
+.abas {
+  display: flex; gap: 1px; margin-left: auto; flex: 0 0 auto;
+  background: var(--seele-linha-forte);
+  border: var(--seele-b) solid var(--seele-linha-forte);
+}
+.aba {
+  font: inherit; font-size: 11px; letter-spacing: 0.14em; padding: 9px 15px;
+  cursor: pointer; border: none;
+  color: var(--seele-osso-apagado); background: var(--seele-negro-painel);
+}
+.aba[aria-current="page"] { color: var(--seele-negro-absoluto); background: var(--seele-laranja-nerv); }
+
+/* ---- o aviso de integridade ----
+   Nunca «autêntico»: verificador, chave e catálogo vêm da mesma origem. */
+.aviso {
+  padding: 12px clamp(20px, 4vw, 56px);
+  font-size: var(--seele-t-dado); line-height: 1.6;
+  border-bottom: var(--seele-b) solid var(--seele-linha);
+}
+.aviso[data-estado="integro"] { color: var(--seele-fosforo); }
+.aviso[data-estado="falhou"] {
+  color: var(--seele-vermelho-alerta);
+  background: var(--seele-vermelho-fraco);
+  border-bottom-color: var(--seele-vermelho-alerta);
+}
+.aviso[data-estado="sem-conferir"] { color: var(--seele-sync-degradado); }
+.aviso p { margin: 0; max-width: 72ch; text-wrap: pretty; }
+.aviso .rodape { color: var(--seele-osso-apagado); font-size: 11px; margin-top: var(--seele-e1); }
+
+/* ---- corpo ---- */
+.corpo { flex: 1 1 auto; min-width: 0; }
+.com-lateral { display: grid; grid-template-columns: 236px minmax(0, 1fr); align-items: start; }
+@media (max-width: 720px) { .com-lateral { grid-template-columns: minmax(0, 1fr); } }
+
+.lateral {
+  position: sticky; top: var(--mods-topo, 63px);
+  max-height: calc(100vh - var(--mods-topo, 63px)); overflow-y: auto;
+  display: flex; flex-direction: column; gap: var(--seele-e3);
+  padding: var(--seele-e3) 20px;
+  border-right: var(--seele-b) solid var(--seele-linha);
+  background: var(--seele-negro-painel);
+}
+.grupo { display: flex; flex-direction: column; gap: 10px; }
+.rotulo {
+  font-size: var(--seele-t-micro); letter-spacing: var(--seele-tracking-rotulo);
+  text-transform: uppercase; color: var(--seele-rotulo-painel);
+}
+.filtro {
+  display: flex; align-items: center; gap: var(--seele-e1); width: 100%;
+  padding: var(--seele-e1) 10px; font: inherit; font-size: 12px; text-align: left;
+  cursor: pointer; border: none; border-left: var(--seele-b-forte) solid transparent;
+  background: none; color: var(--seele-osso-apagado);
+}
+.filtro[aria-pressed="true"] {
+  border-left-color: var(--seele-laranja-nerv);
+  background: var(--seele-laranja-fraco);
+  color: var(--seele-laranja-nerv);
+}
+.filtro .conta { margin-left: auto; font-size: 10px; }
+
+.painel {
+  display: flex; flex-direction: column; gap: 28px;
+  padding: 28px clamp(20px, 4vw, 44px) var(--seele-e6); min-width: 0;
+}
+h1 {
+  margin: 0; font-family: var(--seele-display); font-weight: var(--seele-cartela);
+  font-size: clamp(22px, 2.6vw, var(--seele-t-titulo));
+  line-height: 1.15; letter-spacing: 0.04em; color: var(--seele-osso);
+  text-wrap: pretty;
+}
+.resumo-da-lista { font-size: 12px; color: var(--seele-osso-apagado); }
+
+/* ---- a grade de cartões ---- */
+.grade { display: grid; grid-template-columns: repeat(auto-fill, minmax(288px, 1fr)); gap: var(--seele-e2); }
+.cartao {
+  display: flex; flex-direction: column; min-width: 0;
+  background: var(--seele-negro-painel);
+  box-shadow: 0 0 0 1px var(--seele-linha);
+}
+.cartao-abrir {
+  display: flex; flex-direction: column; gap: 10px; padding: var(--seele-e2);
+  font: inherit; text-align: left; background: none; border: 0; cursor: pointer; min-width: 0;
+}
+.cartao-titulo {
+  font-family: var(--seele-display); font-weight: var(--seele-cartela);
+  font-size: 17px; line-height: 1.1; letter-spacing: 0.04em; color: var(--seele-osso);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.cartao-repo, .cartao-resumo { color: var(--seele-osso-apagado); }
+.cartao-repo { font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cartao-resumo { font-size: 12px; line-height: 1.55; text-wrap: pretty; }
+
+.selo {
+  flex: 0 0 auto; padding: 3px var(--seele-e1);
+  font-size: 8px; letter-spacing: 0.14em; white-space: nowrap;
+  border: var(--seele-b) solid currentColor;
+}
+.selo[data-nivel="oficial"] { color: var(--seele-laranja-nerv); }
+.selo[data-nivel="verificado"] { color: var(--seele-fosforo); }
+.selo[data-nivel="com-notas"] { color: var(--seele-sync-degradado); }
+.selo[data-nivel="revogada"] { color: var(--seele-vermelho-alerta); }
+
+/* Os dois números: versão e idade. Nunca estrelas nem downloads — não os
+   medimos, e um número que não medimos é um número inventado. */
+.numeros {
+  display: flex; align-items: baseline; gap: var(--seele-e2);
+  padding-top: 10px; border-top: var(--seele-b) solid var(--seele-linha);
+}
+.numero {
+  font-family: var(--seele-display); font-weight: var(--seele-cartela);
+  font-size: 15px; line-height: 1; color: var(--seele-osso);
+  font-variant-numeric: tabular-nums;
+}
+.numero-rotulo {
+  font-size: var(--seele-t-micro); letter-spacing: 0.14em; color: var(--seele-rotulo-painel);
+}
+
+/* ---- detalhe ---- */
+.ficha { margin: 0; display: flex; flex-direction: column; }
+.ficha-linha {
+  display: flex; align-items: baseline; justify-content: space-between; gap: var(--seele-e2);
+  padding: 12px 20px; border-bottom: var(--seele-b) solid var(--seele-linha);
+}
+.ficha dt {
+  font-size: var(--seele-t-micro); letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--seele-rotulo-painel); flex: 0 0 auto;
+}
+.ficha dd { margin: 0; font-size: 12px; text-align: right; overflow-wrap: anywhere; min-width: 0; }
+
+/* O hash inteiro, selecionável: é o número que uma pessoa compara a olho. */
+.hash {
+  display: block; padding: 10px 12px;
+  border: var(--seele-b) solid var(--seele-linha);
+  background: var(--seele-negro-painel);
+  font-size: var(--seele-t-dado); color: var(--seele-fosforo);
+  overflow-wrap: anywhere; user-select: all;
+}
+
+.nota {
+  display: flex; gap: 9px; font-size: 12px; line-height: 1.5;
+  color: var(--seele-osso);
+}
+.nota::before { content: "—"; color: var(--seele-sync-degradado); flex: 0 0 auto; }
+
+.tabela { width: 100%; border-collapse: collapse; font-size: 12px; }
+.tabela th {
+  text-align: left; font-size: var(--seele-t-micro); font-weight: 400;
+  letter-spacing: 0.18em; text-transform: uppercase; color: var(--seele-rotulo-painel);
+  padding: var(--seele-e1) 12px; border-bottom: var(--seele-b) solid var(--seele-linha-forte);
+}
+.tabela td { padding: 12px; border-bottom: var(--seele-b) solid var(--seele-linha); vertical-align: top; }
+.rolagem { overflow-x: auto; }
+.espaco { flex: 1; }
+
+.vazio {
+  margin: 0; padding: 40px; text-align: center;
+  font-size: 11px; letter-spacing: 0.22em; text-transform: uppercase;
+  color: var(--seele-osso-apagado); box-shadow: 0 0 0 1px var(--seele-linha);
+}
+
+.passo {
+  display: grid; grid-template-columns: 46px minmax(0, 1fr); gap: 18px;
+  padding: 20px 0; border-top: var(--seele-b) solid var(--seele-linha);
+}
+.passo-n {
+  font-family: var(--seele-display); font-weight: 900; font-size: 28px; line-height: 1;
+  color: var(--seele-laranja-nerv);
+}
+
+.botao {
+  display: inline-block; font: inherit; font-size: 12px; letter-spacing: 0.14em;
+  padding: 10px var(--seele-e2); cursor: pointer;
+  color: var(--seele-osso); background: none;
+  border: var(--seele-b) solid var(--seele-linha-forte);
+}
+.botao-forte {
+  color: var(--seele-negro-absoluto);
+  background: var(--seele-laranja-nerv);
+  border-color: var(--seele-laranja-nerv);
+}
+
+.rodape {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 20px;
+  padding: var(--seele-e3) clamp(20px, 4vw, 56px);
+  border-top: var(--seele-b) solid var(--seele-linha-forte);
+  background: var(--seele-negro-painel); margin-top: auto;
+  font-size: 11px; color: var(--seele-osso-apagado);
+}
+
+/* specs/07: movimento é diagnóstico, nunca decorativo. Não há transição
+   nenhuma neste arquivo, e a ausência é a decisão. */
