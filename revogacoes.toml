@@ -1,0 +1,24 @@
+# O que foi retirado, e por quê.
+#
+# Editado à mão, por uma pessoa. `revogacoes.json` é a saída assinada —
+# editá-la direto produz um arquivo cuja assinatura não confere, e a
+# descoberta disso vem tarde, na forma de um cliente recusando.
+#
+# `motivo` é um identificador de `listas.json`, nunca uma frase: quem
+# escreve a frase é o `site/frases.js` (ADR 0012).
+#
+# `corrigido_em` é o que transforma a recusa em conserto. Uma recusa que só
+# diz «não» manda a pessoa procurar; uma que diz para onde ir resolve.
+
+# [[mods]]
+# id = "alguem/ruim"
+# versao = "1.2.0"
+# motivo = "credencial-vazada"
+# desde = 1757050000
+# corrigido_em = "1.2.1"
+
+# [[versoes_do_produto]]
+# versao = "0.11.2"
+# motivo = "leitura-de-disco-fora-da-pasta"
+# desde = 1757050000
+# corrigido_em = "0.11.3"
