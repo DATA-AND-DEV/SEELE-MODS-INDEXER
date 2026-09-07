@@ -33,6 +33,12 @@ TIPOS = {
     "reach": list, "state": int, "client": str, "server": str,
 }
 
+# Os únicos campos que o Rust declara `Option<T>`. Para os demais, um `null`
+# explícito não é «ausente»: é um manifesto que o `serde` recusaria.
+OPCIONAIS = {"state", "client", "server"}
+
+U32_MAX = 2**32 - 1
+
 
 @dataclass(frozen=True)
 class Manifesto:
@@ -84,13 +90,26 @@ def ler(texto: str) -> Manifesto:
         raise Recusado("malformed", "falta: " + ", ".join(sorted(faltando)))
 
     for chave, tipo in TIPOS.items():
-        if chave not in cru or cru[chave] is None:
+        if chave not in cru:
             continue
         valor = cru[chave]
+        if valor is None:
+            # `null` só equivale a ausente nos campos que o Rust declara
+            # `Option<T>`. Nos outros o `serde` recusa `null`, e aceitar aqui
+            # poria um `repo` nulo num catálogo append-only — sem conserto
+            # barato depois.
+            if chave in OPCIONAIS:
+                continue
+            raise Recusado("malformed", f"{chave} não pode ser nulo")
         # `bool` é subclasse de `int` em Python, e `true` não é um u32 no Rust.
         if isinstance(valor, bool) or not isinstance(valor, tipo):
             raise Recusado("malformed", f"{chave} deveria ser {tipo.__name__}")
-    if any(not isinstance(item, str) for item in cru.get("reach", [])):
+        # `schema`, `api` e `state` são u32 lá: negativo ou acima do teto não
+        # desserializa, e publicar o que o cliente recusa é o defeito que este
+        # módulo inteiro existe para impedir.
+        if tipo is int and not (0 <= valor <= U32_MAX):
+            raise Recusado("malformed", f"{chave} fora da faixa de u32")
+    if any(not isinstance(item, str) for item in cru.get("reach", []) or []):
         raise Recusado("malformed", "reach deveria ser uma lista de textos")
 
     if cru["schema"] > ESQUEMA_DO_MANIFESTO:

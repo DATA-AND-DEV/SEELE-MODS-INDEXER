@@ -141,3 +141,94 @@ def test_reach_com_item_nao_texto_e_malformed():
     with pytest.raises(Recusado) as erro:
         ler('{"schema":1,"id":"a/b","version":"1","api":1,"repo":"r","reach":[123],"client":"c.js"}')
     assert erro.value.codigo == "malformed"
+
+
+# Rodada de correção 2: null em campos obrigatórios e ranges de u32
+
+def test_schema_nulo_e_malformed():
+    # `null` em campo obrigatório deve recusar, não tratar como ausente
+    with pytest.raises(Recusado) as erro:
+        ler('{"schema":null,"id":"a/b","version":"1","api":1,"repo":"r","client":"c.js"}')
+    assert erro.value.codigo == "malformed"
+
+
+def test_id_nulo_e_malformed():
+    with pytest.raises(Recusado) as erro:
+        ler('{"schema":1,"id":null,"version":"1","api":1,"repo":"r","client":"c.js"}')
+    assert erro.value.codigo == "malformed"
+
+
+def test_version_nulo_e_malformed():
+    with pytest.raises(Recusado) as erro:
+        ler('{"schema":1,"id":"a/b","version":null,"api":1,"repo":"r","client":"c.js"}')
+    assert erro.value.codigo == "malformed"
+
+
+def test_api_nulo_e_malformed():
+    with pytest.raises(Recusado) as erro:
+        ler('{"schema":1,"id":"a/b","version":"1","api":null,"repo":"r","client":"c.js"}')
+    assert erro.value.codigo == "malformed"
+
+
+def test_repo_nulo_e_malformed():
+    with pytest.raises(Recusado) as erro:
+        ler('{"schema":1,"id":"a/b","version":"1","api":1,"repo":null,"client":"c.js"}')
+    assert erro.value.codigo == "malformed"
+
+
+def test_reach_nulo_e_malformed():
+    # `reach` tem default [], mas `null` é diferente de ausente
+    with pytest.raises(Recusado) as erro:
+        ler('{"schema":1,"id":"a/b","version":"1","api":1,"repo":"r","reach":null,"client":"c.js"}')
+    assert erro.value.codigo == "malformed"
+
+
+def test_state_nulo_e_tratado_como_ausente():
+    # `state` é `Option<T>` no Rust: `null` é equivalente a ausente
+    m = ler('{"schema":1,"id":"a/b","version":"1","api":1,"repo":"r","state":null,"client":"c.js"}')
+    assert m.state is None
+
+
+def test_client_nulo_e_tratado_como_ausente():
+    # `client` é `Option<T>`: `null` é equivalente a ausente, mas `server` garante validez
+    m = ler('{"schema":1,"id":"a/b","version":"1","api":1,"repo":"r","client":null,"server":"s.js"}')
+    assert m.client is None
+    assert m.server == "s.js"
+
+
+def test_server_nulo_e_tratado_como_ausente():
+    # `server` é `Option<T>`: `null` é equivalente a ausente, mas `client` garante validez
+    m = ler('{"schema":1,"id":"a/b","version":"1","api":1,"repo":"r","server":null,"client":"c.js"}')
+    assert m.server is None
+    assert m.client == "c.js"
+
+
+def test_schema_negativo_e_malformed():
+    with pytest.raises(Recusado) as erro:
+        ler('{"schema":-1,"id":"a/b","version":"1","api":1,"repo":"r","client":"c.js"}')
+    assert erro.value.codigo == "malformed"
+
+
+def test_api_negativo_e_malformed():
+    with pytest.raises(Recusado) as erro:
+        ler('{"schema":1,"id":"a/b","version":"1","api":-1,"repo":"r","client":"c.js"}')
+    assert erro.value.codigo == "malformed"
+
+
+def test_state_negativo_e_malformed():
+    with pytest.raises(Recusado) as erro:
+        ler('{"schema":1,"id":"a/b","version":"1","api":1,"repo":"r","state":-1,"client":"c.js"}')
+    assert erro.value.codigo == "malformed"
+
+
+def test_state_acima_u32_max_e_malformed():
+    # u32::MAX = 4294967295; u32::MAX + 1 = 4294967296
+    with pytest.raises(Recusado) as erro:
+        ler('{"schema":1,"id":"a/b","version":"1","api":1,"repo":"r","state":4294967296,"client":"c.js"}')
+    assert erro.value.codigo == "malformed"
+
+
+def test_state_igual_u32_max_e_aceito():
+    # Prova que o limite não foi apertado demais: u32::MAX é válido
+    m = ler('{"schema":1,"id":"a/b","version":"1","api":1,"repo":"r","state":4294967295,"client":"c.js"}')
+    assert m.state == 4294967295
