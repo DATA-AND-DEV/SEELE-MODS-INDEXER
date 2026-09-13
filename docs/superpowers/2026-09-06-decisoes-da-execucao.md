@@ -64,3 +64,227 @@
 ## Recomendação do review final que NÃO foi implementada
 
 RECOMENDAÇÃO DO REVIEW FINAL, NÃO IMPLEMENTADA (é decisão do humano): eliminar o cache persistente de espelhos git e clonar num diretório temporário a cada chamada. Cada versão é buscada uma vez na vida e `gerar.py` roda na máquina de uma pessoa, então o ganho do cache é fraco perto do que ele custou — 5 rodadas de correção e ~150 das linhas mais retrabalhadas do repositório. Toda a categoria «espelho reaproveitado pode estar corrompido de um jeito novo» desaparece por construção.
+
+## Rodada das revogações (achados C, D e E da auditoria `ab3eef73`)
+
+Esta rodada fecha três achados e nada mais. A execução anterior foi cancelada
+com a árvore preservada e **sem commit**, então o trabalho dela foi recuperado
+por inspeção e transplantado. O que segue separa o que veio de lá do que nasceu
+aqui, porque as duas coisas têm níveis de revisão diferentes: o recuperado
+nunca passou por revisão de outro par de olhos, e o novo nasceu de uma
+conferência de renderização feita nesta rodada.
+
+### Código recuperado da execução cancelada `87884127`
+
+Transplantado sem alteração, arquivo a arquivo:
+
+- `site/revogacoes.js` (novo) — baixa, **confere a assinatura e só então
+  interpreta os bytes**; devolve `{estado, causa, dados}` com `dados: null`
+  fora de `integro`. Fecha os achados C e D.
+- `site/testes/revogacoes.test.js` (novo) — lista assinada vazia, lista válida,
+  indisponibilidade, bytes trocados, chave errada, comentário reescrito, JSON
+  ilegível, forma inesperada, recuperação, e os dois guardas de lista fechada.
+- `site/app.js`, `site/tela.js`, `site/frases.js`, `site/estilo.css`,
+  `site/testes/frases.test.js` — os estados visíveis e as frases deles.
+- `ferramentas/assinar.py` — o guarda de cache recusa **ausência** antes de
+  comparar (achado E), e `_cache_de` passa a usar `[ \t]` no lugar de `\s`,
+  que atravessava a linha em branco entre blocos e fazia um bloco mudo tomar
+  emprestada a regra do bloco seguinte.
+- `ferramentas/testes/test_assinar.py` — o `skipif` de minisign vira marca por
+  teste, para que os guardas de cache (que não usam o binário) não sumam numa
+  máquina sem ele. **Só ali**: em `test_gerar.py` o `pytestmark` de módulo fica
+  onde está, e está certo — todo teste daquele arquivo chama `gerar()`, que
+  assina, e uma marca por teste ali seria a mesma condição repetida vinte
+  vezes. O que `test_gerar.py` recebeu foi um teste novo (o par sem regra
+  nenhuma de cache), não uma troca de marca. A frase original dizia os dois
+  arquivos; corrigido na rodada seguinte, sem tocar no comportamento.
+- `indexador-de-mods.md` — as duas regras, escritas.
+
+### Correções novas desta rodada
+
+Nasceram de renderizar os cinco estados num navegador sem cabeça, sobre uma
+vitrine assinada montada fora do repositório. Nenhuma toca `revogacoes.js`.
+
+1. **`site/tela.js` + `site/estilo.css` — a nota do catálogo (`.nota-dos-selos`).**
+   O achado C cita duas consequências: a tela de revogações dizendo «nada foi
+   retirado» e nenhum cartão recebendo o selo vermelho. O recuperado fecha a
+   primeira, e fecha a segunda na ficha do MOD — mas a tela do catálogo
+   continuava desenhando os selos de nível em silêncio, e um cartão sem o
+   vermelho ali se lê como um MOD que ninguém retirou. A nota diz, onde os
+   selos são olhados em série, que eles não estão respondendo àquela pergunta.
+   Custo se errado: uma linha a mais no topo do catálogo em toda falha de rede.
+
+2. **`site/app.js` — contador de consulta em `atualizarRevogacoes`.**
+   O botão «CONSULTAR DE NOVO» permite duas consultas em voo. Elas respondem
+   fora de ordem, e a última a chegar é a que fica: a resposta lenta de uma
+   falha apagaria o resultado bom que veio depois, e a tela voltaria a recusar
+   uma lista que já tinha conferido — o caminho de volta desfazendo a si mesmo.
+   Custo se errado: uma variável de módulo e uma comparação.
+
+### O que NÃO foi feito, de propósito
+
+Os demais achados da auditoria (A, B, F–L) seguem abertos: esta tarefa é C, D
+e E. Nada foi publicado, nenhuma chave foi trocada, e não há commit.
+
+## Rodada da avaliação por versão (achado B da auditoria `ab3eef73`)
+
+Esta rodada fecha o achado B e nada mais. Ela parte da rodada das revogações
+(C, D e E), que foi recuperada inteira — dez arquivos rastreados mais
+`site/revogacoes.js` e `site/testes/revogacoes.test.js`, conferidos por hash
+antes de qualquer edição — e continua sem commit.
+
+### O achado, revalidado
+
+`ferramentas/catalogo.py` recebia `nivel` e `notas` por versão dentro de
+`VersaoPronta` e não os escrevia na saída. Confirmado lendo o código: `montar`
+montava o dicionário de cada versão com `versao`, `api`, `publicado_em`,
+`hash`, `alcanca` e `arquivos`, e os dois campos de avaliação morriam ali. A
+consequência não estava só no gerador: `site/tela.js` não tinha o que ler, e
+usava `mod.nivel` e `mod.commit` — que são os da versão avaliada mais
+recentemente — na ficha de qualquer versão.
+
+### As decisões
+
+### Ruling: emitir também o `commit` por versão, e não só `nivel` e `notas`.
+O achado nomeia dois campos, mas a ficha da tela mostra três, e o terceiro tem
+o mesmo defeito com a consequência pior: `COMMIT AVALIADO` ao lado do `HASH DO
+CONTEÚDO` de outra versão afirma que revisamos bytes que não são aqueles. Um
+conserto que deixasse o commit misturado fecharia o achado e não fecharia o
+defeito. Custo se errado: uma chave a mais por versão, que nenhum leitor atual
+é obrigado a ler.
+
+### Ruling: `nivel` e `notas` saem de `VersaoPronta`; `commit` sai de `Versao`.
+Os dois primeiros são literalmente os campos que o achado diz serem
+descartados, e emiti-los de onde eles morriam é o que fecha o achado. O
+`commit` não existe em `VersaoPronta`, e acrescentá-lo lá obrigaria a mexer na
+ordem dos campos do dataclass — que tem construção posicional em quatro linhas
+de teste. Ele já está no `Versao` que o laço percorre, que é a mesma origem do
+`commit` no nível do MOD. Custo se errado: duas origens para três campos que
+`gerar.py` copia do mesmo objeto; anotado no código.
+
+### Ruling: `esquema` continua `1`, e nada existente muda.
+Só há acréscimo de chaves dentro de `versoes[]`. Nenhum nome, nenhum sentido e
+nenhuma chave removida — inclusive os campos de avaliação no nível do MOD, que
+seguem querendo dizer «a avaliação mais recente» e seguem sendo o que o cartão
+do catálogo e os filtros leem. Bumpar o esquema obrigaria todo leitor a tratar
+uma versão nova de formato para ganhar campos que ele pode ignorar. Custo se
+errado: um leitor que exija esquema novo para campos novos não terá o sinal —
+mitigado por o contrato dizer, por escrito, que a presença do campo é o sinal.
+
+### Ruling: o site cai no campo do MOD quando o da versão falta.
+`avaliacaoDaVersao` usa `??` para isso. Não é indecisão: um `catalogo.json`
+assinado antes desta mudança não tem o que responder, e o campo do MOD é
+exatamente o que a tela mostrava antes — a aproximação honesta, e a única
+disponível. Custo se errado: nenhum; com catálogo novo o ramo nunca é tomado.
+
+### Ruling: a versão escolhida é estado de tela e NÃO entra na rota.
+Pôr o número no `#/` faria dele contrato de link permanente, e uma versão que
+saísse do catálogo transformaria links guardados por aí em rota morta. O
+`#/mod/<id>` fica intacto. Custo se errado: recarregar a página volta para a
+versão mais recente, e a escolha não é compartilhável por link.
+
+### Ruling: o seletor só aparece com mais de uma versão.
+Um botão sozinho não é uma escolha, e o número da única versão já está na
+ficha. Custo se errado: nenhum.
+
+### Ruling: o selo do cartão do catálogo passa a ser o da versão que o cartão
+mostra. Os dois coincidem hoje — `publicado_em` é o `avaliado_em` da avaliação,
+então «mais recente» dá a mesma versão nas duas contas. Foi amarrado
+justamente por isso: um cartão que anuncia um número de versão e o nível de
+outra é o mesmo defeito em forma silenciosa, e depender de uma coincidência
+para não tê-lo é depender de ninguém mexer nas duas contas. Custo se errado:
+nenhum observável hoje.
+
+### Ruling: `botoesDeVersao` sai de dentro dos `createElement` e é exportada.
+`site/tela.js` não tem teste de DOM por decisão do projeto, e a decisão que
+esta rodada corrige é justamente «de quem é o selo». Deixá-la entre dois
+`append` seria pô-la no único lugar do site onde nada a prende — que é a forma
+exata do defeito original. Mesmo molde de `linhasDaFicha`. Custo se errado:
+uma função exportada a mais.
+
+### Ruling: a mistura é provada por mutação, e não por leitura.
+Todos os testes novos usam duas versões com vereditos **diferentes**: com os
+dois iguais, publicar o veredito do MOD dentro de cada versão passa por
+qualquer asserção sem ser notado — que é como este defeito viveu desde o
+começo. Medido nos dois lados: a mutação que volta a ler o veredito do MOD
+derruba 5 testes em Python e 3 em JavaScript, e nenhum outro.
+
+### O que NÃO foi feito, de propósito
+
+Os demais achados da auditoria (A, F–L) seguem abertos: esta tarefa é o B.
+Nenhuma avaliação real foi criada, nenhuma chave trocada, nada publicado, nada
+comitado, e o repositório do app SEELE não foi tocado — o contrato para ele
+está escrito em `indexador-de-mods.md`, para ser lido quando for a vez dele.
+
+## Rodada dos dois achados da revisão do B
+
+Esta rodada fecha os dois achados que a revisão da rodada anterior levantou, e
+nada mais. Ela parte daquela rodada, recuperada inteira — quinze arquivos
+rastreados mais `site/revogacoes.js` e `site/testes/revogacoes.test.js`,
+conferidos por hash contra a origem antes de qualquer edição — e continua sem
+commit.
+
+### As decisões
+
+### Ruling (revisão, achado 1): o exemplo do contrato ganha uma conferência,
+e não só uma correção. `indexador-de-mods.md` trazia `"oficial": true` ao lado
+de `"nivel": "verificado"`, que `ferramentas/catalogo.py` nunca emite — ali
+`oficial` É `nivel == "oficial"`. Corrigir o `true` para `false` custava uma
+letra e não impedia a volta: o exemplo não roda, ninguém o executa, e o mesmo
+bloco está copiado no spec e no plano. `ferramentas/testes/test_documentacao.py`
+lê os blocos ```json de toda a documentação, parseia cada um, e reprova a
+combinação. Tem também um teste que conta quantos exemplos de catálogo foram
+achados — sem ele, mexer na cerca ```json desligaria a conferência em silêncio.
+O spec (§3, linha 152) já estava coerente e não foi tocado. Custo se errado:
+a conferência reprova um exemplo futuro legítimo, e aí é o exemplo que está
+descrevendo um catálogo que o gerador não produz.
+
+### Ruling (revisão, achado 2): a escolha de versão passa a ser por id do MOD.
+O cartão da lista lia `versaoMaisRecente(mod)` e o veredito do MOD, e não
+tinha como fazer diferente: a escolha vivia num campo único que era apagado ao
+sair da ficha. Um mapa `id → versão` resolve as duas pontas — a escolha não
+vaza para o MOD vizinho (que era o motivo de a limpeza existir) e sobrevive à
+volta para a lista, que é o que dá ao cartão o que mostrar. `dadosDoCartao`
+sai de dentro dos `createElement` pelo mesmo motivo de `botoesDeVersao`: é uma
+decisão, e decisão sem teste no único módulo sem teste de DOM é onde este
+defeito nasceu. Custo se errado: a escolha persiste mais do que alguém espera;
+ela é estado de tela e some ao recarregar.
+
+### Ruling: o selo do cartão fala da versão do cartão, e o «outra versão foi
+retirada» vira linha própria. O selo vermelho vinha de `mod.temRevogada` —
+qualquer versão do MOD. Com o cartão anunciando um número, o mesmo vermelho
+passava a dizer que AQUELE número foi retirado, o que é falso quando a retirada
+foi noutra versão. O selo passa a ser da versão exibida e a informação que ele
+carregava não some: `outraRevogada` vira uma linha curta no cartão. Perder o
+aviso teria sido pagar a coerência com segurança. Custo se errado: uma linha a
+mais num cartão de MOD com versão retirada.
+
+### Ruling: o identificador continua `autor/nome`, e a tela diz o que ele traz.
+O critério pedia que a ação de instalação usasse a versão escolhida. O que o
+app aceita hoje é `autor/nome`, e ele instala a mais recente — passo 5 de «o
+que o cliente faz». Escrever `autor/nome@versao` na tela seria anunciar um
+contrato que o outro lado não tem, e quem digitasse levaria um erro do app.
+Então `acaoDeInstalar` devolve tudo da versão escolhida (hash, base, caminhos)
+e mais `ehMaisRecente`, e a tela avisa, nomeando o número, quando o
+identificador não traz a versão que está na ficha. **Escopo devolvido ao
+SEELE:** aceitar `autor/nome@versao` em Configurações · Mods, instalando a
+versão pedida e conferindo o hash dela. Custo se errado: a pessoa usa a lista
+de arquivos e o hash, que é o caminho que já existia.
+
+### Ruling: a volta do defeito é provada por mutação, de novo.
+Devolver o cartão a `versaoMaisRecente(mod)`/`mod.nivel` e a ação a
+`versaoMaisRecente(mod)` derruba 10 testes — 6 do cartão e do aviso em
+`site/testes/tela.test.js`, 4 da ação em `site/testes/catalogo.test.js` — e
+nenhum outro. Os dois MODs de teste seguem com vereditos diferentes entre as
+versões, pelo mesmo motivo da rodada anterior.
+
+### O que NÃO foi feito, de propósito
+
+Os demais achados da auditoria (A, F–L) seguem abertos. Nenhuma avaliação real
+foi criada, nenhuma chave trocada, nada publicado, nada comitado, e o
+repositório do app SEELE não foi tocado — o `autor/nome@versao` que a tela
+gostaria de oferecer está escrito acima como escopo para uma tarefa daquele
+projeto. Não houve conferência visual em navegador nesta rodada: as duas
+classes de CSS novas (`.cartao-retirada`, `.aviso-da-escolha`) foram escritas
+com tokens que já existem e sem colidir com nome nenhum, mas ninguém as viu
+desenhadas.

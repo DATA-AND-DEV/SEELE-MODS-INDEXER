@@ -292,6 +292,28 @@ def test_cache_do_par_diferente_e_recusado(mundo):
     assert erro.value.codigo == "cache-do-par-difere"
 
 
+def test_par_sem_regra_de_cache_nenhuma_e_recusado(mundo):
+    # O `_headers` sem os blocos das revogações: os dois arquivos ficariam
+    # com o cache padrão da Cloudflare, que ninguém escolheu e que não é o
+    # mesmo para `.json` e `.minisig`. É o caso que passava calado, porque
+    # a comparação era entre duas ausências.
+    raiz, secreta, _ = mundo
+    (raiz / "site" / "_headers").write_text(
+        """/catalogo.json
+  Cache-Control: public, max-age=300
+
+/catalogo.json.minisig
+  Cache-Control: public, max-age=300
+""",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(Recusado) as erro:
+        gerar(raiz, secreta, agora=1757100000)
+    assert erro.value.codigo == "cache-do-par-ausente"
+    assert "/revogacoes.json" in erro.value.detalhe
+
+
 def test_id_do_manifesto_diverge_da_avaliacao_e_recusado(mundo):
     raiz, secreta, _ = mundo
     autor = _autor_do_toml(raiz)
@@ -330,3 +352,87 @@ def test_version_do_manifesto_diverge_da_avaliacao_e_recusado(mundo):
     with pytest.raises(Recusado) as erro:
         gerar(raiz, secreta, agora=1757100000)
     assert erro.value.codigo == "versao-nao-bate-com-o-manifesto"
+
+
+def _segunda_versao(raiz, numero="2.2.0"):
+    """Um segundo commit no repositório do autor, e o `mod.json` dele."""
+    autor = raiz.parent / "repo-do-autor"
+    (autor / "mod.json").write_text(
+        json.dumps(
+            {
+                "schema": 1, "id": "juli/cinza-frio", "version": numero, "api": 1,
+                "repo": "https://github.com/juli/seele-cinza-frio",
+                "reach": ["trocar as cores da interface"],
+                "client": "cliente/main.js",
+            }
+        ),
+        encoding="utf-8",
+    )
+    (autor / "cliente" / "main.js").write_text("// cinza, de novo\n", encoding="utf-8")
+    git(autor, "add", "-A")
+    git(autor, "commit", "-q", "-m", numero)
+    return git(autor, "rev-parse", "HEAD")
+
+
+def _catalogo_de_duas_versoes(mundo):
+    """Duas versões do mesmo MOD com vereditos DIFERENTES, ponta a ponta.
+
+    Vereditos diferentes de propósito: com os dois iguais, publicar o nível do
+    MOD dentro de cada versão passaria por este teste sem ser notado."""
+    raiz, secreta, commit = mundo
+    novo = _segunda_versao(raiz)
+    (raiz / "avaliacoes" / "juli" / "cinza-frio.toml").write_text(
+        f"""
+id = "juli/cinza-frio"
+repo = "{raiz.parent / "repo-do-autor"}"
+titulo = "Cinza Frio"
+resumo = "Contraste alto."
+
+[[versoes]]
+versao = "2.1.0"
+commit = "{commit}"
+nivel = "com-notas"
+notas = ["fala-com-terceiro"]
+avaliado_em = 1757000000
+
+[[versoes]]
+versao = "2.2.0"
+commit = "{novo}"
+nivel = "oficial"
+notas = []
+avaliado_em = 1757000900
+""",
+        encoding="utf-8",
+    )
+    gerar(raiz, secreta, agora=1757100000)
+    catalogo = json.loads((raiz / "publicado" / "catalogo.json").read_text(encoding="utf-8"))
+    mod = catalogo["mods"][0]
+    return mod, {v["versao"]: v for v in mod["versoes"]}, commit, novo
+
+
+def test_o_catalogo_publicado_traz_a_avaliacao_de_cada_versao(mundo):
+    mod, versoes, commit, novo = _catalogo_de_duas_versoes(mundo)
+
+    assert versoes["2.1.0"]["nivel"] == "com-notas"
+    assert versoes["2.1.0"]["notas"] == ["fala-com-terceiro"]
+    assert versoes["2.1.0"]["commit"] == commit
+
+    assert versoes["2.2.0"]["nivel"] == "oficial"
+    assert versoes["2.2.0"]["notas"] == []
+    assert versoes["2.2.0"]["commit"] == novo
+
+    # E o MOD continua descrevendo a avaliação mais recente, como sempre
+    # descreveu: quem já lê estes campos não muda de leitura por causa disto.
+    assert mod["nivel"] == "oficial"
+    assert mod["commit"] == novo
+    assert mod["notas"] == []
+
+
+def test_a_versao_antiga_publicada_nao_recebe_a_avaliacao_da_nova(mundo):
+    # O guarda contra a mistura no arquivo que de fato é assinado e servido.
+    _, versoes, _, _ = _catalogo_de_duas_versoes(mundo)
+    antiga, nova = versoes["2.1.0"], versoes["2.2.0"]
+    assert antiga["nivel"] != nova["nivel"]
+    assert antiga["notas"] != nova["notas"]
+    assert antiga["commit"] != nova["commit"]
+    assert antiga["hash"] != nova["hash"]

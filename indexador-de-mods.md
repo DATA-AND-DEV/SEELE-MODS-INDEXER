@@ -100,7 +100,7 @@ valer sem nenhum mecanismo.
       "titulo": "Salas de RPG",
       "resumo": "Fichas, dados e salas por mesa.",
       "repo": "https://github.com/seele/mod-rpg",
-      "oficial": true,
+      "oficial": false,
       "nivel": "verificado",
       "commit": "a1b2c3d4e5f6…",
       "notas": [],
@@ -110,11 +110,26 @@ valer sem nenhum mecanismo.
           "api": 1,
           "publicado_em": 1757000000,
           "hash": "9f2c…",
+          "nivel": "com-notas",
+          "notas": ["fala-com-terceiro"],
+          "commit": "f6e5d4c3b2a1…",
+          "alcanca": ["falar com um serviço de fora"],
           "arquivos": [
             "mod.json",
             "cliente/main.js",
             "servidor/main.js"
           ]
+        },
+        {
+          "versao": "1.1.0",
+          "api": 1,
+          "publicado_em": 1757090000,
+          "hash": "4b71…",
+          "nivel": "verificado",
+          "notas": [],
+          "commit": "a1b2c3d4e5f6…",
+          "alcanca": [],
+          "arquivos": ["mod.json", "cliente/main.js"]
         }
       ]
     }
@@ -132,6 +147,53 @@ valer sem nenhum mecanismo.
 - **`nivel`** é `oficial`, `verificado` ou `com-notas`. **`notas`** são
   identificadores de aviso do terceiro nível — a frase é do `frases.js`, nunca
   daqui.
+- **`oficial` não é um campo à parte: ele É `nivel == "oficial"`.** O gerador
+  escreve os dois do mesmo lugar, então um catálogo em que eles discordem não
+  existe, e um leitor que os trate como independentes está lendo um fato só
+  duas vezes. O exemplo acima diz `false` porque o `nivel` do MOD é
+  `verificado`, e `ferramentas/testes/test_documentacao.py` reprova o
+  documento se a combinação incoerente voltar.
+- **`alcanca`** é o `reach` do `mod.json`, e fica por versão porque `mod.json`
+  é por versão: uma versão que passa a alcançar a rede diz isso sem reescrever
+  o que a anterior alcançava.
+
+### A avaliação é por versão, e os campos do MOD são um atalho
+
+`nivel`, `notas` e `commit` aparecem **duas vezes** de propósito, e as duas não
+querem dizer a mesma coisa:
+
+- **Dentro de cada `versoes[]`: a avaliação daquela versão.** É a resposta
+  certa para «o que foi encontrado nestes bytes». É a única que pode ser lida
+  ao lado do `hash` da mesma linha sem mentir — o `hash` identifica bytes, e o
+  veredito ao lado dele tem de ser o veredito daqueles bytes.
+- **No nível do MOD: a avaliação mais recente**, por `avaliado_em` e não pela
+  ordem do arquivo. Serve para listar e filtrar, onde a pergunta é «o que este
+  MOD é hoje». Não descreve versão nenhuma além da última — e por isso **não
+  carimba o cartão do catálogo**: o cartão anuncia um número de versão, e o
+  selo ao lado tem de ser o daquele número. `site/tela.js` o tira da versão
+  exibida, que é a escolhida quando houve escolha.
+
+**Um consumidor que deixe alguém escolher a versão lê o veredito de `versoes[]`,
+nunca o do MOD.** Foi esse o defeito corrigido nesta rodada: o gerador já
+calculava a avaliação por versão e a descartava na saída, então a tela só tinha
+o veredito do MOD para mostrar — e uma versão publicada com ressalvas aparecia
+limpa assim que a seguinte passasse limpa. A ressalva não some porque a versão
+seguinte é melhor; quem instala a antiga instala a antiga.
+
+Para quem vai consumir isto de fora (o app SEELE, hoje o único previsto):
+
+- Os campos por versão são **acréscimo**, e `esquema` continua `1`. Nenhuma
+  chave mudou de nome ou de sentido, nenhuma saiu. Um leitor escrito antes
+  deles continua lendo o mesmo catálogo com o mesmo resultado.
+- Um leitor novo que queira funcionar também com um `catalogo.json` assinado
+  **antes** desta mudança cai no campo do MOD quando o da versão faltar. É o
+  que `site/catalogo.js` faz em `avaliacaoDaVersao`, e é a única aproximação
+  honesta disponível: era exatamente o que a tela mostrava antes.
+- A assinatura cobre estes campos como cobre os outros — ela é sobre o arquivo
+  inteiro. Um nível por versão adulterado é um catálogo adulterado, e a
+  conferência que decide é a do app, com a chave compilada nele.
+- Nada disto é prova. Vale aqui a mesma frase de baixo: `nivel` é conveniência
+  de tela, quem prova é a assinatura.
 - **`oficial` e `nivel` são conveniência de tela e não prova.** Quem prova é a
   assinatura `minisign`, conferida contra a chave embutida no app, **e ela cobre
   as notas**: notas que alguém pode tirar não protegem ninguém. O ADR 0026 já
@@ -178,6 +240,16 @@ lugar: o núcleo nunca formata mensagem.
 «não» manda a pessoa procurar; uma que diz para onde ir resolve. É o mesmo
 critério do `specs/02-protocolo.md` sobre toda razão ser específica.
 
+**A lista só é usada depois de a assinatura dela conferir, e uma consulta que
+não conferiu não vira lista vazia.** «Nada foi retirado» e «não conseguimos
+saber o que foi retirado» levam a decisões opostas — a primeira manda instalar,
+a segunda manda esperar. A tela diz qual das duas é o caso: a frase que afirma
+ausência de revogação só é alcançável depois da conferência, e a indisponibilidade
+e a falha de integridade aparecem nomeadas, com um caminho de volta (consultar de
+novo), porque a causa provável é um nó da CDN com uma das duas metades velha.
+Vale para o navegador que não sabe conferir Ed25519 também: o que não foi
+conferido não é usado, e ali não há «usar assim mesmo».
+
 ## `_headers` — a parte que não se copia sem ler
 
 ```
@@ -213,6 +285,11 @@ O raciocínio, porque os três números são decisões diferentes:
 novo com uma assinatura velha em cache é um cliente recusando um catálogo
 legítimo — a falha mais difícil de diagnosticar deste desenho inteiro, porque
 ela parece adulteração.
+
+E **um par sem regra nenhuma não é um par cujas regras batem.** Sem bloco, os
+dois arquivos ficam com o padrão da CDN, que não é o mesmo para `.json` e para
+`.minisig` e que ninguém escolheu — então o guarda do `gerar.py` recusa a
+ausência antes de comparar, e não só a divergência.
 
 ## Como publicar, e onde a sua revisão entra
 

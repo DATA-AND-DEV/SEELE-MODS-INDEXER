@@ -168,3 +168,116 @@ def test_arquivos_fora_de_ordem_saem_ordenados():
     }
     v = montar([avaliacao()], p, 1757100000)["mods"][0]["versoes"][0]
     assert v["arquivos"] == ["cliente/main.js", "mod.json"]
+
+
+# --- A avaliação por versão -------------------------------------------------
+#
+# Duas versões do mesmo MOD com vereditos DIFERENTES: é a única forma de um
+# teste enxergar mistura de metadados. Com as duas iguais, publicar o nível do
+# MOD no lugar do nível da versão passa despercebido.
+
+COMMIT_ANTIGO = "0f1e2d3c4b5a69788796a5b4c3d2e1f009182736"
+
+
+def avaliacao_de_duas_versoes():
+    return Avaliacao(
+        id="juli/cinza-frio", autor="juli", nome="cinza-frio",
+        repo="https://github.com/juli/seele-cinza-frio",
+        titulo="Cinza Frio", resumo="Contraste alto.",
+        versoes=[
+            Versao("1.0.0", COMMIT_ANTIGO, "com-notas", ["fala-com-terceiro"], 1757000000),
+            Versao("2.0.0", COMMIT, "oficial", [], 1757000900),
+        ],
+    )
+
+
+def prontas_de_duas_versoes():
+    return {
+        ("juli/cinza-frio", "1.0.0"): VersaoPronta(
+            versao="1.0.0", api=1, publicado_em=1757000000, hash="c" * 64,
+            alcanca=["falar com um serviço de fora"], arquivos=["mod.json"],
+            nivel="com-notas", notas=["fala-com-terceiro"],
+        ),
+        ("juli/cinza-frio", "2.0.0"): VersaoPronta(
+            versao="2.0.0", api=1, publicado_em=1757000900, hash="d" * 64,
+            alcanca=[], arquivos=["mod.json"],
+            nivel="oficial", notas=[],
+        ),
+    }
+
+
+def _por_numero(mod):
+    return {v["versao"]: v for v in mod["versoes"]}
+
+
+def test_cada_versao_carrega_o_proprio_nivel():
+    m = montar([avaliacao_de_duas_versoes()], prontas_de_duas_versoes(), 1757100000)["mods"][0]
+    versoes = _por_numero(m)
+    assert versoes["1.0.0"]["nivel"] == "com-notas"
+    assert versoes["2.0.0"]["nivel"] == "oficial"
+
+
+def test_cada_versao_carrega_as_proprias_notas():
+    # Uma ressalva encontrada na 1.0.0 não some porque a 2.0.0 passou limpa.
+    m = montar([avaliacao_de_duas_versoes()], prontas_de_duas_versoes(), 1757100000)["mods"][0]
+    versoes = _por_numero(m)
+    assert versoes["1.0.0"]["notas"] == ["fala-com-terceiro"]
+    assert versoes["2.0.0"]["notas"] == []
+
+
+def test_cada_versao_carrega_o_proprio_commit_avaliado():
+    # O commit é o que faz a avaliação valer: mostrar o commit da versão nova
+    # ao lado do hash da versão velha é afirmar que revisamos bytes que não
+    # são os que estão sendo servidos ali.
+    m = montar([avaliacao_de_duas_versoes()], prontas_de_duas_versoes(), 1757100000)["mods"][0]
+    versoes = _por_numero(m)
+    assert versoes["1.0.0"]["commit"] == COMMIT_ANTIGO
+    assert versoes["2.0.0"]["commit"] == COMMIT
+
+
+def test_a_avaliacao_da_versao_nunca_e_a_do_mod_quando_elas_diferem():
+    # O guarda direto contra a mistura: se alguém voltar a publicar o veredito
+    # do MOD dentro de cada versão, estes três pares ficam iguais e o teste cai.
+    m = montar([avaliacao_de_duas_versoes()], prontas_de_duas_versoes(), 1757100000)["mods"][0]
+    antiga = _por_numero(m)["1.0.0"]
+    assert m["nivel"] == "oficial"
+    assert antiga["nivel"] != m["nivel"]
+    assert antiga["notas"] != m["notas"]
+    assert antiga["commit"] != m["commit"]
+
+
+def test_o_mod_continua_descrevendo_a_avaliacao_mais_recente():
+    # Os campos antigos não mudam de sentido: quem já lê `mod.nivel` continua
+    # lendo «o que a avaliação mais recente achou».
+    m = montar([avaliacao_de_duas_versoes()], prontas_de_duas_versoes(), 1757100000)["mods"][0]
+    assert m["nivel"] == "oficial"
+    assert m["oficial"] is True
+    assert m["notas"] == []
+    assert m["commit"] == COMMIT
+
+
+def test_as_notas_da_versao_saem_em_copia():
+    # A saída é serializada e assinada; se ela apontasse para a lista da
+    # avaliação, mexer numa mexeria na outra sem nenhum aviso.
+    prontas = prontas_de_duas_versoes()
+    m = montar([avaliacao_de_duas_versoes()], prontas, 1757100000)["mods"][0]
+    _por_numero(m)["1.0.0"]["notas"].append("guarda-dados-na-maquina")
+    assert prontas[("juli/cinza-frio", "1.0.0")].notas == ["fala-com-terceiro"]
+
+
+def test_append_only_ignora_a_avaliacao_e_olha_so_o_hash():
+    # Reavaliar uma versão publicada é legítimo — o que nunca muda são os
+    # bytes. O guarda append-only não pode confundir as duas coisas.
+    anterior = montar([avaliacao_de_duas_versoes()], prontas_de_duas_versoes(), 1757000000)
+    reavaliada = avaliacao_de_duas_versoes()
+    reavaliada.versoes[0] = Versao("1.0.0", COMMIT_ANTIGO, "verificado", [], 1757000000)
+    prontas = prontas_de_duas_versoes()
+    velha = prontas[("juli/cinza-frio", "1.0.0")]
+    prontas[("juli/cinza-frio", "1.0.0")] = VersaoPronta(
+        versao=velha.versao, api=velha.api, publicado_em=velha.publicado_em,
+        hash=velha.hash, alcanca=list(velha.alcanca), arquivos=list(velha.arquivos),
+        nivel="verificado", notas=[],
+    )
+    novo = montar([reavaliada], prontas, 1757100000)
+    conferir_append_only(novo, anterior)
+    assert _por_numero(novo["mods"][0])["1.0.0"]["nivel"] == "verificado"
