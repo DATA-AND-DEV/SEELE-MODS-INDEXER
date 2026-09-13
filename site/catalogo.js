@@ -24,6 +24,71 @@ export function versaoMaisRecente(mod) {
 }
 
 /**
+ * A versão que a tela está mostrando — a escolhida, ou a mais recente.
+ *
+ * Um número que não está mais no catálogo cai na mais recente em vez de numa
+ * tela vazia: a lista de versões vem de um arquivo que pode ser recarregado
+ * enquanto alguém lê, e uma escolha velha não é motivo para não mostrar nada.
+ */
+export function versaoEscolhida(mod, numero) {
+  if (!numero) return versaoMaisRecente(mod);
+  return mod.versoes.find((v) => v.versao === numero) ?? versaoMaisRecente(mod);
+}
+
+/**
+ * O veredito que vale para UMA versão: o dela, nunca o do MOD.
+ *
+ * Os campos no nível do MOD descrevem a avaliação mais recente. Mostrá-los ao
+ * lado de uma versão antiga diz «foi isto que revisamos nestes bytes» sobre
+ * bytes que ninguém revisou assim — e o nível é justamente o que alguém lê
+ * para decidir instalar.
+ *
+ * O `??` é compatibilidade e não indecisão: um `catalogo.json` gerado antes de
+ * os campos por versão existirem não tem o que responder, e o veredito do MOD
+ * é a melhor aproximação disponível — a mesma que a tela mostrava antes.
+ */
+export function avaliacaoDaVersao(mod, versao) {
+  return {
+    nivel: versao?.nivel ?? mod.nivel,
+    notas: versao?.notas ?? mod.notas ?? [],
+    commit: versao?.commit ?? mod.commit,
+  };
+}
+
+/**
+ * O que instalar, e de QUAL versão — a escolhida, nunca a mais recente.
+ *
+ * O hash e a lista de arquivos já saíam da versão escolhida na ficha, mas o
+ * caminho de ação era montado solto no meio da tela, a partir do MOD. Junto
+ * ficam porque são uma coisa só: o `hash` é o número com que quem baixa
+ * confere os bytes que baixou, e separá-los deixava cada um livre para passar
+ * a falar de uma versão diferente sem nada avisar — foi exatamente o que
+ * aconteceu.
+ *
+ * `identificador` é `autor/nome` porque é o que o app aceita hoje, e ele
+ * instala a mais recente. Por isso `maisRecente` e `ehMaisRecente` saem daqui:
+ * a tela precisa poder dizer que digitar o id não traz a versão escolhida.
+ * Inventar aqui um `autor/nome@versao` seria escrever um contrato que o app
+ * não tem — o campo para isso é uma mudança no SEELE, não uma string nossa.
+ */
+export function acaoDeInstalar(mod, versao) {
+  const base = `mods/${mod.autor}/${mod.nome}/${versao.versao}/`;
+  const recente = versaoMaisRecente(mod);
+  return {
+    identificador: mod.id,
+    versao: versao.versao,
+    maisRecente: recente.versao,
+    ehMaisRecente: versao.versao === recente.versao,
+    hash: versao.hash,
+    base,
+    arquivos: (versao.arquivos ?? []).map((caminho) => ({
+      caminho,
+      url: base + caminho,
+    })),
+  };
+}
+
+/**
  * Sem acento e em minúscula, para comparar.
  *
  * Quem digita «traco» tem de achar «traço»: exigir o acento é exigir que a

@@ -31,9 +31,16 @@ def assinar(arquivo: Path, chave_secreta: Path, comentario: str) -> Path:
 
 
 def _cache_de(headers: str, caminho: str) -> str | None:
-    """A linha `Cache-Control` do bloco de `caminho`, ou nada."""
+    """A linha `Cache-Control` do bloco de `caminho`, ou nada.
+
+    `[ \\t]` e não `\\s` nas duas repetições: `\\s` casa `\\n`, então a linha
+    em branco que separa dois blocos era engolida como se fosse continuação
+    e o bloco se estendia até o fim do arquivo. Um bloco que tivesse perdido
+    o próprio `Cache-Control` devolvia então o do bloco SEGUINTE — nada
+    aparecia errado, e o guarda do par comparava uma regra que aquele
+    caminho não tem. Um bloco termina onde o arquivo diz que ele termina."""
     padrao = re.compile(
-        r"^" + re.escape(caminho) + r"\s*$\n(?:^\s+.*$\n?)*", re.MULTILINE
+        r"^" + re.escape(caminho) + r"[ \t]*$\n(?:^[ \t]+.*$\n?)*", re.MULTILINE
     )
     achado = padrao.search(headers)
     if achado is None:
@@ -53,6 +60,21 @@ def conferir_cache_do_par(headers: str, assinado: str) -> None:
     e não um parágrafo."""
     do_arquivo = _cache_de(headers, assinado)
     da_assinatura = _cache_de(headers, assinado + ".minisig")
+
+    # Ausência é recusa, e antes da comparação: sem esta linha, o par SEM
+    # REGRA NENHUMA passa — `None == None` — que é exatamente o caso em que
+    # não há guarda nenhum. Os dois arquivos ficariam com o cache padrão da
+    # Cloudflare, que não é o mesmo para os dois (`.json` e `.minisig` são
+    # extensões diferentes para ela) e que ninguém escolheu. Um par que não
+    # tem regra não é um par cujas regras batem; é um par sem decisão.
+    if do_arquivo is None or da_assinatura is None:
+        faltando = [
+            caminho
+            for caminho, regra in ((assinado, do_arquivo), (assinado + ".minisig", da_assinatura))
+            if regra is None
+        ]
+        raise Recusado("cache-do-par-ausente", "sem Cache-Control para " + ", ".join(faltando))
+
     if do_arquivo != da_assinatura:
         raise Recusado(
             "cache-do-par-difere",

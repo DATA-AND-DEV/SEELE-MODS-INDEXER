@@ -51,6 +51,21 @@ def montar(
                     # Por versão e não por MOD, porque `mod.json` é por versão.
                     "alcanca": list(pronta.alcanca),
                     "arquivos": sorted(pronta.arquivos),
+                    # A avaliação DESTA versão, e não a do MOD. Ela já era
+                    # calculada por versão e morria aqui: o catálogo só
+                    # publicava o veredito da versão avaliada mais
+                    # recentemente, então quem abrisse uma versão antiga lia o
+                    # nível e as notas de outra. Uma versão publicada com
+                    # ressalvas não deixa de tê-las porque a seguinte passou
+                    # limpa — e o `hash` desta linha continua sendo o dos bytes
+                    # daquela versão, o que tornava o par nível/hash uma
+                    # afirmação sobre duas coisas diferentes.
+                    "nivel": pronta.nivel,
+                    "notas": list(pronta.notas),
+                    # O commit sai do `Versao` e não do `VersaoPronta` porque é
+                    # o ponto fixo da avaliação, e mora onde o veredito mora —
+                    # a mesma origem do `commit` no nível do MOD, logo abaixo.
+                    "commit": v.commit,
                 }
             )
         if not versoes:
@@ -63,6 +78,11 @@ def montar(
         # selo. É o selo que alguém lê para decidir instalar: deixá-lo
         # depender da ordem de edição de um arquivo daria a quem edita um
         # poder que a avaliação não lhe deu.
+        #
+        # Os campos de avaliação no nível do MOD ficam onde estavam, e seguem
+        # querendo dizer exatamente isto: «o que a avaliação mais recente
+        # achou». Eles não são o resumo das versões nem servem para descrever
+        # uma versão escolhida — para isso existem os campos por versão acima.
         ultima = max(a.versoes, key=lambda v: v.avaliado_em)
         mods.append(
             {

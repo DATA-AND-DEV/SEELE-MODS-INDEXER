@@ -104,6 +104,43 @@ button:focus-visible { outline: var(--seele-b-forte) solid var(--seele-osso); ou
   font-size: 11px; line-height: 1.6; color: var(--seele-osso-apagado);
 }
 
+/* ---- a consulta das revogações que não foi conferida ----
+   Classe própria, e não `.aviso`: aquele é o aviso do catálogo, mora no
+   cabeçalho da página e tem borda de largura total. Este ocupa o lugar da
+   tabela, dentro do painel — e ocupar aquele lugar é metade do que ele diz,
+   porque o que estaria ali é a frase que afirma que nada foi retirado.
+   Os dois estados têm cores diferentes de propósito: não saber (a lista não
+   chegou) e não bater (a lista chegou adulterada ou torta) pedem urgências
+   diferentes de quem lê. */
+.aviso-das-revogacoes {
+  display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
+  padding: var(--seele-e3);
+  font-size: var(--seele-t-dado); line-height: 1.6;
+  color: var(--seele-sync-degradado);
+  box-shadow: 0 0 0 1px currentColor;
+}
+.aviso-das-revogacoes[data-estado="falhou"] {
+  color: var(--seele-vermelho-alerta);
+  background: var(--seele-vermelho-fraco);
+}
+.aviso-das-revogacoes p { margin: 0; max-width: 72ch; text-wrap: pretty; }
+.aviso-das-revogacoes .rotulo { color: currentColor; }
+
+/* A mesma informação encolhida para uma linha, no topo do catálogo. Ali os
+   selos continuam sendo desenhados, e é por isso que ela não pode faltar:
+   um cartão sem o vermelho parece um MOD que ninguém retirou. */
+.nota-dos-selos {
+  margin: 0 0 var(--seele-e3); padding: var(--seele-e2) var(--seele-e3);
+  max-width: 72ch; text-wrap: pretty;
+  font-size: var(--seele-t-dado); line-height: 1.6;
+  color: var(--seele-sync-degradado);
+  box-shadow: 0 0 0 1px currentColor;
+}
+.nota-dos-selos[data-estado="falhou"] {
+  color: var(--seele-vermelho-alerta);
+  background: var(--seele-vermelho-fraco);
+}
+
 /* ---- corpo ---- */
 .corpo { flex: 1 1 auto; min-width: 0; }
 .com-lateral { display: grid; grid-template-columns: 236px minmax(0, 1fr); align-items: start; }
@@ -134,6 +171,18 @@ button:focus-visible { outline: var(--seele-b-forte) solid var(--seele-osso); ou
   color: var(--seele-laranja-nerv);
 }
 .filtro .conta { margin-left: auto; font-size: 10px; }
+
+/* Os botões de versão da ficha do MOD.
+   `.filtro` nasceu para a coluna da lateral, onde ocupar a largura inteira é
+   o certo. Aqui são poucos números curtos, e uma fileira que quebra custa
+   menos altura do que uma coluna — a ficha inteira cabe sem rolar. */
+.versoes { display: flex; flex-wrap: wrap; gap: var(--seele-e1); }
+.versoes .filtro {
+  width: auto; gap: 10px;
+  border: var(--seele-b) solid var(--seele-linha);
+  border-left-width: var(--seele-b-forte);
+}
+.versoes .filtro[aria-pressed="true"] { border-color: var(--seele-laranja-nerv); }
 
 .painel {
   display: flex; flex-direction: column; gap: 28px;
@@ -184,6 +233,24 @@ h1 {
 .selo[data-nivel="verificado"] { color: var(--seele-fosforo); }
 .selo[data-nivel="com-notas"] { color: var(--seele-sync-degradado); }
 .selo[data-nivel="revogada"] { color: var(--seele-vermelho-alerta); }
+
+/* O cartão diz que OUTRA versão deste MOD foi retirada — não a que ele
+   anuncia. O selo por MOD dizia as duas coisas com o mesmo vermelho, e
+   separá-las custou esta linha: o selo fala da versão do cartão, e esta
+   linha fala do resto do MOD. Vermelho apagado, e não o do selo: é aviso de
+   contexto, e não o veredito do número logo acima. */
+.cartao-retirada {
+  font-size: var(--seele-t-micro); letter-spacing: 0.1em;
+  color: var(--seele-vermelho-alerta);
+}
+
+/* O mesmo papel na ficha do MOD: o identificador logo acima instala a versão
+   mais recente, e a ficha é de outra. */
+.aviso-da-escolha {
+  margin: 0; max-width: 72ch; text-wrap: pretty;
+  font-size: var(--seele-t-dado); line-height: 1.6;
+  color: var(--seele-sync-degradado);
+}
 
 /* Os dois números: versão e idade. Nunca estrelas nem downloads — não os
    medimos, e um número que não medimos é um número inventado. */

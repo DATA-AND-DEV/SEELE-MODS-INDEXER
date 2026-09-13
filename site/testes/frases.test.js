@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { FALHAS, MOTIVOS, NIVEIS, NOTAS, ROTULOS_DE_NIVEL, frase } from "../frases.js";
+import { FALHAS, MOTIVOS, NIVEIS, NOTAS, REVOGACOES, ROTULOS_DE_NIVEL, frase } from "../frases.js";
+import { CAUSAS } from "../revogacoes.js";
 
 const LISTAS = JSON.parse(
   readFileSync(fileURLToPath(new URL("../../listas.json", import.meta.url)), "utf-8"),
@@ -90,6 +91,35 @@ test("toda causa que verificar.js pode devolver tem frase, ou é dobrada em app.
   }
 });
 
+test("toda causa de uma consulta de revogações tem frase", () => {
+  // `CAUSAS` é a lista fechada do `revogacoes.js`, e este é o mesmo guarda
+  // que já existe para os motivos e as notas: um identificador sem frase
+  // sai cru na tela, e aqui ele sairia justamente na hora em que quem lê
+  // mais precisa entender o que aconteceu.
+  for (const id of CAUSAS) {
+    assert.ok(REVOGACOES[id], `falta frase para a causa ${id}`);
+  }
+});
+
+test("nenhuma frase de revogação sobra sem causa", () => {
+  for (const id of Object.keys(REVOGACOES)) {
+    assert.ok(CAUSAS.includes(id), `frase órfã: ${id}`);
+  }
+});
+
+test("nenhuma frase de revogação afirma que nada foi retirado", () => {
+  // Elas existem para dizer «não sabemos». Uma que dissesse «nenhuma
+  // revogação» seria o defeito de volta, escrito em português em vez de
+  // num `catch` — e a tela não teria como distinguir.
+  for (const [id, texto] of Object.entries(REVOGACOES)) {
+    const minuscula = texto.toLowerCase();
+    assert.ok(
+      !/nada foi retirado|nenhuma revoga/.test(minuscula),
+      `a frase de ${id} afirma ausência de revogação`,
+    );
+  }
+});
+
 test("a frase da assinatura acusa cache antes de adulteração", () => {
   // É a causa provável e a mais difícil de achar: um catálogo novo com uma
   // assinatura velha em cache parece adulteração e não é.
@@ -100,7 +130,7 @@ test("a frase da assinatura acusa cache antes de adulteração", () => {
 test("nenhuma frase promete autenticidade", () => {
   // A conferência do navegador é integridade: verificador, chave e catálogo
   // vêm da mesma origem, e não há âncora.
-  const todas = Object.values({ ...FALHAS, ...NIVEIS }).join(" ").toLowerCase();
+  const todas = Object.values({ ...FALHAS, ...NIVEIS, ...REVOGACOES }).join(" ").toLowerCase();
   assert.ok(!todas.includes("autêntic"), "a palavra é «íntegro», nunca «autêntico»");
 });
 

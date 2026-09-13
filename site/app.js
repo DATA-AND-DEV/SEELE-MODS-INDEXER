@@ -1,19 +1,39 @@
-// SEELE MODS — ligar os cinco.
+// SEELE MODS — ligar os seis.
 //
 // A ordem é a do «o que o cliente faz» da doc, e o site suporta isso e nada
-// além: baixa o catálogo e a assinatura, confere, busca localmente, e lê as
-// revogações. Nenhum passo precisa de mais do que arquivo parado.
+// além: baixa o catálogo e a assinatura, confere, busca localmente, e baixa
+// as revogações com a assinatura delas, que também é conferida antes de a
+// lista ser lida. Nenhum passo precisa de mais do que arquivo parado.
 
 "use strict";
 
 import { cruzarRevogacoes, filtrar, ordenar } from "./catalogo.js";
+import { CONSULTANDO, carregarRevogacoes } from "./revogacoes.js";
 import { analisar, paraHash } from "./rotas.js";
 import { desenhar, desenharAviso } from "./tela.js";
 import { temEd25519, verificar } from "./verificar.js";
 
 const estado = {
-  todos: [], lista: [], revogacoes: null,
+  // `catalogo` são os MODs como vieram; `todos` são os mesmos cruzados com
+  // as revogações. Dois campos e não um porque as duas consultas são
+  // independentes e chegam em qualquer ordem — quem chegar por último
+  // recruza com o que o outro já deixou aqui.
+  catalogo: [], todos: [], lista: [], revogacoes: CONSULTANDO,
   tela: "catalogo", id: null, nivel: null, ordem: "recentes", busca: "",
+  // A versão escolhida em cada MOD, por id. Um MOD ausente do mapa quer dizer
+  // «a mais recente», e não «nenhuma»: é estado de tela, e por isso não entra
+  // na rota. Pôr o número no `#/` faria dele contrato de link permanente — uma
+  // versão que saísse do catálogo transformaria links guardados por aí em rota
+  // morta.
+  //
+  // Por id, e não uma escolha só: a lista mostra vários MODs ao mesmo tempo, e
+  // é o cartão de cada um que carrega o selo daquela versão. Com uma escolha
+  // única, ou a 1.0.0 escolhida num MOD carimbava a 1.0.0 do vizinho — outra
+  // avaliação, que ninguém escolheu —, ou ela tinha de ser apagada ao sair da
+  // ficha, e aí o cartão nunca voltaria a mostrar o que a pessoa escolheu.
+  // `Map` e não objeto: as chaves vêm do catálogo, e um objeto tem nomes que
+  // já querem dizer outra coisa.
+  escolhas: new Map(),
   agora: Math.floor(Date.now() / 1000),
 };
 
@@ -26,6 +46,8 @@ const acoes = {
   abrir: (id) => { location.hash = paraHash({ tela: "mod", id }); },
   filtrarNivel: (nivel) => { estado.nivel = nivel; redesenhar(); },
   ordenar: (ordem) => { estado.ordem = ordem; redesenhar(); },
+  reconsultarRevogacoes: () => { atualizarRevogacoes(); },
+  escolherVersao: (versao) => { estado.escolhas.set(estado.id, versao); redesenhar(); },
 };
 
 function redesenhar() {
@@ -93,18 +115,48 @@ async function carregar() {
     // porque esconder tudo esconderia a informação que explica a falha.
   }
 
-  try {
-    estado.revogacoes = JSON.parse(decodificador.decode(await baixar("revogacoes.json")));
-  } catch {
-    estado.revogacoes = { mods: [], versoes_do_produto: [] };
-  }
+  estado.catalogo = catalogo.mods;
+  recruzar();
+}
 
-  estado.todos = cruzarRevogacoes(catalogo.mods, estado.revogacoes);
+/** Qual consulta de revogações é a atual — ver `atualizarRevogacoes`. */
+let consultaDasRevogacoes = 0;
+
+/** O cruzamento é refeito sempre que uma das duas consultas responde. */
+function recruzar() {
+  // `dados` é `null` fora do estado `integro`, e `cruzarRevogacoes` trata
+  // isso como «nenhuma revogação conhecida» — que é o que ele pode fazer.
+  // Quem diz que não sabemos é a tela, que lê `estado.revogacoes.estado`.
+  estado.todos = cruzarRevogacoes(estado.catalogo, estado.revogacoes.dados);
   redesenhar();
+}
+
+/**
+ * Consulta as revogações, e é o caminho de volta depois de uma falha.
+ *
+ * Roda em paralelo com o catálogo e não depois dele: são dois arquivos
+ * parados independentes, e um catálogo que não chegou não é motivo para a
+ * aba de revogações ficar sem um estado a mostrar.
+ */
+async function atualizarRevogacoes() {
+  // Duas consultas em voo respondem fora de ordem, e quem clica «CONSULTAR
+  // DE NOVO» duas vezes põe duas em voo. Sem o contador, a resposta lenta da
+  // primeira — a que falhou — chegaria depois da segunda e apagaria o
+  // resultado bom: a tela voltaria a recusar uma lista que já conferiu.
+  const minha = (consultaDasRevogacoes += 1);
+  estado.revogacoes = CONSULTANDO;
+  redesenhar();
+  const resultado = await carregarRevogacoes(baixar);
+  if (minha !== consultaDasRevogacoes) return;
+  estado.revogacoes = resultado;
+  recruzar();
 }
 
 function aoTrocarRota() {
   const rota = analisar(location.hash);
+  // Nada a zerar ao trocar de MOD: a escolha mora sob o id de quem a fez, e
+  // por isso não alcança o vizinho. Era o que a limpeza daqui existia para
+  // impedir, e ela cobrava o preço de a escolha sumir ao voltar para a lista.
   estado.tela = rota.tela;
   estado.id = rota.id;
   redesenhar();
@@ -129,3 +181,4 @@ new ResizeObserver(medirTopo).observe(topo);
 
 aoTrocarRota();
 carregar();
+atualizarRevogacoes();

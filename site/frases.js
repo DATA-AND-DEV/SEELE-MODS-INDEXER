@@ -47,9 +47,9 @@ export const NIVEIS = {
  * do cartão e no botão da lateral, onde a descrição inteira transbordava.
  *
  * `revogada` mora só aqui: não é um nível de avaliação (não tem entrada em
- * `NIVEIS` nem em `listas.json`), é o estado que o selo do cartão mostra
- * quando a versão mais recente do MOD foi retirada. Sem um rótulo próprio,
- * o selo caía no fallback de `frase()` e mostrava o identificador cru.
+ * `NIVEIS` nem em `listas.json`), é o estado que o selo mostra quando a versão
+ * exibida — a do cartão, a do botão — foi retirada. Sem um rótulo próprio, o
+ * selo caía no fallback de `frase()` e mostrava o identificador cru.
  */
 export const ROTULOS_DE_NIVEL = {
   oficial: "Oficial",
@@ -82,7 +82,42 @@ export const FALHAS = {
     "este navegador não confere assinaturas Ed25519. O catálogo abaixo não foi conferido aqui — quem confere de verdade é o app.",
 };
 
-const GRUPOS = { motivos: MOTIVOS, notas: NOTAS, niveis: NIVEIS, rotulos: ROTULOS_DE_NIVEL, falhas: FALHAS };
+/** O que aconteceu com a consulta das revogações.
+ *
+ * Nenhuma destas frases diz «nada foi retirado», e é a razão de o
+ * dicionário existir: aquela frase é uma afirmação sobre o mundo, e só a
+ * lista assinada pode fazê-la. Todas dizem, com palavras diferentes, a
+ * mesma coisa — «não sabemos» — e dizem também que a lista não conferida
+ * não foi usada, porque quem lê precisa saber que o silêncio dos cartões
+ * não é um veredito.
+ *
+ * A de `assinatura-nao-confere` acusa cache antes de adulteração pelo mesmo
+ * motivo de `FALHAS`: é a causa provável, e é a mais difícil de
+ * diagnosticar — a lista e a assinatura dela têm um minuto de cache, e
+ * basta um nó da CDN entregar uma das duas metades velha. */
+export const REVOGACOES = {
+  "sem-resposta":
+    "a lista de revogações não chegou, então não sabemos o que foi retirado. A ausência de aviso de revogação aqui vem da falta da lista, e não de ela estar vazia. Consulte de novo antes de instalar ou de hospedar.",
+  "assinatura-nao-confere":
+    "a lista de revogações e a assinatura dela não combinam. Quase sempre é cache: um dos dois chegou velho de um nó da CDN. Consulte de novo daqui a um minuto. Enquanto não combinarem, a lista não é usada.",
+  "comentario-adulterado":
+    "os bytes da lista batem com a assinatura, mas o comentário confiável — o texto que diz o que foi assinado — foi trocado depois. Isso não é cache, e a lista não é usada.",
+  "json-ilegivel":
+    "a lista chegou assinada, mas não é JSON legível. A assinatura confere, então o defeito é de quem gerou o arquivo, e não da rede — e a lista não é usada.",
+  "formato-inesperado":
+    "a lista chegou assinada, mas não tem a forma de uma lista de revogações. A assinatura confere, então o defeito é de quem gerou o arquivo — e a lista não é usada.",
+  "sem-ed25519":
+    "este navegador não confere assinaturas Ed25519, então a lista de revogações não foi conferida aqui — e o que não foi conferido não é usado. Quem confere de verdade é o app.",
+};
+
+const GRUPOS = {
+  motivos: MOTIVOS,
+  notas: NOTAS,
+  niveis: NIVEIS,
+  rotulos: ROTULOS_DE_NIVEL,
+  falhas: FALHAS,
+  revogacoes: REVOGACOES,
+};
 
 /**
  * A frase de um identificador.

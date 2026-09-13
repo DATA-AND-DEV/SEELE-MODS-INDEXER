@@ -1,8 +1,11 @@
 // SEELE MODS — o único módulo que toca o DOM.
 //
-// É o único de propósito: os outros cinco são funções puras testáveis com
+// É o único de propósito: os outros são funções puras testáveis com
 // `node --test`, e um teste de DOM aqui exigiria a dependência de build que
-// este desenho existe para não ter.
+// este desenho existe para não ter. É também por isso que as decisões saem
+// daqui em vez de morarem entre dois `createElement` — «esta lista pode
+// dizer que nada foi retirado?» é do `revogacoes.js`, e é lá que ela tem
+// teste.
 //
 // Tudo é montado com `textContent` e `createElement`. Nenhum `innerHTML`
 // com dado do catálogo: o catálogo é assinado, mas «assinado» não é
@@ -11,10 +14,29 @@
 
 "use strict";
 
-import { ORDENS, versaoMaisRecente } from "./catalogo.js";
+import {
+  ORDENS,
+  acaoDeInstalar,
+  avaliacaoDaVersao,
+  versaoEscolhida,
+} from "./catalogo.js";
 import { frase } from "./frases.js";
+import { foiConferida, paraTela } from "./revogacoes.js";
 
 const NIVEIS_DA_LATERAL = ["oficial", "verificado", "com-notas"];
+
+/**
+ * A versão que a pessoa escolheu NESTE MOD, ou `null`.
+ *
+ * As escolhas ficam por id porque a lista mostra vários MODs ao mesmo tempo:
+ * uma escolha só, guardada solta, ou vazaria de um MOD para o outro — a 1.0.0
+ * que alguém escolheu aqui carimbando a 1.0.0 de lá, que é outra avaliação —
+ * ou teria de ser apagada ao sair da ficha, e então o cartão nunca teria o que
+ * mostrar além da mais recente.
+ */
+function escolhaDe(estado, id) {
+  return estado.escolhas?.get(id) ?? null;
+}
 
 function elemento(etiqueta, classe, texto) {
   const no = document.createElement(etiqueta);
@@ -49,17 +71,24 @@ export function textoDaIdade(publicado_em, agora) {
  * O hash e o commit saem **inteiros**: o primeiro é o número que uma pessoa
  * compara a olho com o que o app mostra, e o segundo abreviado colide.
  *
+ * Nível e commit saem de `avaliacaoDaVersao` e não do MOD: esta ficha fala de
+ * UMA versão, e todas as linhas dela têm de falar da mesma. Com o nível do MOD
+ * aqui, escolher a versão antiga trocava o hash e os arquivos e deixava o
+ * veredito da versão nova no lugar — a ficha afirmando sobre estes bytes uma
+ * revisão que foi feita em outros.
+ *
  * Não há estrelas nem downloads. Não os medimos — e o índice não coleta
  * nada, que é metade do argumento de ele ser arquivo parado.
  */
 export function linhasDaFicha(mod, versao) {
+  const avaliacao = avaliacaoDaVersao(mod, versao);
   return [
     { rotulo: "VERSÃO", valor: versao.versao },
     { rotulo: "API", valor: String(versao.api) },
     { rotulo: "ARQUIVOS", valor: String(versao.arquivos.length) },
-    { rotulo: "NÍVEL", valor: frase("niveis", mod.nivel) },
+    { rotulo: "NÍVEL", valor: frase("niveis", avaliacao.nivel) },
     { rotulo: "HASH DO CONTEÚDO", valor: versao.hash, mono: true },
-    { rotulo: "COMMIT AVALIADO", valor: mod.commit, mono: true },
+    { rotulo: "COMMIT AVALIADO", valor: avaliacao.commit, mono: true },
   ];
 }
 
@@ -69,11 +98,64 @@ function selo(nivel) {
   return no;
 }
 
-function cartao(mod, agora, aoAbrir) {
+/**
+ * O que o cartão da lista diz: número, idade e selo — todos da MESMA versão.
+ *
+ * A versão é a escolhida, e não a mais recente. Enquanto a escolha morria ao
+ * sair da ficha, as duas coincidiam sempre, e por isso o cartão podia ler o
+ * MOD sem que nada caísse: o número vinha de `versaoMaisRecente(mod)` e o selo
+ * do veredito do MOD. São duas contas diferentes sobre coisas diferentes, e um
+ * cartão que anuncia «1.0.0» com o selo da 2.0.0 diz sobre estes bytes uma
+ * revisão feita em outros — no lugar em que os selos são olhados em série, que
+ * é onde se decide qual MOD abrir.
+ *
+ * `outraRevogada` existe para não perder o que o selo por MOD dizia. Ele
+ * ficava vermelho quando QUALQUER versão do MOD tinha sido retirada, e isso é
+ * informação que vale; só não é o selo desta versão. Vermelho sobre um número
+ * que ninguém retirou é tão falso quanto a falta dele sobre um que foi.
+ */
+export function dadosDoCartao(mod, numeroEscolhido, agora) {
+  const versao = versaoEscolhida(mod, numeroEscolhido);
+  return {
+    versao: versao.versao,
+    idade: textoDaIdade(versao.publicado_em, agora),
+    nivel: versao.revogada ? "revogada" : avaliacaoDaVersao(mod, versao).nivel,
+    outraRevogada: (mod.versoes ?? []).some(
+      (v) => v.revogada && v.versao !== versao.versao,
+    ),
+  };
+}
+
+/**
+ * O que dizer quando a versão escolhida não é a que o identificador traz.
+ *
+ * O app aceita `autor/nome` e instala a mais recente — é o passo 5 do «o que o
+ * cliente faz», e não há hoje forma de pedir uma versão por ali. Então a tela
+ * não pode oferecer o id em silêncio embaixo de uma ficha da 1.0.0: quem
+ * digitasse instalaria a 2.0.0 achando que instalou o que leu.
+ *
+ * O aviso nomeia o número que o identificador traz de verdade, e aponta para o
+ * caminho que traz ESTES bytes: a lista de arquivos desta versão, com o hash
+ * desta versão para conferir. Um `autor/nome@versao` resolveria melhor, e é
+ * mudança no app SEELE — escrevê-lo aqui seria anunciar um contrato que o
+ * outro lado não tem.
+ */
+export function avisoDaEscolha(acao) {
+  if (acao.ehMaisRecente) return null;
+  return (
+    `O identificador acima instala a versão mais recente (${acao.maisRecente}), ` +
+    `e não a ${acao.versao} que está nesta tela. Para ficar nesta versão, use os ` +
+    "arquivos listados abaixo e confira o hash desta ficha."
+  );
+}
+
+function cartao(mod, numeroEscolhido, agora, aoAbrir) {
   const raiz = elemento("article", "cartao");
   const botao = elemento("button", "cartao-abrir");
   botao.type = "button";
   botao.addEventListener("click", () => aoAbrir(mod.id));
+
+  const dados = dadosDoCartao(mod, numeroEscolhido, agora);
 
   const topo = elemento("span", "cartao-topo");
   const nomes = elemento("span", "cartao-nomes");
@@ -81,19 +163,21 @@ function cartao(mod, agora, aoAbrir) {
     elemento("span", "cartao-titulo", mod.titulo),
     elemento("span", "cartao-repo", mod.id),
   );
-  topo.append(nomes, selo(mod.temRevogada ? "revogada" : mod.nivel));
+  topo.append(nomes, selo(dados.nivel));
 
-  const recente = versaoMaisRecente(mod);
   const numeros = elemento("span", "numeros");
   numeros.append(
-    elemento("span", "numero", recente.versao),
+    elemento("span", "numero", dados.versao),
     elemento("span", "numero-rotulo", "VERSÃO"),
     elemento("span", "espaco"),
-    elemento("span", "numero", textoDaIdade(recente.publicado_em, agora)),
+    elemento("span", "numero", dados.idade),
     elemento("span", "numero-rotulo", "PUBLICADA"),
   );
 
   botao.append(topo, elemento("span", "cartao-resumo", mod.resumo), numeros);
+  if (dados.outraRevogada) {
+    botao.append(elemento("span", "cartao-retirada", "OUTRA VERSÃO DESTE MOD FOI RETIRADA"));
+  }
   raiz.append(botao);
   return raiz;
 }
@@ -143,11 +227,30 @@ function telaCatalogo(estado, acoes) {
     ),
   );
 
+  // O selo do cartão vira «revogada» a partir de uma lista que pode não ter
+  // sido conferida — e quando ela não foi, a ausência do vermelho num cartão
+  // é silêncio, não veredito. A tela de revogações já diz isso de si mesma,
+  // e a ficha do MOD também; faltava dizê-lo onde os selos são olhados em
+  // série, que é aqui.
+  if (!foiConferida(estado.revogacoes)) {
+    const nota = elemento(
+      "p",
+      "nota-dos-selos",
+      estado.revogacoes.estado === "consultando"
+        ? "A lista de revogações ainda está sendo consultada: os selos abaixo ainda não dizem se um MOD foi retirado."
+        : "A lista de revogações não foi conferida, e o que não foi conferido não é usado: os selos abaixo não dizem se um MOD foi retirado. A aba Revogações explica o que houve.",
+    );
+    nota.dataset.estado = estado.revogacoes.estado;
+    painel.append(nota);
+  }
+
   if (estado.lista.length === 0) {
     painel.append(elemento("p", "vazio", "NENHUM MOD BATE COM ESSA BUSCA"));
   } else {
     const grade = elemento("div", "grade");
-    for (const mod of estado.lista) grade.append(cartao(mod, estado.agora, acoes.abrir));
+    for (const mod of estado.lista) {
+      grade.append(cartao(mod, escolhaDe(estado, mod.id), estado.agora, acoes.abrir));
+    }
     painel.append(grade);
   }
 
@@ -155,7 +258,52 @@ function telaCatalogo(estado, acoes) {
   return raiz;
 }
 
-function telaMod(estado) {
+/**
+ * A lista de versões como ela é LIDA: número, selo e qual está escolhida.
+ *
+ * É função exportada e pura pelo mesmo motivo de `linhasDaFicha`: as decisões
+ * saem do meio dos `createElement` para poderem ter teste sem DOM. A que mora
+ * aqui é a que o defeito desta rodada tinha errado — de quem é o selo.
+ *
+ * Da mais recente para a mais antiga, porque é a ordem em que se procura.
+ */
+export function botoesDeVersao(mod, escolhida) {
+  return [...mod.versoes]
+    .sort((a, b) => b.publicado_em - a.publicado_em)
+    .map((v) => ({
+      versao: v.versao,
+      // O selo é o da versão da linha, nunca o do MOD: é ele que diz que
+      // trocar de versão troca o veredito, e é a única coisa na tela que
+      // avisa disso antes de a pessoa clicar.
+      nivel: v.revogada ? "revogada" : avaliacaoDaVersao(mod, v).nivel,
+      escolhida: v.versao === escolhida.versao,
+    }));
+}
+
+/**
+ * Os botões que trocam a versão em exibição.
+ *
+ * Só aparece com mais de uma versão: um botão sozinho não é uma escolha, e o
+ * número da única versão já está na ficha logo abaixo.
+ */
+function blocoDasVersoes(mod, escolhida, acoes) {
+  const bloco = elemento("section", "grupo");
+  bloco.append(elemento("span", "rotulo", "VERSÕES AVALIADAS"));
+  const linha = elemento("div", "versoes");
+  for (const item of botoesDeVersao(mod, escolhida)) {
+    const botao = elemento("button", "filtro", item.versao);
+    botao.type = "button";
+    botao.dataset.versao = item.versao;
+    botao.setAttribute("aria-pressed", String(item.escolhida));
+    botao.append(selo(item.nivel));
+    botao.addEventListener("click", () => acoes.escolherVersao(item.versao));
+    linha.append(botao);
+  }
+  bloco.append(linha);
+  return bloco;
+}
+
+function telaMod(estado, acoes) {
   const mod = estado.lista.find((m) => m.id === estado.id) ?? estado.todos.find((m) => m.id === estado.id);
   const painel = elemento("div", "painel");
   if (!mod) {
@@ -163,22 +311,51 @@ function telaMod(estado) {
     return painel;
   }
 
-  const versao = versaoMaisRecente(mod);
+  const versao = versaoEscolhida(mod, escolhaDe(estado, mod.id));
+  const avaliacao = avaliacaoDaVersao(mod, versao);
   painel.append(elemento("h1", null, mod.titulo));
   painel.append(elemento("span", "resumo-da-lista", `${mod.id} · ${mod.repo}`));
   painel.append(elemento("p", "cartao-resumo", mod.resumo));
 
+  // A escolha vem ANTES de tudo o que ela muda: notas, ficha e arquivos falam
+  // da versão escolhida, e uma tela que só revelasse isso depois faria a
+  // pessoa reler o que já tinha lido.
+  if (mod.versoes.length > 1 && acoes?.escolherVersao) {
+    painel.append(blocoDasVersoes(mod, versao, acoes));
+  }
+
   // As notas vêm ANTES de tudo o que parece um botão de instalar: uma nota
   // que a pessoa lê depois de instalar não é uma nota.
-  if (mod.notas.length > 0) {
+  //
+  // E são as notas DESTA versão. As do MOD são as da avaliação mais recente:
+  // mostrá-las sobre uma versão antiga esconderia a ressalva que aquela
+  // versão tem e anunciaria uma que ela não tem.
+  if (avaliacao.notas.length > 0) {
     const bloco = elemento("section", "grupo");
-    bloco.append(elemento("span", "rotulo", "O QUE A AVALIAÇÃO ACHOU DE INCOMUM"));
-    for (const nota of mod.notas) bloco.append(elemento("p", "nota", frase("notas", nota)));
+    bloco.append(elemento("span", "rotulo", "O QUE A AVALIAÇÃO ACHOU DE INCOMUM NESTA VERSÃO"));
+    for (const nota of avaliacao.notas) bloco.append(elemento("p", "nota", frase("notas", nota)));
     painel.append(bloco);
   }
 
-  const revogada = versao.revogada;
-  if (revogada) {
+  // Esta é a tela onde alguém decide instalar, e é por isso que a consulta
+  // das revogações aparece aqui mesmo quando ela falhou: sem este bloco, a
+  // ausência do aviso «esta versão foi retirada» seria lida como «esta
+  // versão não foi retirada» — uma afirmação que ninguém conferiu.
+  if (!foiConferida(estado.revogacoes)) {
+    const bloco = elemento("section", "grupo");
+    bloco.append(elemento("span", "rotulo", "NÃO SABEMOS SE ESTA VERSÃO FOI RETIRADA"));
+    bloco.append(
+      elemento(
+        "p",
+        "cartao-resumo",
+        estado.revogacoes.estado === "consultando"
+          ? "A lista de revogações ainda está sendo consultada."
+          : frase("revogacoes", estado.revogacoes.causa),
+      ),
+    );
+    painel.append(bloco);
+  } else if (versao.revogada) {
+    const revogada = versao.revogada;
     const bloco = elemento("section", "grupo");
     bloco.append(elemento("span", "rotulo", "ESTA VERSÃO FOI RETIRADA"));
     bloco.append(elemento("p", "cartao-resumo", frase("motivos", revogada.motivo)));
@@ -199,12 +376,20 @@ function telaMod(estado) {
 
   // O que o app de fato oferece: o id para digitar, e os caminhos imutáveis.
   // `seele://mod/<id>` não existe — aquele esquema é o convite de servidor.
+  //
+  // Tudo daqui para baixo sai de `acaoDeInstalar(mod, versao)`, e da MESMA
+  // versão: o identificador, o aviso, os caminhos dos arquivos e o hash que
+  // quem baixa usa para conferir. Montados soltos, cada um podia passar a
+  // falar de uma versão diferente sem nada cair.
+  const acao = acaoDeInstalar(mod, versao);
   const comoInstalar = elemento("section", "grupo");
   comoInstalar.append(elemento("span", "rotulo", "COMO INSTALAR"));
   comoInstalar.append(
     elemento("p", "cartao-resumo", "No app, em Configurações · Mods, digite o identificador abaixo. O app baixa os arquivos, confere o hash e recusa se não bater."),
   );
-  comoInstalar.append(elemento("code", "hash", mod.id));
+  comoInstalar.append(elemento("code", "hash", acao.identificador));
+  const aviso = avisoDaEscolha(acao);
+  if (aviso) comoInstalar.append(elemento("p", "aviso-da-escolha", aviso));
   painel.append(comoInstalar);
 
   if (versao.alcanca.length > 0) {
@@ -216,10 +401,9 @@ function telaMod(estado) {
 
   const arquivos = elemento("section", "grupo");
   arquivos.append(elemento("span", "rotulo", "OS ARQUIVOS DESTA VERSÃO"));
-  const base = `mods/${mod.autor}/${mod.nome}/${versao.versao}/`;
-  for (const caminho of versao.arquivos) {
-    const link = elemento("a", null, caminho);
-    link.href = base + caminho;
+  for (const arquivo of acao.arquivos) {
+    const link = elemento("a", null, arquivo.caminho);
+    link.href = arquivo.url;
     arquivos.append(link);
   }
   painel.append(arquivos);
@@ -231,23 +415,60 @@ function telaMod(estado) {
   return painel;
 }
 
-function telaRevogacoes(estado) {
+/**
+ * O bloco que ocupa o lugar da tabela quando a consulta não foi conferida.
+ *
+ * Ele tem um botão e o aviso de integridade do catálogo não tem, e não é
+ * incoerência: o ADR 0029 recusa «tentar assim mesmo», que é usar o dado
+ * ruim. Consultar de novo é o contrário disso — é buscar um dado bom, e é
+ * o único caminho de volta, porque a lista chega por uma requisição que
+ * pode simplesmente ter pegado um nó ruim da CDN.
+ */
+function blocoDaConsultaRecusada(oQue, acoes) {
+  const bloco = elemento("section", "aviso-das-revogacoes");
+  bloco.dataset.estado = oQue.estado;
+  bloco.append(elemento("span", "rotulo", "A LISTA DE REVOGAÇÕES NÃO FOI CONFERIDA"));
+  bloco.append(elemento("p", null, frase("revogacoes", oQue.causa)));
+
+  // Fora de `sem-ed25519`: ali o que falta é o navegador, e um botão que
+  // não pode funcionar é uma promessa falsa.
+  if (oQue.causa !== "sem-ed25519" && acoes?.reconsultarRevogacoes) {
+    const botao = elemento("button", "botao", "CONSULTAR DE NOVO");
+    botao.type = "button";
+    botao.addEventListener("click", () => acoes.reconsultarRevogacoes());
+    bloco.append(botao);
+  }
+  return bloco;
+}
+
+function telaRevogacoes(estado, acoes) {
   const painel = elemento("div", "painel");
   painel.append(elemento("h1", null, "Revogações"));
   painel.append(
     elemento("p", "cartao-resumo", "MODs retirados e versões do produto revogadas, na mesma lista — são a mesma peça. Uma revogação impede instalar e impede hospedar; ela não apaga o que já está numa máquina."),
   );
 
-  const linhas = [
-    ...(estado.revogacoes?.mods ?? []).map((r) => ({ o_que: `${r.id} ${r.versao}`, ...r })),
-    ...(estado.revogacoes?.versoes_do_produto ?? []).map((r) => ({ o_que: `SEELE ${r.versao}`, ...r })),
-  ].sort((a, b) => b.desde - a.desde);
+  const oQue = paraTela(estado.revogacoes);
 
-  if (linhas.length === 0) {
+  if (oQue.mostrar === "consultando") {
+    painel.append(elemento("p", "vazio", "CONSULTANDO A LISTA DE REVOGAÇÕES"));
+    return painel;
+  }
+
+  if (oQue.mostrar === "recusa") {
+    painel.append(blocoDaConsultaRecusada(oQue, acoes));
+    return painel;
+  }
+
+  if (oQue.mostrar === "vazio") {
+    // A única frase deste site que afirma ausência de revogação, e ela só
+    // é alcançável depois de a assinatura conferir. Antes, qualquer falha
+    // caía aqui e dizia isto sem ter conferido nada.
     painel.append(elemento("p", "vazio", "NADA FOI RETIRADO ATÉ AGORA"));
     return painel;
   }
 
+  const linhas = oQue.linhas;
   const rolagem = elemento("div", "rolagem");
   const tabela = elemento("table", "tabela");
   const cabecalho = elemento("tr");
