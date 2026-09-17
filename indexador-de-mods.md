@@ -328,6 +328,46 @@ indexador que passa por revisão humana de qualquer jeito, isso não é o gargal
 que atesta duas coisas deixa as duas se passarem uma pela outra, e a do 0026
 autoriza instalar programa.
 
+## Pôr no ar pela primeira vez, e o que falta hoje
+
+**Escrito em 2026-09-17**, quando `publicado/` foi gerado pela primeira vez.
+
+### O que já está feito
+
+- `ferramentas/gerar.py` roda e produz `publicado/` inteiro, com
+  `catalogo.json` e `revogacoes.json` assinados pela chave de MOD. Conferido
+  com `minisign -V`: *«Signature and comment signature verified»*.
+- **O catálogo está vazio**, e isso é o estado correto: nenhum MOD foi avaliado
+  ainda. Um catálogo vazio e assinado é o primeiro dia do serviço, e o cliente
+  o aceita — há teste para isso, do outro lado.
+- O cliente do SEELE **fala este formato**. Os quatro arquivos assinados daqui
+  são vetor de teste em `apps/seele-app/testes/` do repositório do produto, e a
+  suíte de lá reprova se os dois lados divergirem. Sem esse vetor, as duas
+  suítes ficavam verdes enquanto discordavam — e ficaram, por meses.
+- O botão de solicitação de inclusão **aponta para um repositório que existe**.
+  Ele apontava para `seele/SEELE-MODS-INDEXER`, que é 404: o canal existia e
+  não levava a lugar nenhum, que é pior que não existir. Há guarda agora.
+- Há modelo de issue em `.github/ISSUE_TEMPLATE/`, para a solicitação chegar
+  com repositório, commit, descrição e alcance — sem eles a avaliação não
+  começa, e cada campo que falta é uma ida e volta.
+
+### O que falta, e é de quem opera
+
+1. **Apontar `mods.seele.app.br`.** Hoje ele não resolve; `seele.app.br`
+   resolve. É um registro de DNS e a ligação do projeto do Pages ao domínio.
+2. **Criar o projeto na Cloudflare Pages** servindo `publicado/` deste
+   repositório, sem build remoto — o conteúdo já vem pronto. **Não ligue Web
+   Analytics nem Logpush**, e não ponha nada de análise: a seção de cima diz
+   por quê, e é a única parte disto que não dá para desfazer depois.
+3. **Gerar a chave de produção.** A que assina hoje é a de desenvolvimento,
+   como `chaves/LEIA.md` diz. Trocar `mods.pub` depois de um cliente publicado
+   é uma release do cliente, não uma edição de arquivo: todo SEELE no mundo tem
+   a chave antiga compilada dentro.
+4. **Commitar `publicado/`** — o commit é o deploy.
+
+A ordem importa: a chave de produção antes de qualquer cliente publicado
+conhecer a de desenvolvimento.
+
 ## O que o cliente faz, na ordem
 
 Escrito aqui porque é o que o site tem de suportar, e nada além:

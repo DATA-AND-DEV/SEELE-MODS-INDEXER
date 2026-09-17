@@ -1,0 +1,18 @@
+{
+  "comentario": "As listas fechadas. Fonte única para gerar.py e frases.js — se fossem duas, um motivo novo entraria no catálogo sem frase e a tela mostraria o identificador cru. O guarda é um teste, não a disciplina de quem edita.",
+  "motivos": [
+    "credencial-vazada",
+    "leitura-de-disco-fora-da-pasta",
+    "rede-nao-declarada",
+    "dado-enviado-a-terceiro",
+    "nao-corresponde-ao-commit",
+    "pedido-do-autor",
+    "migracao-que-corrompe"
+  ],
+  "notas": [
+    "fala-com-terceiro",
+    "guarda-dados-na-maquina",
+    "substitui-a-interface-inteira",
+    "roda-no-servidor"
+  ]
+}

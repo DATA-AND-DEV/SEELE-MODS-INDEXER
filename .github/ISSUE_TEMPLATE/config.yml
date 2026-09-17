@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Como se faz um MOD
+    url: https://github.com/DATA-AND-DEV/SEELE/blob/main/docs/como-se-faz-um-mod.md
+    about: O passo a passo de escrever e testar um MOD antes de pedir inclusão.

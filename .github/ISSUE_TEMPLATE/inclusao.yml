@@ -1,0 +1,66 @@
+name: Inclusão de um MOD no catálogo
+description: Peça que um MOD seu seja avaliado e entre em mods.seele.app.br
+title: "inclusão: <autor>/<nome>"
+labels: ["inclusão"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **O índice guarda o veredito e o commit, não o seu código.** Você publica
+        no seu repositório; aqui fica registrado qual commit foi avaliado e o que
+        a avaliação achou, e o catálogo serve os bytes que saem daquele commit.
+
+        **O que a avaliação é, e o que ela não é.** É um filtro, e não uma prova.
+        Ela pega o óbvio — `eval` de string remota, exfiltração escancarada,
+        ofuscação. Ela não pega o caminho sutil na décima função de um arquivo
+        limpo. «Verificado» quer dizer que passou no filtro, e não que é seguro.
+
+  - type: input
+    id: repositorio
+    attributes:
+      label: URL do repositório
+      description: Público, porque é o que torna a avaliação conferível por qualquer pessoa.
+      placeholder: https://github.com/voce/meu-mod
+    validations:
+      required: true
+
+  - type: input
+    id: commit
+    attributes:
+      label: Commit a avaliar
+      description: >
+        O SHA completo. A avaliação fixa este commit — um push depois da
+        aprovação não muda o que ninguém baixa, e exige solicitação nova.
+      placeholder: a1b2c3d4e5f6...
+    validations:
+      required: true
+
+  - type: textarea
+    id: oque
+    attributes:
+      label: O que o MOD faz
+      description: Uma ou duas frases, como alguém as leria antes de instalar.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alcance
+    attributes:
+      label: O que ele alcança
+      description: >
+        O `reach` do seu `mod.json`, e o que cada item quer dizer na prática.
+        Quem entra num servidor com o seu MOD lê esta lista antes de aceitar.
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: confirmacoes
+    attributes:
+      label: Antes de mandar
+      options:
+        - label: O `mod.json` declara `repo` apontando para este repositório.
+          required: true
+        - label: O identificador é `autor/nome`, em minúsculas, e bate com a pasta.
+          required: true
+        - label: Li que o veredito pode ser «negado», e que ele é público.
+          required: true

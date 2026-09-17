@@ -7,6 +7,7 @@ import {
   dadosDoCartao,
   linhasDaFicha,
   textoDaIdade,
+  enderecoDaSolicitacao,
 } from "../tela.js";
 import { acaoDeInstalar } from "../catalogo.js";
 
@@ -226,4 +227,29 @@ test("escolhida uma versão antiga, a tela avisa que o identificador traz outra"
   // O número que o identificador realmente traz aparece na frase: sem ele, o
   // aviso diz que há uma diferença sem dizer qual.
   assert.match(aviso, /2\.0\.0/);
+});
+
+test("a solicitação de inclusão aponta para o repositório que existe", () => {
+  // **A organização já esteve errada aqui**, e o defeito era mudo: o endereço
+  // dizia `seele/SEELE-MODS-INDEXER`, que é 404. O botão abria, o GitHub
+  // respondia «não encontrado», e quem tentasse publicar um MOD concluiria que
+  // o projeto não aceita submissões — quando o que estava quebrado era o
+  // caminho. Um canal que existe e não leva a lugar nenhum é pior que canal
+  // nenhum, porque ninguém volta a procurá-lo.
+  const endereco = enderecoDaSolicitacao();
+  assert.ok(
+    endereco.startsWith("https://github.com/DATA-AND-DEV/SEELE-MODS-INDEXER/issues/new"),
+    `a solicitação aponta para ${endereco}`,
+  );
+  assert.ok(!endereco.includes("/seele/"), "voltou a apontar para a organização errada");
+
+  // E o corpo continua pedindo as quatro coisas sem as quais a avaliação não
+  // começa. Uma issue que chega sem o commit é uma ida e volta a mais para
+  // todo mundo.
+  const url = new URL(endereco);
+  const corpo = url.searchParams.get("body") ?? "";
+  for (const pedido of ["URL do repositório", "Commit a avaliar", "O que o mod faz", "alcança"]) {
+    assert.ok(corpo.includes(pedido), `a solicitação não pede «${pedido}»`);
+  }
+  assert.equal(url.searchParams.get("labels"), "inclusão");
 });
