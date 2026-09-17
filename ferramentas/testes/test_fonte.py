@@ -17,6 +17,7 @@ import pytest
 
 from ferramentas import fonte
 from ferramentas.fonte import materializar
+from ferramentas.hash_conteudo import conteudo
 from ferramentas.recusa import Recusado
 
 
@@ -486,3 +487,69 @@ def test_cache_que_e_arquivo_da_git_falhou(repo, tmp_path, contagem):
     assert erro.value.codigo == "git-falhou"
     assert contagem.clones == 0
     assert contagem.reconstrucoes == 0
+
+
+# --- 9: o metadado do git sai, e não derruba o commit ------------------------
+
+
+def test_metadado_do_git_e_omitido_em_vez_de_recusar_o_commit(repo, tmp_path):
+    """A regra que o primeiro MOD de verdade encontrou.
+
+    `.gitignore` estava na mesma lista que `.DS_Store` desde o commit que criou
+    este módulo — escrito antes de existir MOD nenhum para recusar. Todo
+    repositório normal tem um, então a regra não barrava descuido: barrava
+    publicar."""
+    origem, _ = repo
+    (origem / ".gitignore").write_text("node_modules/\n", encoding="utf-8")
+    (origem / ".gitattributes").write_text("* text=auto\n", encoding="utf-8")
+    git(origem, "add", "-A")
+    git(origem, "commit", "-q", "-m", "com metadado do git")
+    commit = git(origem, "rev-parse", "HEAD")
+
+    arquivos = materializar(str(origem), commit, tmp_path / "cache")
+
+    caminhos = [c for c, _ in arquivos]
+    assert caminhos == ["cliente/main.js", "mod.json"], "só o MOD, sem o metadado"
+
+
+def test_metadado_omitido_nao_muda_o_hash_de_quem_nao_o_tinha(repo, tmp_path):
+    """Omitir é invisível ao cliente, e é isso que faz a omissão ser segura.
+
+    O `content_hash` e a lista `arquivos` descrevem o conjunto publicado. Se o
+    `.gitignore` mudasse o hash, dois commits com o mesmo MOD e `.gitignore`
+    diferentes publicariam pacotes diferentes — e o cliente teria de baixar de
+    novo por causa de um arquivo que ele nunca recebe."""
+    origem, commit_limpo = repo
+    antes = conteudo(materializar(str(origem), commit_limpo, tmp_path / "cache-a"))
+
+    (origem / ".gitignore").write_text("node_modules/\n", encoding="utf-8")
+    git(origem, "add", "-A")
+    git(origem, "commit", "-q", "-m", "com .gitignore")
+    depois = conteudo(
+        materializar(str(origem), git(origem, "rev-parse", "HEAD"), tmp_path / "cache-b")
+    )
+
+    assert antes == depois
+
+
+def test_a_sujeira_do_sistema_continua_recusando_o_commit(repo, tmp_path):
+    """O outro lado da separação, para que ela não vire «passa tudo».
+
+    `.DS_Store` não é escolha de ninguém: o sistema o cria em qualquer pasta
+    que alguém abriu. Um deles comitado diz que quem publica não olhou o que
+    comitou, e isso é sobre o commit inteiro, não sobre um arquivo."""
+    origem, _ = repo
+    (origem / ".gitignore").write_text("node_modules/\n", encoding="utf-8")
+    (origem / ".DS_Store").write_bytes(b"\x00lixo")
+    git(origem, "add", "-A", "-f")
+    git(origem, "commit", "-q", "-m", "metadado e lixo")
+    commit = git(origem, "rev-parse", "HEAD")
+
+    with pytest.raises(Recusado) as erro:
+        materializar(str(origem), commit, tmp_path / "cache")
+
+    assert erro.value.codigo == "arquivo-estranho"
+    assert ".DS_Store" in erro.value.detalhe
+    # E o omitido não aparece na recusa: ele não é o motivo, e nomeá-lo mandaria
+    # quem publica remover o arquivo errado.
+    assert ".gitignore" not in erro.value.detalhe

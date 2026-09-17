@@ -16,9 +16,23 @@ from ferramentas.recusa import Recusado
 # disco pelo servidor sem entrarem na lista `arquivos` do catálogo. O
 # resultado seria o cliente recusando o MOD com «o hash não bate», que é a
 # nossa palavra para «adulterado» — apontando para o lugar errado.
-RECUSADOS = frozenset(
-    {".DS_Store", "Thumbs.db", "desktop.ini", ".gitattributes", ".gitignore", ".gitmodules"}
-)
+#
+# Estes três aparecem **sozinhos**: o sistema operacional os cria em qualquer
+# pasta que alguém abriu, sem ninguém pedir. Recusar o commit é o certo, porque
+# um deles no repositório significa que quem publica não olhou o que comitou.
+RECUSADOS = frozenset({".DS_Store", "Thumbs.db", "desktop.ini"})
+
+# O metadado do git é outra coisa, e a diferença é quem o criou: ninguém comita
+# `.gitignore` por descuido — ele está lá porque o autor o escreveu, e todo
+# repositório normal tem um. Recusar o commit por causa dele não protegia
+# ninguém; só tornava impossível publicar um MOD de verdade, o que se descobriu
+# no primeiro que apareceu. Estes são **omitidos** do conjunto publicado.
+#
+# Omitir não abre brecha: o `content_hash` e a lista `arquivos` do catálogo
+# descrevem o conjunto publicado, e é sobre esse conjunto que o cliente
+# confere. O que não é publicado não é baixado, não entra no hash de nenhum dos
+# dois lados, e não existe para o SEELE.
+OMITIDOS = frozenset({".gitattributes", ".gitignore", ".gitmodules"})
 SUFIXOS_RECUSADOS = (".swp", ".swo", ".orig", ".rej", ".pyc")
 PASTAS_RECUSADAS = frozenset({".git", "__pycache__", "node_modules", ".idea", ".vscode"})
 
@@ -129,6 +143,11 @@ def _garantir_espelho(repo: str, cache: Path, espelho: Path) -> bool:
     return True
 
 
+def _omitido(caminho: str) -> bool:
+    """Metadado do git, que sai do conjunto publicado sem recusar o commit."""
+    return caminho.split("/")[-1] in OMITIDOS
+
+
 def _estranho(caminho: str) -> bool:
     partes = caminho.split("/")
     if any(parte in PASTAS_RECUSADAS for parte in partes[:-1]):
@@ -188,7 +207,9 @@ def _uma_tentativa(repo: str, commit: str, cache: Path, espelho: Path) -> list[t
         raise Recusado("commit-ausente", f"{repo}@{commit}")
 
     listagem = _git(espelho, "ls-tree", "-r", "-z", "--name-only", commit, cache=cache)
-    caminhos = [c for c in listagem.split("\0") if c]
+    # A omissão vem antes da recusa porque as duas listas são disjuntas e a
+    # ordem só decide qual erro um arquivo omitido daria — nenhum, que é o ponto.
+    caminhos = [c for c in listagem.split("\0") if c and not _omitido(c)]
 
     estranhos = sorted(c for c in caminhos if _estranho(c))
     if estranhos:

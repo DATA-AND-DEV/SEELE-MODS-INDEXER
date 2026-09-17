@@ -249,3 +249,9 @@ das migrações, e o `gerar.py` a cobra.
 - Há modelo de issue, com os quatro campos sem os quais a avaliação não começa.
 - O assinador aceita chave com senha (`MINISIGN_PASSWORD`).
 - `wrangler.jsonc` fixa o diretório de saída.
+- O metadado do git (`.gitignore`, `.gitattributes`, `.gitmodules`) é
+  **omitido** do conjunto publicado, e não mais motivo para recusar o commit.
+  Ele estava na mesma lista que `.DS_Store` desde antes de existir MOD algum —
+  e como todo repositório normal tem um `.gitignore`, a regra não barrava
+  descuido nenhum: barrava publicar. A sujeira que o sistema cria sozinha
+  continua derrubando o commit inteiro.
