@@ -7,7 +7,7 @@ identificador cru para quem lê."""
 import pytest
 
 from ferramentas.recusa import Recusado
-from ferramentas.manifesto import ler
+from ferramentas.manifesto import ESQUEMA_DO_MANIFESTO, VERSAO_DA_API, ler
 
 VALIDO = """
 {
@@ -43,16 +43,28 @@ def test_chave_desconhecida_e_malformed():
     assert erro.value.codigo == "malformed"
 
 
+# Os dois «do futuro» saem das constantes, e não de um número escrito à mão.
+# `api` era um `2` literal, e no dia em que a API foi a 2 o teste passou a
+# afirmar que o presente é o futuro — continuou verde afirmando o contrário do
+# que o nome dele diz.
 def test_esquema_do_futuro_e_schema_too_new():
+    futuro = ESQUEMA_DO_MANIFESTO + 1
     with pytest.raises(Recusado) as erro:
-        ler('{"schema":2,"id":"a/b","version":"1","api":1,"repo":"r","client":"c.js"}')
+        ler(f'{{"schema":{futuro},"id":"a/b","version":"1","api":1,"repo":"r","client":"c.js"}}')
     assert erro.value.codigo == "schema-too-new"
 
 
 def test_api_do_futuro_e_api_too_new():
+    futuro = VERSAO_DA_API + 1
     with pytest.raises(Recusado) as erro:
-        ler('{"schema":1,"id":"a/b","version":"1","api":2,"repo":"r","client":"c.js"}')
+        ler(f'{{"schema":1,"id":"a/b","version":"1","api":{futuro},"repo":"r","client":"c.js"}}')
     assert erro.value.codigo == "api-too-new"
+
+
+def test_a_api_de_hoje_e_aceita():
+    """A outra metade, sem a qual o teste acima passaria com a API em zero."""
+    m = ler(f'{{"schema":1,"id":"a/b","version":"1","api":{VERSAO_DA_API},"repo":"r","client":"c.js"}}')
+    assert m.api == VERSAO_DA_API
 
 
 @pytest.mark.parametrize(

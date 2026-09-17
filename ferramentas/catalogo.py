@@ -8,6 +8,7 @@ alguém buscou o catálogo."""
 from dataclasses import dataclass, field
 
 from ferramentas.avaliacoes import Avaliacao
+from ferramentas.manifesto import VERSAO_DA_API
 from ferramentas.recusa import Recusado
 
 ESQUEMA = 1
@@ -102,7 +103,17 @@ def montar(
             }
         )
 
-    return {"esquema": ESQUEMA, "gerado_em": gerado_em, "mods": mods}
+    # `api_oferecida` não é lida pelo cliente em produção — ela existe para o
+    # teste de vetor do SEELE, que compara este número com o `MOD_API_VERSION`
+    # dele. As duas constantes já eram espelho uma da outra sem nada as amarrar,
+    # e a divergência custou uma publicação recusada. O catálogo é o único
+    # arquivo que atravessa os dois repositórios, então o guarda mora nele.
+    return {
+        "esquema": ESQUEMA,
+        "api_oferecida": VERSAO_DA_API,
+        "gerado_em": gerado_em,
+        "mods": mods,
+    }
 
 
 def _por_versao(catalogo: dict) -> dict[tuple[str, str], str]:

@@ -15,7 +15,14 @@ from dataclasses import dataclass, field
 from ferramentas.recusa import Recusado
 
 ESQUEMA_DO_MANIFESTO = 1
-VERSAO_DA_API = 1
+
+# Espelho de `seele_proto::mods::MOD_API_VERSION`. Ele foi a 2 com a ponte de
+# pedidos, e este número ficou em 1 — divergência que só apareceu no primeiro
+# MOD de verdade, recusado com `api-too-new` por pedir uma API que o cliente
+# oferece. O cabeçalho deste módulo já dizia que as duas constantes não podem
+# divergir; dizer não é guardar, então agora o catálogo carrega este número e
+# um teste do SEELE o compara com o dele.
+VERSAO_DA_API = 2
 
 # Toda chave que o esquema 1 conhece. Uma chave fora daqui é recusada em vez
 # de ignorada, pelo motivo que o Rust escreve em `deny_unknown_fields`: uma

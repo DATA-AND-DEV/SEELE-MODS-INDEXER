@@ -2,6 +2,7 @@ import pytest
 
 from ferramentas.avaliacoes import Avaliacao, Versao
 from ferramentas.catalogo import ESQUEMA, VersaoPronta, conferir_append_only, montar
+from ferramentas.manifesto import VERSAO_DA_API
 from ferramentas.recusa import Recusado
 
 COMMIT = "4f9a1c0e8b7d6a5f4e3d2c1b0a9f8e7d6c5b4a39"
@@ -281,3 +282,14 @@ def test_append_only_ignora_a_avaliacao_e_olha_so_o_hash():
     novo = montar([reavaliada], prontas, 1757100000)
     conferir_append_only(novo, anterior)
     assert _por_numero(novo["mods"][0])["1.0.0"]["nivel"] == "verificado"
+
+
+def test_o_catalogo_carrega_a_api_que_este_indexador_oferece():
+    """O guarda contra a divergência que custou a primeira publicação.
+
+    `VERSAO_DA_API` aqui e `MOD_API_VERSION` no SEELE são espelho um do outro,
+    em repositórios diferentes, sem nada os amarrando — e quando o segundo foi
+    a 2, este ficou em 1. O catálogo é o único arquivo que atravessa os dois,
+    e o teste de vetor do SEELE compara este número com o dele."""
+    catalogo = montar([], {}, 1)
+    assert catalogo["api_oferecida"] == VERSAO_DA_API
