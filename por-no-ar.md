@@ -33,8 +33,16 @@ Publicar o SEELE antes do passo 2 custa uma release inteira para desfazer.
 A que assina hoje é a de desenvolvimento (`~/.minisign/mods-dev.key`), e o
 `chaves/LEIA.md` já dizia para trocá-la antes do primeiro MOD real.
 
+**Antes, confira que não há nada a ser destruído.** O `minisign -G` recusa
+sobrescrever uma chave existente, e o jeito de forçá-lo — `-f` — apagaria a
+privada sem perguntar. Nunca use `-f` aqui.
+
 ```sh
-minisign -G -p /tmp/mods.pub -s ~/.minisign/mods.key
+ls ~/.minisign/mods.key 2>/dev/null && echo "JÁ EXISTE — pare e escolha outro nome" || echo "livre para gerar"
+```
+
+```sh
+minisign -G -p /tmp/mods-producao.pub -s ~/.minisign/mods.key
 ```
 
 Ele pede uma senha duas vezes. **Ponha uma.** Sem senha, a chave é um arquivo em
@@ -58,12 +66,22 @@ a chave que trazem dentro. Não há recuperação.
 Ela vive em dois lugares, e os dois têm de ser os mesmos bytes:
 
 ```sh
-cp /tmp/mods.pub  ~/SEELE-MODS-INDEXER/chaves/mods.pub
-cp /tmp/mods.pub  ~/SEELE/apps/seele-app/chaves/mods.pub
+cp /tmp/mods-producao.pub ~/SEELE-MODS-INDEXER/chaves/mods.pub && cp /tmp/mods-producao.pub ~/SEELE/apps/seele-app/chaves/mods.pub
 ```
 
-O segundo é o que o cliente compila para dentro de si. Há teste dos dois lados
-que reprova se eles divergirem — ver `apps/seele-app/testes/LEIA.md`.
+E confira, em vez de supor — esta é a linha que separa «troquei nos dois» de
+«troquei num e não no outro», que é o estado em que tudo parece bem até o
+primeiro cliente recusar o catálogo:
+
+```sh
+cmp -s ~/SEELE-MODS-INDEXER/chaves/mods.pub ~/SEELE/apps/seele-app/chaves/mods.pub && echo "IDÊNTICAS: $(sed -n 1p ~/SEELE-MODS-INDEXER/chaves/mods.pub)" || echo "DIFERENTES — não siga"
+```
+
+Tem de sair `IDÊNTICAS` seguido do identificador da chave **nova**. Se ainda
+vier `C069B28F78EA03BF`, é a de desenvolvimento: a cópia não aconteceu.
+
+O segundo caminho é o que o cliente compila para dentro de si. Há teste dos dois
+lados que reprova se eles divergirem — ver `apps/seele-app/testes/LEIA.md`.
 
 Depois de trocar, os vetores de teste do SEELE ficam assinados pela chave velha
 e o teste vai reprovar. É o guarda funcionando. Regere-os no passo 3.
@@ -86,10 +104,10 @@ minisign -V -p chaves/mods.pub -m publicado/catalogo.json
 Atualize os vetores do cliente e rode a suíte dele:
 
 ```sh
-cp publicado/catalogo.json      ~/SEELE/apps/seele-app/testes/catalogo-do-indexador.json
-cp publicado/catalogo.json.minisig ~/SEELE/apps/seele-app/testes/catalogo-do-indexador.json.minisig
-cp publicado/revogacoes.json    ~/SEELE/apps/seele-app/testes/revogacoes-do-indexador.json
-cp publicado/revogacoes.json.minisig ~/SEELE/apps/seele-app/testes/revogacoes-do-indexador.json.minisig
+for f in catalogo revogacoes; do cp "publicado/$f.json" ~/SEELE/apps/seele-app/testes/"$f-do-indexador.json"; cp "publicado/$f.json.minisig" ~/SEELE/apps/seele-app/testes/"$f-do-indexador.json.minisig"; done
+```
+
+```sh
 cd ~/SEELE && cargo test -p seele-app --bin seele-app o_catalogo::
 ```
 
