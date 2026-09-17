@@ -33,7 +33,10 @@ export const NOTAS = {
 /** O que cada nível atesta — e o que ele não atesta. */
 export const NIVEIS = {
   oficial: "nosso, e nós respondemos por ele",
-  verificado: "passou na avaliação automática",
+  // Não há avaliação automática, e nunca houve: alguém clona o commit fixado
+  // e lê o código. A frase dizia o contrário, e dizia isso sobre o veredito de
+  // todo MOD verificado — inclusive o primeiro, que foi lido à mão.
+  verificado: "passou na leitura do código, que pega o óbvio e não prova o sutil",
   "com-notas": "passou, com ressalvas que valem a leitura",
 };
 
