@@ -45,6 +45,26 @@ ls ~/.minisign/mods.key 2>/dev/null && echo "JÁ EXISTE — pare e escolha outro
 minisign -G -p /tmp/mods-producao.pub -s ~/.minisign/mods.key
 ```
 
+### Se ele abortar dizendo que a chave já existe
+
+Então a privada já está lá — de uma geração anterior, ou de uma tentativa que
+você interrompeu. **Não use `-f`**: ele apagaria a privada sem perguntar, e com
+ela todo catálogo que os clientes já publicados sabem conferir.
+
+A pública se recria a partir da privada, sem gerar par nenhum:
+
+```sh
+minisign -R -s ~/.minisign/mods.key -p /tmp/mods-producao.pub
+```
+
+Ele pede a senha daquela chave, e isso serve de segunda conferência: **se ela
+abrir, é a senha certa** — a mesma que vai no `MINISIGN_PASSWORD` do passo 3.
+Melhor descobrir aqui do que no meio do `gerar.py`.
+
+Depois disso, siga do passo 2 normalmente.
+
+### Se for a primeira vez
+
 Ele pede uma senha duas vezes. **Ponha uma.** Sem senha, a chave é um arquivo em
 disco que autoriza código de terceiro a rodar na máquina de outras pessoas, e
 basta alguém copiá-lo. O gerador sabe pedi-la desde 2026-09-17:
