@@ -184,3 +184,54 @@ def test_um_bloco_mudo_nao_toma_emprestada_a_regra_do_bloco_seguinte():
     with pytest.raises(Recusado) as erro:
         conferir_cache_do_par(headers, "/catalogo.json")
     assert erro.value.codigo == "cache-do-par-ausente"
+
+
+def test_assina_com_chave_protegida_por_senha(tmp_path):
+    """A chave de produção tem senha, e o assinador tem de saber pedi-la.
+
+    Antes disto o gerador só funcionava com chave criada com `-W` — sem senha.
+    Uma chave sem senha é um arquivo em disco que autoriza código de terceiro a
+    rodar na máquina de outra pessoa, e a ferramenta obrigava a isso sem dizer.
+    """
+    import os
+    import subprocess
+
+    from ferramentas import assinar as assinatura
+    from ferramentas.recusa import Recusado
+
+    secreta = tmp_path / "com-senha.key"
+    publica = tmp_path / "com-senha.pub"
+    subprocess.run(
+        ["minisign", "-G", "-p", str(publica), "-s", str(secreta)],
+        input="abre-te-sesamo\nabre-te-sesamo\n",
+        text=True, check=True, capture_output=True,
+    )
+    alvo = tmp_path / "catalogo.json"
+    alvo.write_text('{"esquema":1,"mods":[]}\n', encoding="utf-8")
+
+    anterior = os.environ.get("MINISIGN_PASSWORD")
+    try:
+        # Sem a senha no ambiente, recusa — e é a recusa certa, não um sucesso
+        # silencioso: o `minisign` imprime `done` mesmo falhando, e quem decide
+        # é o código de saída.
+        os.environ.pop("MINISIGN_PASSWORD", None)
+        try:
+            assinatura.assinar(alvo, secreta, "prova")
+            raise AssertionError("assinou uma chave com senha sem a senha")
+        except Recusado:
+            pass
+        assert not alvo.with_suffix(alvo.suffix + ".minisig").exists()
+
+        # Com a senha, assina — e a assinatura confere contra a pública.
+        os.environ["MINISIGN_PASSWORD"] = "abre-te-sesamo"
+        produzida = assinatura.assinar(alvo, secreta, "prova")
+        assert produzida.exists()
+        subprocess.run(
+            ["minisign", "-V", "-p", str(publica), "-m", str(alvo)],
+            check=True, capture_output=True,
+        )
+    finally:
+        if anterior is None:
+            os.environ.pop("MINISIGN_PASSWORD", None)
+        else:
+            os.environ["MINISIGN_PASSWORD"] = anterior

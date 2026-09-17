@@ -5,6 +5,7 @@ comitar o `.minisig` é o que mantém a propriedade que o ADR 0026 mais preza
 — a chave que autoriza é a única coisa que um invasor não alcança pela
 rede."""
 
+import os
 import re
 import subprocess
 from pathlib import Path
@@ -19,11 +20,30 @@ def assinar(arquivo: Path, chave_secreta: Path, comentario: str) -> Path:
     é o tamanho — o pré-hash existe para arquivo grande, e o catálogo tem
     dezenas de KB. **Não é pelo navegador:** a conferência de lá é integridade
     e não autenticidade (mesma origem, sem âncora), então justificar o modo
-    por ela seria pagar por um benefício que não existe."""
+    por ela seria pagar por um benefício que não existe.
+
+    ## A senha da chave
+
+    `MINISIGN_PASSWORD` no ambiente, quando a chave tiver uma. Sem a variável,
+    manda-se uma linha vazia — que é o que uma chave criada com `-W` espera.
+
+    **Isto existia e não podia existir.** Antes daqui, a única linha mandada
+    era a vazia, então o gerador só funcionava com chave **sem senha** — e uma
+    chave sem senha é um arquivo em disco que autoriza código de terceiro a
+    rodar na máquina de outra pessoa. Quem tentasse usar uma chave com senha
+    recebia `minisign-falhou` com «Wrong password for that key», e nada
+    explicava que a ferramenta é que não sabia perguntar.
+
+    O `check=True` é o que separa os dois casos, e ele é indispensável por um
+    motivo medido: **o `minisign` imprime `done` mesmo quando falha.** Quem
+    olhasse a saída concluiria que assinou. Quem decide aqui é o código de
+    saída."""
+    senha = os.environ.get("MINISIGN_PASSWORD")
     try:
         subprocess.run(
             ["minisign", "-S", "-l", "-s", str(chave_secreta), "-m", str(arquivo), "-t", comentario],
-            input="\n", text=True, check=True, capture_output=True,
+            input=f"{senha}\n" if senha is not None else "\n",
+            text=True, check=True, capture_output=True,
         )
     except subprocess.CalledProcessError as erro:
         raise Recusado("minisign-falhou", erro.stderr.strip()) from erro

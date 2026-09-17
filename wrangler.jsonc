@@ -1,0 +1,18 @@
+{
+  // Configuração do Cloudflare Pages para mods.seele.app.br.
+  //
+  // Existe pelo mesmo motivo que a do `SEELE-SITE`, e o motivo é uma cicatriz
+  // dele: o diretório de saída já foi publicado **vazio** num campo do painel,
+  // e vazio faz o Pages servir a raiz do repositório. Lá isso expôs o fonte;
+  // aqui exporia `ferramentas/`, `avaliacoes/` e — o que importa — faria o
+  // `catalogo.json` da raiz (que não existe) dar 404 enquanto o site parecia
+  // no ar. A partir daqui este arquivo é a fonte da verdade, e o campo
+  // equivalente no painel fica travado.
+  //
+  // **O comando de build tem de ficar VAZIO no painel.** Este repositório não
+  // compila nada: `publicado/` é comitado pronto pelo `ferramentas/gerar.py`,
+  // na máquina de quem tem a chave. É essa ausência de build remoto que mantém
+  // a propriedade do ADR 0026 — não há passo na nuvem onde enfiar um segredo.
+  "name": "seele-mods",
+  "pages_build_output_dir": "./publicado"
+}
