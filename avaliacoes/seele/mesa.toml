@@ -1,0 +1,55 @@
+# MESA — avaliação de 2026-09-17.
+#
+# O que foi lido, para que a próxima avaliação não recomece do zero:
+#
+# - **Sem rede.** Nenhum `fetch`, `XMLHttpRequest` ou `WebSocket` nas duas
+#   metades, e nenhuma dependência de execução — o `playwright` do
+#   `package.json` é só de desenvolvimento. Toda conversa passa pelo
+#   `globalThis.SeeleMods`, e só por `request` e `snapshot`.
+# - **Sem execução dinâmica.** Nada de `eval`, `new Function`, `import()`,
+#   `require()` ou `createElement('script')`.
+# - **Identidade nunca vem do pedido.** O `aoPedir` usa `ctx.person`,
+#   `ctx.channel`, `ctx.write` e `ctx.admin`; quem só lê é barrado antes de
+#   qualquer escrita, e `setup` exige `ctx.admin`.
+# - **Travessia de caminho fechada por construção.** Todo id sai de
+#   `next(c, prefixo)` — contador do servidor — e o `find` casa com `===`
+#   estrito. O caminho de imagem é `'channel-' + ctx.channel + '/' + id`, com
+#   `ctx.channel` vindo do hospedeiro e o resto preso a `^[a-z0-9-]{1,64}$`.
+# - **A projeção de privacidade confere.** Fichas chegam ao GM e ao
+#   responsável; cenas, só a publicada e ativa; `notes` e `upload` são
+#   apagados antes de sair; peças e iniciativa ocultas são filtradas.
+# - **Crescimento limitado** em todo lugar que acumula: `receipts` em 64,
+#   `log` em 40, e os tetos de `LIMIT`.
+#
+# O ponto que mais custou a fechar foi o `innerHTML` do cliente, que é o único
+# caminho por onde um jogador poderia pôr script na janela de outro. São três
+# escritas, todas em elementos que o próprio MOD cria. Das 119 interpolações
+# que não passam por `esc()`, cada uma foi classificada: são literais,
+# ternários de literais, chamadas a auxiliares que escapam por dentro, ou
+# números — e «número» aqui não é confiança, é o `num()` do servidor, que
+# recusa com `Number.isInteger` antes de guardar. Os auxiliares `btn`, `field`,
+# `area` e `check` interpolam o rótulo sem escapar; todas as chamadas foram
+# extraídas e conferidas, e as que passam texto de gente passam `esc(...)`.
+#
+# Duas observações para o autor, que não são defeito hoje:
+#
+# 1. `imagePart` é chamado com `s.id` num lugar (retrato) e com `r.scene` —
+#    cru do pedido — no outro. Só é seguro porque o `find` é `===`; trocá-lo
+#    por `find(...).id` tiraria a segurança da dependência de outra função.
+# 2. `snapshot.channels[].id` entra num atributo sem escapar. É número hoje
+#    (`ChannelId` do SEELE), e vem do hospedeiro, não de um jogador.
+#
+# E o teto de sempre: isto é um filtro, não uma prova. Pega o óbvio; não pega
+# o caminho sutil na décima função de um arquivo limpo.
+
+id = "seele/mesa"
+repo = "https://github.com/DATA-AND-DEV/MESA"
+titulo = "Mesa"
+resumo = "Mesa de RPG por canal: fichas, tabuleiro com peças, compêndio, iniciativa e ambientação. A voz continua na sala do SEELE."
+
+[[versoes]]
+versao = "1.2.0"
+commit = "743bf6f2d842d7420a2115bf15eb8e7cbc51e06b"
+nivel = "verificado"
+notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
+avaliado_em = 1789679950
