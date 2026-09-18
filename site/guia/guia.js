@@ -19,7 +19,14 @@ function abrir() {
   artigos.forEach(a=>a.hidden=a!==atual.el);
   document.querySelectorAll('.sumario [role=tab]').forEach(tab=>{const ativo=tab.hash==='#'+atual.rota;tab.setAttribute('aria-selected',String(ativo));tab.tabIndex=ativo?0:-1;});
   document.title=atual.titulo+' — Criar MODs SEELE';
-  document.querySelector('#painel-'+modo+' .sumario [aria-selected="true"]')?.scrollIntoView({block:'nearest',inline:'nearest'});
+  const tab=document.querySelector('#painel-'+modo+' .sumario [aria-selected="true"]');
+  if(tab){
+    const nav=tab.parentElement,b=tab.getBoundingClientRect(),n=nav.getBoundingClientRect();
+    if(b.right>n.right)nav.scrollLeft+=b.right-n.right;
+    if(b.left<n.left)nav.scrollLeft-=n.left-b.left;
+    if(b.bottom>n.bottom)nav.scrollTop+=b.bottom-n.bottom;
+    if(b.top<n.top)nav.scrollTop-=n.top-b.top;
+  }
   if(busca.value)pesquisar();
 }
 function navegar(rota){

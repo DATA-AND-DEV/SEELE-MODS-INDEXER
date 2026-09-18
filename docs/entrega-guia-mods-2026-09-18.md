@@ -41,3 +41,7 @@ O gerador do catálogo já copia a árvore site/ para publicado/. Ao atualizar s
 - Catálogo, revogações, assinaturas e chave pública preservados byte a byte ao preparar a publicação.
 
 As fontes técnicas foram conferidas no código local do SEELE commit 6a525d19c9967e0527be7d845ee16712b3f4d9e8. A publicação não altera instalações dos MODs nem regras do core.
+
+## Publicação
+
+Commit inicial: e592835. Push para main concluído; check Cloudflare Pages terminou com sucesso. A página pública /guia/ abriu com os 24 capítulos e os dois modos de consulta.
