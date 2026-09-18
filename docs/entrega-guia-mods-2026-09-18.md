@@ -49,3 +49,7 @@ Commit inicial: e592835. Push para main concluído; check Cloudflare Pages termi
 ## Ajuste de padrão visual
 
 Navegação do guia alinhada à direita, com o mesmo grupo de botões do catálogo (Criar um MOD, Catálogo, Revogações e Publicar). Download Markdown transferido para a ficha de material de apoio. Layout conferido visualmente; 5 testes Node e 3 testes Python do guia passaram após a alteração.
+
+## Padrão definitivo dos controles
+
+Conforme orientação final, o guia usa o CSS do próprio catálogo MODs (`../estilo.css`) e as classes `topo`, `marca`, `abas`, `aba`, `botao` e `botao-forte`. A tentativa de adotar SEELE-SITE foi descartada antes de publicar. Botões com borda, dimensões, fonte e espaçamento conferidos no navegador; troca de abas validada.

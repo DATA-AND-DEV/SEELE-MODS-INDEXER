@@ -14,7 +14,7 @@ function abrir() {
   atual = indice.find(a=>a.rota===rota) || indice[0];
   const modo = atual.el.dataset.mode;
   ultimos[modo] = atual.el.dataset.slug;
-  modos.forEach(b=>{const ativo=b.id==='modo-'+modo;b.setAttribute('aria-selected',String(ativo));b.tabIndex=ativo?0:-1;});
+  modos.forEach(b=>{const ativo=b.id==='modo-'+modo;b.setAttribute('aria-selected',String(ativo));b.tabIndex=ativo?0:-1;b.classList.toggle('botao-forte',ativo);});
   document.querySelectorAll('.documentacao').forEach(p=>p.hidden=p.id!=='painel-'+modo);
   artigos.forEach(a=>a.hidden=a!==atual.el);
   document.querySelectorAll('.sumario [role=tab]').forEach(tab=>{const ativo=tab.hash==='#'+atual.rota;tab.setAttribute('aria-selected',String(ativo));tab.tabIndex=ativo?0:-1;});
@@ -84,3 +84,7 @@ abrir();
 const medirBarra=()=>document.documentElement.style.setProperty("--altura-barra",document.querySelector(".barra-consulta").offsetHeight+"px");
 new ResizeObserver(medirBarra).observe(document.querySelector(".barra-consulta"));
 medirBarra();
+
+const medirCabecalho=()=>document.documentElement.style.setProperty("--altura-cabecalho",document.querySelector("#topo").offsetHeight+"px");
+new ResizeObserver(medirCabecalho).observe(document.querySelector("#topo"));
+medirCabecalho();
