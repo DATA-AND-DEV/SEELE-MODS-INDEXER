@@ -53,3 +53,41 @@ commit = "743bf6f2d842d7420a2115bf15eb8e7cbc51e06b"
 nivel = "verificado"
 notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
 avaliado_em = 1789679950
+
+# 1.2.1 — avaliada em 2026-09-17, sobre o diff.
+#
+# A 1.2.0 foi lida inteira; aqui o que importa é o que mudou, e foi conferido
+# que **só** isso mudou: `servidor/main.js` é byte a byte o mesmo, e a metade
+# que roda na máquina de quem hospeda não foi tocada.
+#
+# O título do commit diz «integra acesso à coluna de canais», e isso pedia
+# olhar o `reach` antes de qualquer outra coisa. Ele **não** mudou, e não
+# deveria: o MOD já declarava `dom`, e inserir-se na coluna de canais em vez de
+# flutuar sobre a conversa é DOM. Um MOD com `dom` já podia repintar a janela
+# inteira; ele passou a acrescentar uma seção a um painel, que é menos, e não
+# mais.
+#
+# O botão deixou de ser um retângulo fixo no canto e virou uma linha dentro da
+# coluna, com ícone, `aria-expanded`, `aria-controls` e o foco voltando para
+# ele ao fechar. O `innerHTML` novo é uma string estática — zero interpolação,
+# conferido —, e as cinco escritas de `innerHTML` do arquivo continuam sendo as
+# quatro já auditadas mais esta.
+#
+# Reconferidas no código novo: nenhuma rede, nenhuma execução dinâmica, nenhum
+# armazenamento do navegador. Os sete pontos de escape que a 1.2.0 exigiu
+# classificar continuam os mesmos sete, e continuam seguros pelo mesmo motivo —
+# tabela literal, índice de laço, e inteiros que o `num()` do servidor garante
+# com `Number.isInteger`. 21 testes e o `quickjs-check` passam.
+#
+# Uma observação para o autor, que não é defeito: ele passou a depender de
+# seletores internos do SEELE (`#tela-sessao .painel-canais .canais-rolagem`).
+# Eles existem hoje, e o código já trata a ausência caindo para o corpo da
+# página — mas é acoplamento a uma estrutura que não é contrato, e uma renomeação
+# do nosso lado o move de lugar sem avisar ninguém.
+
+[[versoes]]
+versao = "1.2.1"
+commit = "7ca40d1cc98e57adaed17c0e5f007593041c4eef"
+nivel = "verificado"
+notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
+avaliado_em = 1789691343
