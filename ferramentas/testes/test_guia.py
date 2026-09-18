@@ -22,5 +22,8 @@ def test_generated_downloads_and_links_exist():
     for href in re.findall(r'href="([^"]+)"', page):
         if href.startswith(('https:', 'http:', '#')) or '#' in href:
             continue
-        assert (root / href).exists(), href
+        target = root / href
+        if href in {'../chave.pub', '../catalogo.json', '../revogacoes.json'}:
+            target = SOURCE.parents[1] / 'publicado/guia' / href
+        assert target.exists(), href
     assert (root / 'exemplos/contador.zip').is_file()

@@ -81,6 +81,19 @@ def chapters():
     return [(parts[i],parts[i+1],parts[i+2],parts[i+3]) for i in range(1,len(parts),4)]
 
 
+def shell():
+    """Cabeçalho e rodapé vêm do catálogo; só destinos e busca são adaptados."""
+    source = (ROOT / 'site/index.html').read_text()
+    header = re.search(r'<header\b.*?</header>', source, re.S)[0]
+    header = re.sub(r'<button([^>]*data-ir="([^"]+)"[^>]*)>(.*?)</button>',
+                    lambda m: '<a class="' + ('marca' if 'class="marca"' in m[1] else 'aba') + '" href="../' + ('' if m[2]=='catalogo' else '#/'+m[2]) + '">' + m[3] + '</a>', header, flags=re.S)
+    header = header.replace('href="guia/"', 'href="./" aria-current="page"')
+    header = header.replace('id="busca"', 'id="buscar-guia"').replace('buscar mods, autores, repositórios', 'buscar no guia: pedidos, arquivos, erros').replace('Buscar no catálogo', 'Buscar no guia')
+    footer = re.search(r'<footer\b.*?</footer>', source, re.S)[0]
+    footer = re.sub(r'href="([^"#]+)"', lambda m:'href="../'+m[1]+'"', footer)
+    return header, footer
+
+
 def generate():
     DEST.mkdir(exist_ok=True)
     entries = chapters()
@@ -101,14 +114,15 @@ def generate():
 <meta name="description" content="Aprenda a criar MODs para o SEELE: guia passo a passo, API 2, pedidos, eventos, arquivos, permissões, exemplos e publicação.">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
 <title>Como criar MODs — SEELE</title><link rel="stylesheet" href="../fontes.css"><link rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="guia.css"><link rel="stylesheet" href="../estilo.css"></head>
-<body><a class="pular" href="#conteudo">Pular para a documentação</a>
-<header class="topo" id="topo"><a class="marca" href="../"><svg viewBox="0 0 96 96" width="26" height="26" role="img" aria-label="SEELE"><path d="M34 34L62 62" stroke="#EAE3CF" stroke-width="6"/><rect x="12" y="12" width="24" height="24" fill="#F2521F"/><rect x="62" y="62" width="20" height="20" fill="none" stroke="#F2521F" stroke-width="6"/></svg><span><span class="marca-seele">SEELE</span> <span class="marca-mods">MODS</span></span></a><nav class="abas" aria-label="Seções"><a class="aba" href="./" aria-current="page">CRIAR UM MOD</a><a class="aba" href="../">CATÁLOGO</a><a class="aba" href="../#/revogacoes">REVOGAÇÕES</a><a class="aba" href="../#/publicar">PUBLICAR</a></nav></header>
-<div class="introducao"><div><p class="coordenada">Manual de criação / API 2</p><h1>Faça o SEELE<br><span>do seu jeito.</span></h1><p class="resumo">Da primeira ideia ao pacote publicado. Aprenda o caminho ou consulte o contrato exato de cada operação.</p></div><div class="guia-ficha"><span>REFERÊNCIA DO DESENVOLVEDOR</span><dl><div><dt>Manifesto</dt><dd>Schema 1</dd></div><div><dt>API de MOD</dt><dd>Versão 2</dd></div><div><dt>Revisão</dt><dd>18 SET 2026</dd></div><div><dt>Conteúdo</dt><dd>23 capítulos · exemplo instalável</dd></div></dl><a href="exemplos/contador.zip" download>Baixar MOD de exemplo ↓</a><a class="download" href="guia-criacao-mods.md" download>Baixar guia .md ↓</a></div></div>
-<div class="barra-consulta"><div role="tablist" aria-label="Modo de leitura" class="modos"><button type="button" role="tab" class="botao botao-forte" id="modo-guia" aria-controls="painel-guia">Guia passo a passo</button><button type="button" role="tab" class="botao" id="modo-referencia" aria-controls="painel-referencia">Referência técnica</button></div><label class="busca"><span>Buscar no guia</span><input id="buscar-guia" type="search" placeholder="Ex.: upload, permissão, timeout" autocomplete="off"></label></div>
-<main id="conteudo" tabindex="-1"><section id="resultados" aria-label="Resultados da busca" hidden><h2>Resultados</h2><p id="contagem" role="status"></p><div id="lista-resultados"></div><button type="button" id="limpar-busca" class="botao">Limpar busca</button></section>'''+''.join(panels)+'''</main>
-<p class="status-copia" id="status-copia" role="status" aria-live="polite"></p><footer>SEELE MODS / Documentação técnica <a href="#referencia/fontes">Fontes e revisão</a><a href="guia-criacao-mods.md" download>Markdown completo</a></footer>
-<noscript><p>JavaScript está desativado. O conteúdo completo permanece disponível abaixo dos índices. Busca e abas requerem JavaScript; você também pode baixar o Markdown.</p></noscript><script type="module" src="guia.js"></script></body></html>'''
-    page = page.replace('23 capítulos',f'{len(entries)} capítulos')
+<body><div class="pagina"><a class="pular" href="#conteudo">Pular para a documentação</a>
+__CABECALHO__
+<section class="painel guia-abertura" aria-labelledby="titulo-guia"><div class="guia-apresentacao"><h1 id="titulo-guia">Criar um MOD</h1><p class="cartao-resumo">Guia de criação e referência da API. Do primeiro pacote à publicação no catálogo.</p><p class="rotulo">API 2 · Schema 1 · Revisado em 18/09/2026</p></div><div class="guia-recursos"><a class="botao" href="guia-criacao-mods.md" download>BAIXAR GUIA .MD ↓</a><a class="botao" href="exemplos/contador.zip" download>MOD DE EXEMPLO ↓</a></div></section>
+<div class="barra-consulta"><div role="tablist" aria-label="Modo de leitura" class="modos"><button type="button" role="tab" class="botao botao-forte" id="modo-guia" aria-controls="painel-guia">Guia passo a passo</button><button type="button" role="tab" class="botao" id="modo-referencia" aria-controls="painel-referencia">Referência técnica</button></div></div>
+<main class="corpo" id="conteudo" tabindex="-1"><section id="resultados" aria-label="Resultados da busca" hidden><h2>Resultados</h2><p id="contagem" role="status"></p><div id="lista-resultados"></div><button type="button" id="limpar-busca" class="botao">Limpar busca</button></section>'''+''.join(panels)+'''</main>
+<p class="status-copia" id="status-copia" role="status" aria-live="polite"></p>__RODAPE__
+<noscript><p>JavaScript está desativado. O conteúdo completo permanece disponível abaixo dos índices. Busca e abas requerem JavaScript; você também pode baixar o Markdown.</p></noscript></div><script type="module" src="guia.js"></script></body></html>'''
+    header, footer = shell()
+    page = page.replace('__CABECALHO__', header).replace('__RODAPE__', footer)
     (DEST/'index.html').write_text(page)
     # A versão para download usa títulos Markdown convencionais.
     (DEST/'guia-criacao-mods.md').write_text(re.sub(r'^## \[(?:guia|referencia):[a-z-]+\] ', '## ', SOURCE.read_text(),flags=re.M))

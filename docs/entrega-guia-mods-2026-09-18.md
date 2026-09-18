@@ -53,3 +53,12 @@ Navegação do guia alinhada à direita, com o mesmo grupo de botões do catálo
 ## Padrão definitivo dos controles
 
 Conforme orientação final, o guia usa o CSS do próprio catálogo MODs (`../estilo.css`) e as classes `topo`, `marca`, `abas`, `aba`, `botao` e `botao-forte`. A tentativa de adotar SEELE-SITE foi descartada antes de publicar. Botões com borda, dimensões, fonte e espaçamento conferidos no navegador; troca de abas validada.
+
+
+## Integração do guia ao catálogo — remoção do hero
+
+A abertura de landing page foi substituída por uma seção compacta `painel`, com título, resumo e downloads em botões com borda. A ficha isolada de metadados foi removida. O gerador agora extrai cabeçalho e rodapé diretamente de `site/index.html`, adaptando somente links e a busca do guia. Isso mantém marca, navegação à direita e estrutura comum sincronizadas ao regenerar a documentação. A busca ocupa o mesmo campo do catálogo.
+
+A coluna de capítulos usa 236 px, como a lateral do catálogo; conteúdo, margens e títulos foram ajustados para continuidade visual. A página dedicada `/guia/` e os 24 capítulos permanecem disponíveis.
+
+Validação deste ajuste: 5 testes Node e 3 Python passaram; busca por “permissões” retornou 7 capítulos; console sem erros registrados; ausência de overflow global em 390 e 1280 px. Prévia visual conferida. Os testes de links também verificam os recursos assinados do rodapé na pasta de publicação.
