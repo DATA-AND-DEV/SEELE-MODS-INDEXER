@@ -65,3 +65,34 @@ commit = "a2f33438092389a10cd6e247beac6330e531f3a3"
 nivel = "oficial"
 notas = ["roda-no-servidor"]
 avaliado_em = 1789700369
+
+# ----------------------------------------------------------------- 1.0.1
+#
+# **Avaliação de 2026-09-18. Nenhuma linha de código mudou** entre 1.0.0 e
+# 1.0.1, e a leitura de 1.0.0 vale inteira — não a repito aqui para não
+# inventar uma segunda fonte da verdade sobre os mesmos bytes de código.
+#
+# O que mudou é o que sai no pacote. Saíram `docs/migracao-diretorios.md` e
+# `docs/relatorio-entrega.md`: notas da sessão em que este MOD foi separado da
+# árvore do SEELE, com treze linhas de caminho absoluto da máquina de quem
+# publica — nome de usuário, layout de disco, e onde ficava um zip de backup.
+#
+# O indexador publica o repositório inteiro, então isso estava sendo baixado
+# por quem instala o MOD. Encontrado conferindo o pacote da Perfis antes de
+# empurrá-lo; o ESTILO tinha os mesmos dois arquivos, pela mesma origem.
+#
+# **O que já está no ar pela 1.0.0 continua no ar assim**, e é escolha: o
+# catálogo é append-only porque a promessa é «o MOD que você baixou é o MOD que
+# revisamos», e trocar bytes de uma versão publicada quebra essa promessa.
+# Revogá-la teria custo para quem já a instalou, e a exposição não justifica
+# esse custo — é informação de diretório, não credencial.
+#
+# Conferido depois da limpeza: zero caminhos de máquina no pacote, e os mesmos
+# 3 testes passando.
+
+[[versoes]]
+versao = "1.0.1"
+commit = "0fba9a5e346b9417f52bbf8562039b7e8200bd61"
+nivel = "oficial"
+notas = ["roda-no-servidor"]
+avaliado_em = 1789749344

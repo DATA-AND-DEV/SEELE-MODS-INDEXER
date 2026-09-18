@@ -139,10 +139,36 @@ avaliado_em = 1789700395
 # sendo a maior parte do que quem baixa o MOD leva sem usar.
 #
 # E o teto de sempre: isto é um filtro, não uma prova.
+#
+# ---
+#
+# **Por que a versão publicada é a 1.2.1, e não a 1.2.0.**
+#
+# A leitura acima é da 1.2.0, e vale inteira: entre ela e a 1.2.1 não mudou uma
+# linha de código. O que mudou foi o que sai no pacote.
+#
+# O pacote da 1.2.0 foi montado e conferido antes de ir ao ar, e nessa
+# conferência apareceram `docs/migracao-diretorios.md` e
+# `docs/relatorio-entrega.md`: notas da sessão em que este MOD foi separado da
+# árvore do SEELE, com treze linhas de caminho absoluto da máquina de quem
+# publica — nome de usuário, layout de disco, e onde ficava um zip de backup.
+#
+# O indexador publica o repositório inteiro, então isso é baixado por quem
+# instala o MOD. Os dois arquivos saíram, e o que se publica é a 1.2.1. A
+# 1.2.0 nunca chegou ao CDN.
+#
+# **O que já está no ar pela 1.0.0 continua no ar assim**, e é uma escolha, não
+# um esquecimento: o catálogo é append-only porque a promessa é «o MOD que você
+# baixou é o MOD que revisamos», e trocar bytes de uma versão publicada quebra
+# essa promessa. Revogá-la teria custo para quem já a instalou, e a exposição
+# não justifica esse custo — é informação de diretório, não credencial.
+#
+# Conferido depois da limpeza: zero caminhos de máquina no pacote, e os mesmos
+# 12 testes passando.
 
 [[versoes]]
-versao = "1.2.0"
-commit = "31289275ae34ab2ee5cdd8580eeffcdffe17777d"
+versao = "1.2.1"
+commit = "136233e2b89fc42d4e436b28c3f0a188ee7a6f2c"
 nivel = "oficial"
 notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
-avaliado_em = 1789748984
+avaliado_em = 1789749344
