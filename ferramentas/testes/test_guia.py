@@ -22,6 +22,7 @@ def test_generated_downloads_and_links_exist():
     for href in re.findall(r'href="([^"]+)"', page):
         if href.startswith(('https:', 'http:', '#')) or '#' in href:
             continue
+        href = href.split('?', 1)[0]
         target = root / href
         if href in {'../chave.pub', '../catalogo.json', '../revogacoes.json'}:
             target = SOURCE.parents[1] / 'publicado/guia' / href

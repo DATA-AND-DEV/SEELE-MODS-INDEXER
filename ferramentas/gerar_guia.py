@@ -5,6 +5,7 @@ HTML cru é escapado. A saída integra o copytree de site/ do gerador do catálo
 """
 from pathlib import Path
 import html
+import hashlib
 import re
 import shutil
 import zipfile
@@ -123,6 +124,9 @@ __CABECALHO__
 <noscript><p>JavaScript está desativado. O conteúdo completo permanece disponível abaixo dos índices. Busca e abas requerem JavaScript; você também pode baixar o Markdown.</p></noscript></div><script type="module" src="guia.js"></script></body></html>'''
     header, footer = shell()
     page = page.replace('__CABECALHO__', header).replace('__RODAPE__', footer)
+    for asset in ('guia.css', 'guia.js'):
+        version = hashlib.sha256((DEST / asset).read_bytes()).hexdigest()[:12]
+        page = page.replace(f'"{asset}"', f'"{asset}?v={version}"')
     (DEST/'index.html').write_text(page)
     # A versão para download usa títulos Markdown convencionais.
     (DEST/'guia-criacao-mods.md').write_text(re.sub(r'^## \[(?:guia|referencia):[a-z-]+\] ', '## ', SOURCE.read_text(),flags=re.M))

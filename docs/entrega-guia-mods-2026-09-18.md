@@ -62,3 +62,5 @@ A abertura de landing page foi substituída por uma seção compacta `painel`, c
 A coluna de capítulos usa 236 px, como a lateral do catálogo; conteúdo, margens e títulos foram ajustados para continuidade visual. A página dedicada `/guia/` e os 24 capítulos permanecem disponíveis.
 
 Validação deste ajuste: 5 testes Node e 3 Python passaram; busca por “permissões” retornou 7 capítulos; console sem erros registrados; ausência de overflow global em 390 e 1280 px. Prévia visual conferida. Os testes de links também verificam os recursos assinados do rodapé na pasta de publicação.
+
+Publicação 8d12a53 confirmada pelo Cloudflare Pages e pela página pública. CSS e JavaScript do guia recebem versão baseada no conteúdo para impedir mistura de HTML novo com arquivos antigos em cache.
