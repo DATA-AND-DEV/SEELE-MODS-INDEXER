@@ -45,3 +45,7 @@ As fontes técnicas foram conferidas no código local do SEELE commit 6a525d19c9
 ## Publicação
 
 Commit inicial: e592835. Push para main concluído; check Cloudflare Pages terminou com sucesso. A página pública /guia/ abriu com os 24 capítulos e os dois modos de consulta.
+
+## Ajuste de padrão visual
+
+Navegação do guia alinhada à direita, com o mesmo grupo de botões do catálogo (Criar um MOD, Catálogo, Revogações e Publicar). Download Markdown transferido para a ficha de material de apoio. Layout conferido visualmente; 5 testes Node e 3 testes Python do guia passaram após a alteração.
