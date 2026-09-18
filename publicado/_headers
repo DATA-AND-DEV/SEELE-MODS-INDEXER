@@ -37,3 +37,7 @@
 # carrega versão — só /mods/* tem essa propriedade, e só ele ganha immutable.
 /fontes/*
   Cache-Control: public, max-age=2592000
+
+# Guia estático e downloads de documentação.
+/guia/*
+  Cache-Control: public, max-age=300
