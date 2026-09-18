@@ -39,6 +39,21 @@
 #
 # E o teto de sempre: isto é um filtro, não uma prova.
 
+#
+# **Nível `oficial`, e não `verificado`** — reclassificado em 2026-09-18, a
+# pedido de quem responde pelo projeto. Os três MODs do catálogo são nossos, e
+# é isso que a palavra diz: a frase do site para `oficial` é «nosso, e nós
+# respondemos por ele». `verificado` diria a outra coisa — «passou na leitura»
+# —, que é verdade mas é menos do que se sabe sobre estes.
+#
+# **A regra append-only continua valendo**, e foi conferida: ela cobra o
+# **hash**, porque a promessa é «o MOD que você baixou é o MOD que revisamos».
+# O nível é veredito sobre os mesmos bytes, e um veredito pode ser revisto sem
+# que um byte mude.
+#
+# E `oficial` não destranca nada: conferido no cliente e no site, ele é selo e
+# filtro, sem privilégio, sem capacidade e sem atalho. Um nível que desse poder
+# seria um nível em que alguém se apoiaria para dizer sim sem ler o resto.
 id = "seele/estilo"
 repo = "https://github.com/DATA-AND-DEV/ESTILO"
 titulo = "Estilo"
@@ -47,6 +62,6 @@ resumo = "O tema do servidor: cores, cantos, densidade e fonte, escolhidos por q
 [[versoes]]
 versao = "1.0.0"
 commit = "a2f33438092389a10cd6e247beac6330e531f3a3"
-nivel = "verificado"
+nivel = "oficial"
 notas = ["roda-no-servidor"]
 avaliado_em = 1789700369
