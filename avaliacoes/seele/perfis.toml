@@ -172,3 +172,50 @@ commit = "136233e2b89fc42d4e436b28c3f0a188ee7a6f2c"
 nivel = "oficial"
 notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
 avaliado_em = 1789749344
+
+# ----------------------------------------------------------------- 1.2.2
+#
+# **Avaliação de 2026-09-18.** Mudança pequena e de um lado só: o
+# `servidor/main.js` não mudou — apenas o cabeçalho, que ainda dizia 1.2.1. A
+# leitura da 1.2.0 continua valendo inteira para a metade de servidor, que é a
+# arriscada.
+#
+# O que entrou é uma **fila de pedidos** no cliente. Um envio de 10 MiB são
+# 2 331 fragmentos, e sem espaçamento eles saem como rajada. Conferido contra o
+# produto, e não contra o comentário do autor: `seele-server/src/taxa.rs` tem
+# `QUADROS_DE_RAJADA = 60`, `QUADROS_POR_SEGUNDO = 20.0` e `PACIENCIA = 200` —
+# passar do teto por tempo suficiente **derruba a conexão**. O comentário do
+# MOD diz «20/s, use no máximo 8/s», e está certo.
+#
+# A fila serializa e espaça em 125 ms. O teste do autor mede o que havia antes:
+# das 2 331 fichas, 2 271 seriam descartadas. Ele simula o balde do SEELE com
+# tráfego concorrente, o que é mais do que a maioria dos testes de MOD faz.
+#
+# **Três decisões que valem ser nomeadas, porque as três são a escolha certa:**
+#
+#   - escrita não é repetida automaticamente. Repetir um `upload-part` que só
+#     *pareceu* falhar gravaria o mesmo fragmento duas vezes;
+#   - descarregar o MOD cancela o que ainda não chegou à ponte, em vez de
+#     deixar pedidos órfãos correndo contra uma sessão que acabou;
+#   - o custo está **na tela**: «10 MiB levam cerca de cinco minutos». A conta
+#     fecha — 2 331 × 125 ms ≈ 291 s. Um produto que escondesse isso deixaria a
+#     pessoa achando que travou.
+#
+# A fila não tem teto de tamanho: quem enfileirar mais rápido do que oito por
+# segundo faz a cadeia crescer. Na prática o único produtor em rajada é o
+# próprio envio de imagem, que é limitado pelo tamanho do arquivo — não é
+# caminho de abuso, e fica anotado porque um MOD que ganhasse outro produtor
+# precisaria reler isto.
+#
+# Executado aqui: 16 testes passam (eram 12), zero caminhos de máquina no
+# pacote, e o `cliente/main.js` confere com o que o `ferramentas/build.mjs`
+# gera — o gerado não divergiu da fonte.
+#
+# E o teto de sempre: isto é um filtro, não uma prova.
+
+[[versoes]]
+versao = "1.2.2"
+commit = "e506907a1e25072ccd74c2cbd4a71127ed2f2362"
+nivel = "oficial"
+notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
+avaliado_em = 1789751826
