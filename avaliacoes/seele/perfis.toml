@@ -1,0 +1,63 @@
+# PERFIS — avaliação de 2026-09-17.
+#
+# Perfis por servidor: nome de exibição, pronomes, biografia, estado, cor,
+# avatar e banner — com um efeito de movimento opcional no banner.
+#
+# É o mais arriscado dos três MODs avaliados até hoje, porque recebe **imagens
+# de terceiros e as desenha**. Foi por aí que a leitura começou.
+#
+# **A imagem que chega é conferida antes de virar `src`:**
+# `/^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+\/=]+$/` — ancorada nas
+# duas pontas, com lista fechada de tipos e alfabeto de base64. Um
+# `data:text/html` ou um `javascript:` não passam, e nem chegariam a ser
+# `<img>` de qualquer forma.
+#
+# **O caminho do arquivo é gerado pelo servidor, e não pelo pedido:**
+# `'uploads/' + ctx.person + '-' + token + '.txt'`, com `token` de relógio mais
+# aleatório. Quem lê depois lê do **perfil guardado**, não de um caminho que
+# alguém mandou. A travessia está fechada por construção, e o `inner_path` do
+# SEELE a recusaria de novo.
+#
+# O envio é em fragmentos, e cada guarda tem motivo: ordem conferida
+# (`up.next !== r.index` recusa), teto por fragmento e no total, prazo de 600
+# segundos, imagem validada **antes** de comitar, e o envio anterior apagado.
+# A coleta do que ficou para trás acontece num pedido posterior, depois de os
+# metadados terem sido comitados — porque efeito em arquivo não desfaz junto
+# com a transação do banco, e o comentário do autor diz isso.
+#
+# **Identidade nunca vem do pedido.** `r.person !== me` recusa com «você só
+# pode editar o próprio perfil», e escrever exige `ctx.write`. O comentário do
+# autor é explícito: *«A forged owner/admin in r is irrelevant. Only ctx.person
+# can mutate.»* Conferido: é verdade.
+#
+# **Zero `innerHTML`** — o cliente monta tudo com `createElement` e
+# `textContent`. A única interpolação em CSS é a cor de destaque num
+# `linear-gradient`, e ela é segura porque o servidor a valida com
+# `/^#[0-9a-f]{6}$/i` antes de guardar; sem essa regex, seria injeção de CSS.
+#
+# Crescimento limitado: 128 perfis por servidor, 32 por consulta, textos com
+# teto. E `prefers-reduced-motion` é respeitado de verdade — com ele, as
+# animações param **e** as imagens não são desenhadas, com a tela dizendo por
+# quê em vez de simplesmente não mostrar nada.
+#
+# Sem rede, sem execução dinâmica, sem armazenamento do navegador. 7 testes e o
+# `quickjs-check` passam, sob limite de 8 MiB.
+#
+# **Uma observação para o autor, que não é defeito:** o pacote leva 257 KiB, e
+# 188 deles são fontes `.woff2` sob `ferramentas/native/`, que servem à prévia
+# de desenvolvimento e não ao MOD. O ESTILO carrega as mesmas 188 KiB.
+#
+# E o teto de sempre: isto é um filtro, não uma prova. Pega o óbvio; não pega o
+# caminho sutil na décima função de um arquivo limpo.
+
+id = "seele/perfis"
+repo = "https://github.com/DATA-AND-DEV/PERFIS"
+titulo = "Perfis"
+resumo = "Um perfil por servidor: nome, pronomes, biografia, cor, avatar e banner — separados do seu perfil no SEELE."
+
+[[versoes]]
+versao = "1.0.0"
+commit = "90f0859cd0211bf875a2d0cea4ee6275dff25dda"
+nivel = "verificado"
+notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
+avaliado_em = 1789700395

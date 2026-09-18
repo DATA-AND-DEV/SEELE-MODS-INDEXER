@@ -1,0 +1,52 @@
+# ESTILO — avaliação de 2026-09-17.
+#
+# Um MOD de tema: quem administra o servidor escolhe cores, raio de canto,
+# densidade e fonte, e a janela de quem entra passa a usá-los.
+#
+# **O ponto que exigiu escrutínio** é o que ele faz de mais incomum: escrever
+# tokens CSS lidos do servidor em `document.documentElement.style`. Um valor
+# `url(...)` num token usado como fundo faria a máquina de cada espectador
+# buscar aquele endereço — e isso é uma baliza de IP, não um tema.
+#
+# Duas camadas independentes barram isso, e as duas foram conferidas:
+#
+# 1. **O servidor valida antes de guardar.** Cores têm de casar
+#    `/^#[0-9a-f]{6}$/i`, o raio é inteiro entre 0 e 24, densidade e fonte vêm
+#    de listas fechadas, e o brilho é booleano. Um `url(...)` não entra.
+# 2. **A CSP do SEELE barra de qualquer jeito.** `default-src 'self'`, `img-src`
+#    sem origem remota e `font-src 'self'` recusam a busca mesmo que o valor
+#    passasse. Vale dizer em voz alta: se alguém alargar a CSP um dia, esta
+#    segunda camada cai, e a primeira passa a ser a única.
+#
+# Os **nomes** dos tokens vêm de uma tabela literal no próprio cliente, não do
+# servidor — não há propriedade arbitrária a ser escrita.
+#
+# O resto é limpo por construção: **zero `innerHTML`** no cliente, que monta
+# tudo com `createElement` e `textContent`; nenhuma rede, nenhuma execução
+# dinâmica, nenhum armazenamento do navegador. O tema é aplicado por
+# `CSSStyleSheet` adotada e removida ao descarregar, e os valores originais dos
+# tokens são guardados e restaurados.
+#
+# Trocar o tema exige `ctx.admin`, e o cliente só mostra o editor quando o
+# servidor responde `canEdit` — a decisão é do servidor, e a tela obedece.
+#
+# 3 testes e o `quickjs-check` passam, sob limite de 8 MiB.
+#
+# **Uma observação para o autor, que não é defeito:** o pacote leva 231 KiB, e
+# 188 deles são fontes `.woff2` sob `ferramentas/native/`, que servem à prévia
+# de desenvolvimento e não ao MOD. O PERFIS carrega as mesmas 188 KiB, então
+# quem instalar os dois baixa as fontes duas vezes.
+#
+# E o teto de sempre: isto é um filtro, não uma prova.
+
+id = "seele/estilo"
+repo = "https://github.com/DATA-AND-DEV/ESTILO"
+titulo = "Estilo"
+resumo = "O tema do servidor: cores, cantos, densidade e fonte, escolhidos por quem administra e aplicados na janela de quem entra."
+
+[[versoes]]
+versao = "1.0.0"
+commit = "a2f33438092389a10cd6e247beac6330e531f3a3"
+nivel = "verificado"
+notas = ["roda-no-servidor"]
+avaliado_em = 1789700369
