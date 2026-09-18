@@ -76,3 +76,73 @@ commit = "90f0859cd0211bf875a2d0cea4ee6275dff25dda"
 nivel = "oficial"
 notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
 avaliado_em = 1789700395
+
+# ----------------------------------------------------------------- 1.2.0
+#
+# **Avaliação de 2026-09-18.** O que mudou de 1.0.0 para cá é quase todo o
+# caminho da imagem: ela passa a ir e voltar em fragmentos, e o teto sobe de
+# 350 KB para 10 MiB por campo. A 1.1.0 existiu por algumas horas e foi
+# superada pela 1.2.0 no mesmo dia; é a 1.2.0 que está publicada aqui.
+#
+# **O que continua valendo da leitura anterior**, conferido de novo e não
+# suposto: identidade só vem de `ctx` (`r.person !== me` recusa), escrever
+# exige `ctx.write`, o caminho do arquivo é gerado pelo servidor e nunca vem do
+# pedido, zero `innerHTML`, sem rede, sem execução dinâmica, sem armazenamento
+# do navegador, e a cor de destaque continua validada por `/^#[0-9a-f]{6}$/i`
+# antes de entrar num `linear-gradient`.
+#
+# **Onde a validação foi parar.** Ela não sumiu, mudou de lugar — e precisava,
+# porque o QuickJS não recebe mais a imagem inteira:
+#
+#   - o cabeçalho `data:image/(png|jpeg|webp|gif);base64,` e os bytes mágicos
+#     de cada formato são conferidos no fragmento **0**, antes de qualquer
+#     escrita;
+#   - todo fragmento tem de casar o alfabeto de base64, e os não finais têm de
+#     ter exatamente `CHUNK` — o que fecha a porta de mandar milhares de
+#     fragmentos de um byte;
+#   - no último, o número de bytes decodificados é conferido contra o teto do
+#     campo, e não só o comprimento do texto.
+#
+# Na leitura, `sliceAsset` monta a resposta lendo `caminho + '.' + n`, com o
+# caminho vindo do **perfil guardado**. A leitura paginada ainda confere
+# `r.path !== path` e recusa com «a imagem mudou», o que impede costurar
+# pedaços de duas imagens diferentes numa resposta só.
+#
+# **Duas consequências que não são falhas, e que quem hospeda tem de saber.**
+#
+# A primeira é disco. Os fragmentos **ficam**: o índice aponta para eles e a
+# leitura é sob demanda. Uma imagem de 10 MiB vira ~2 331 arquivos. Com o teto
+# de 128 perfis e dois campos cada, o pior caso deste MOD na máquina de quem
+# hospeda é da ordem de **597 mil arquivos e 2,5 GiB** — trinta vezes o que a
+# versão anterior podia ocupar. A avaliação de 1.0.0 dizia «crescimento
+# limitado», e a frase continua verdadeira no sentido de que há teto; ela
+# deixou de descrever a mesma ordem de grandeza.
+#
+# A segunda é o prazo. Na 1.0.0 os 600 segundos contavam do início do envio.
+# Agora `up.started` é reescrito a cada fragmento, então o prazo passou a ser
+# **entre fragmentos**. Um envio que nunca termina pode ser mantido de pé
+# indefinidamente, mandando um fragmento a cada nove minutos. O custo é uma
+# vaga de envio por pessoa e os fragmentos parciais dela — limitado, e não
+# gratuito. A coleta do que foi abandonado tem orçamento de 32 remoções por
+# pedido e retoma de onde parou, então recolher uma imagem grande abandonada
+# leva dezenas de pedidos.
+#
+# **O que foi executado aqui**, e não lido: `npm test` passa, 12 testes (eram
+# 7). E o pacote foi materializado pelo próprio `ferramentas.fonte` — 35
+# arquivos, 275,5 KiB, contra 33 e 256,8 KiB da 1.0.0 —, cujo hash de 1.0.0
+# voltou igual ao que está publicado: a regra append-only está intacta.
+#
+# Das 275,5 KiB, **165,2 são fontes `.woff2`** sob `ferramentas/native/` —
+# 59% do pacote —, que servem à prévia de desenvolvimento e não ao MOD. A
+# avaliação de 1.0.0 dizia 188 KiB; o número certo, medido no pacote que o
+# `ferramentas.fonte` monta, é este. Continua não sendo defeito, e continua
+# sendo a maior parte do que quem baixa o MOD leva sem usar.
+#
+# E o teto de sempre: isto é um filtro, não uma prova.
+
+[[versoes]]
+versao = "1.2.0"
+commit = "31289275ae34ab2ee5cdd8580eeffcdffe17777d"
+nivel = "oficial"
+notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
+avaliado_em = 1789748984
