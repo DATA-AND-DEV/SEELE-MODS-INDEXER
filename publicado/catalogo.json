@@ -1,7 +1,7 @@
 {
   "esquema": 1,
   "api_oferecida": 2,
-  "gerado_em": 1789749409,
+  "gerado_em": 1789751885,
   "mods": [
     {
       "id": "seele/estilo",
@@ -209,7 +209,7 @@
       "repo": "https://github.com/DATA-AND-DEV/PERFIS",
       "oficial": true,
       "nivel": "oficial",
-      "commit": "136233e2b89fc42d4e436b28c3f0a188ee7a6f2c",
+      "commit": "e506907a1e25072ccd74c2cbd4a71127ed2f2362",
       "notas": [
         "roda-no-servidor",
         "guarda-dados-na-maquina"
@@ -318,6 +318,60 @@
             "guarda-dados-na-maquina"
           ],
           "commit": "136233e2b89fc42d4e436b28c3f0a188ee7a6f2c"
+        },
+        {
+          "versao": "1.2.2",
+          "api": 2,
+          "publicado_em": 1789751826,
+          "hash": "7dac99fa457e9ca5c4a2e68ace0e696ae451c6433d23b31f9456d39b695d8bab",
+          "alcanca": [
+            "dom",
+            "perfis por servidor",
+            "imagens e banners animados"
+          ],
+          "arquivos": [
+            "README.md",
+            "cliente/main.js",
+            "ferramentas/build.mjs",
+            "ferramentas/fila.js",
+            "ferramentas/interface.js",
+            "ferramentas/native/fontes.css",
+            "ferramentas/native/fontes/LICENCA-ibm-plex-mono.txt",
+            "ferramentas/native/fontes/LICENCA-noto-sans-jp.txt",
+            "ferramentas/native/fontes/LICENCA-saira-condensed.txt",
+            "ferramentas/native/fontes/PROCEDENCIA.md",
+            "ferramentas/native/fontes/ibm-plex-mono-400.woff2",
+            "ferramentas/native/fontes/ibm-plex-mono-500.woff2",
+            "ferramentas/native/fontes/ibm-plex-mono-600.woff2",
+            "ferramentas/native/fontes/noto-sans-jp-700.woff2",
+            "ferramentas/native/fontes/noto-sans-jp-900.woff2",
+            "ferramentas/native/fontes/saira-condensed-500.woff2",
+            "ferramentas/native/fontes/saira-condensed-700.woff2",
+            "ferramentas/native/fontes/saira-condensed-900.woff2",
+            "ferramentas/native/tokens.css",
+            "ferramentas/perfis.js",
+            "ferramentas/preview.cjs",
+            "ferramentas/preview.css",
+            "ferramentas/preview.js",
+            "ferramentas/quickjs-check/Cargo.lock",
+            "ferramentas/quickjs-check/Cargo.toml",
+            "ferramentas/quickjs-check/smoke.js",
+            "ferramentas/quickjs-check/src/main.rs",
+            "ferramentas/test-ui.cjs",
+            "mod.json",
+            "package-lock.json",
+            "package.json",
+            "servidor/main.js",
+            "test/banner-animado.gif",
+            "test/fila.test.cjs",
+            "test/servidor.test.cjs"
+          ],
+          "nivel": "oficial",
+          "notas": [
+            "roda-no-servidor",
+            "guarda-dados-na-maquina"
+          ],
+          "commit": "e506907a1e25072ccd74c2cbd4a71127ed2f2362"
         }
       ]
     }
