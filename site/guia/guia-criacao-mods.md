@@ -246,11 +246,13 @@ O **tipo do arquivo vem dos bytes**, nunca do nome nem do manifesto: o SEELE rec
 await SeeleUI.tema({
   acento:'#6BFFB6', fundo:'#050403', painel:'#0A0806',
   texto:'#EAE3CF', apagado:'#908574', borda:'#241F19',
-  densidade:'compacta', fonte:'mono',
+  densidade:'compacta', fonte:'mono', arredondamento:8, brilho:false,
 });
 ```
 
 As seis cores aceitam somente `#rrggbb`. `densidade` aceita `compacta` ou `confortavel` e `fonte` aceita `mono` ou `sans` — são escolhas e não números, porque uma cor o produto confere e um espaçamento não: `0px` deixaria a sessão ilegível sem violar regra nenhuma. `fonte` é escolha entre as duas pilhas que o produto declara, e não família livre: a escala de tipo daqui é medida, e uma família qualquer moveria tamanho, entrelinha e contraste de uma vez.
+
+`arredondamento` é inteiro de 0 a 24 e `brilho` é `true` ou `false`. O produto escreve o `px` e monta a sombra a partir de um token dele: um raio livre aceitaria `9999`, e uma sombra livre aceitaria qualquer `box-shadow`. O produto abre em canto reto e sem sombra, e o tema de servidor é a exceção nomeada em `specs/07-estetica.md` — vale só naquela sessão.
 
 O produto recusa nomes e cores inválidos, disputa de token com outro MOD e contraste texto/fundo abaixo de 4,5:1. Capture o Error e apresente sua mensagem. O tema é aplicado somente à sessão e sai com ela.
 
@@ -264,9 +266,9 @@ Os pedaços são base64 de janelas **múltiplas de três**. Duas janelas seguida
 
 ### O que não existe, e por quê
 
-**CSS próprio e decoração de canais.** A região é o lugar onde um MOD desenha. A única coisa que um MOD entrega fora dela é uma **marca** na lista de pessoas — e ali ele entrega dado, não desenho: quem monta é o produto.
+**CSS próprio e decoração de canais.** A região é o lugar onde um MOD desenha. A única coisa que um MOD entrega fora dela é um **cartão** na lista de pessoas — e ali ele declara, não desenha: quem monta é o mesmo renderer, com uma gramática menor.
 
-**Arredondamento e brilho no tema.** `docs/marca.md` proíbe raio e sombra, e a palavra é «nunca». A API recusa os dois pelo nome, com a razão — não é ausência, é decisão.
+**Nada.** As duas ausências que esta seção listava — arredondamento e brilho no tema, e o cartão na lista de pessoas — foram implementadas. O que continua fora é só o que está acima: CSS próprio e decoração de canais.
 
 Não transforme uma interação indisponível em uma alteração automática de dados, e não escreva na tela que algo «aguarda suporte»: se a sua ideia depende de uma dessas, proponha a extensão.
 
@@ -315,7 +317,7 @@ Um manifesto precisa declarar **exatamente** a API que o aplicativo oferece — 
 | Cliente | globalThis.SeeleMods.request(id, canal, objeto) |
 | Cliente | globalThis.SeeleUI.regiao(conteudo) |
 | Cliente | globalThis.SeeleUI.tema(valores) |
-| Cliente | globalThis.SeeleUI.marcas(marcas) |
+| Cliente | globalThis.SeeleUI.cartoes(cartoes) |
 | Cliente | globalThis.SeeleUI.aoEvento(funcao) |
 | Cliente | globalThis.SeeleUI.pedaco(arquivo, inicio) — base64, janelas múltiplas de 3 |
 | Cliente | globalThis.SeeleUI.soltar(arquivo) |
@@ -764,7 +766,7 @@ Fonte: [mundo.rs](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e
 
 ## Executor, região, tema e ciclo de vida
 
-A API 3 substitui o código dentro da janela por um executor próprio. As funções assíncronas são `SeeleMods.snapshot()`, `SeeleMods.request(id, canal, valor)`, `SeeleUI.regiao(conteudo)`, `SeeleUI.tema(valores)`, `SeeleUI.marcas(marcas)`, `SeeleUI.pedaco(arquivo, inicio)` e `SeeleUI.soltar(arquivo)`. `SeeleUI.aoEvento(funcao)` é síncrona e registra um ouvinte. As falhas rejeitam a Promise com Error.
+A API 3 substitui o código dentro da janela por um executor próprio. As funções assíncronas são `SeeleMods.snapshot()`, `SeeleMods.request(id, canal, valor)`, `SeeleUI.regiao(conteudo)`, `SeeleUI.tema(valores)`, `SeeleUI.cartoes(cartoes)`, `SeeleUI.pedaco(arquivo, inicio)` e `SeeleUI.soltar(arquivo)`. `SeeleUI.aoEvento(funcao)` é síncrona e registra um ouvinte. As falhas rejeitam a Promise com Error.
 
 ### Declarar a região
 
@@ -852,28 +854,41 @@ await SeeleUI.tema({
   fundo:'#050403', painel:'#0b0a08', texto:'#EAE3CF',
   apagado:'#7A7061', acento:'#6BFFB6', borda:'#241F19',
   densidade:'compacta', fonte:'mono',
+  arredondamento:8, brilho:false,
 });
 ```
 
-São **seis cores** — `fundo`, `painel`, `texto`, `apagado`, `acento`, `borda` —, mais `densidade` (`compacta` ou `confortavel`) e `fonte` (`mono` ou `sans`). `fonte` escolhe entre as duas pilhas de tipo que o produto declara, e não é família livre: a escala de tipo daqui é medida, e uma família qualquer moveria tamanho, entrelinha e contraste de uma vez.
+São **seis cores** — `fundo`, `painel`, `texto`, `apagado`, `acento`, `borda` —, mais `densidade` (`compacta` ou `confortavel`), `fonte` (`mono` ou `sans`), `arredondamento` (inteiro de 0 a 24) e `brilho` (`true` ou `false`). `fonte` escolhe entre as duas pilhas de tipo que o produto declara, e não é família livre: a escala de tipo daqui é medida, e uma família qualquer moveria tamanho, entrelinha e contraste de uma vez.
+
+**O arredondamento é número, e o brilho é booleano.** Quem escreve o `px` é o produto, e a sombra que o brilho liga é montada pelo produto a partir de um token dele. Mande `8`, e não `'8px'`; mande `true`, e não um `box-shadow`. Fora do intervalo é recusa com o intervalo escrito.
+
+O produto abre em **canto reto e sem sombra** — é a estética dele, em `specs/07-estetica.md` —, e o tema de servidor é a exceção nomeada ali: o efeito vale só naquela sessão e sai com ela.
 
 A chamada substitui o pedido de tema deste MOD. `await SeeleUI.tema({})` retira os tokens pedidos por ele; não escreva cores padrão por cima da escolha pessoal. A saída da sessão também remove a camada automaticamente.
 
 O produto valida nomes, valores `#rrggbb`, posse dos tokens por outro MOD e contraste texto/fundo mínimo de 4,5:1. Uma recusa não confirma o tema solicitado: só registre a aplicação depois de a Promise resolver.
 
-**`arredondamento` e `brilho` são recusados pelo nome, com a razão.** Não é que a API não os conheça: `docs/marca.md` proíbe raio e sombra, e a palavra que ele usa é «nunca». Se o seu MOD guarda esses valores para outros produtos, guarde-os — e diga a quem os salvou que estão guardados e não desenhados, em vez de zerá-los. Descobrir a recusa aplicando um tema de mentira para ver o que passa é pior: polui o tema aplicado no caminho.
-
-### Marcar pessoas na lista do produto
+### Dar cartão a pessoas na lista do produto
 
 ```js
-await SeeleUI.marcas({ '7': {texto:'ela/dela', cor:'#a78bfa'} });
+const recusados = await SeeleUI.cartoes({
+  '7': [
+    {forma:'midia', chave:'retrato', doServidor:{canal, pedido:{op:'asset', person:'7'}, campo:'image'}},
+    {forma:'titulo', chave:'nome', dentro:'Lia da Torre'},
+    {forma:'texto', chave:'pronome', dentro:'ela/dela'},
+  ],
+});
 ```
 
-Esta é a **única superfície de um MOD fora da região dele**, e ela é estreita de propósito: você entrega dado, e quem desenha é o produto — no lugar dele, com a tipografia dele, com o espaçamento dele. Você não escolhe posição, tamanho nem vizinho, e não alcança nenhum outro nó.
+Esta é a **única superfície de um MOD fora da região dele**. O que você manda é a **mesma declaração da região**, e quem monta é o **mesmo renderer** — `createElement` e `textContent`, como em todo o resto. Você não escolhe posição, tamanho, tipografia nem vizinho, e não alcança nenhum outro nó.
 
-A chave é o `id` da pessoa como aparece no retrato. O texto vale até 24 caracteres e é cortado nesse ponto; a cor, quando vem, precisa ser `#rrggbb` e pinta **o contorno**, nunca o texto. Um MOD marca até 128 pessoas. Uma cor malformada **recusa o conjunto inteiro** — mande só o que já passa nessa forma, para que a recusa seja de quem digitou errado e não da lista toda.
+A chave é o `id` da pessoa como aparece no retrato. Duas coisas mudam em relação à região:
 
-Uma marca sem texto não entra: um retângulo vazio ao lado de um nome é o produto anunciando uma ausência que ninguém pediu para anunciar. Cada chamada **substitui** as suas marcas, e elas saem junto com o MOD.
+**A gramática é menor.** Um cartão aceita `titulo`, `texto`, `linha`, `lista`, `item` e `midia`. Não aceita `campo`, `escolha`, `botao`, `arquivo` nem `tela` — nada que receba foco ou clique. A linha do roster já tem um botão do produto, e dividir a ordem de tabulação e a área de toque com um terceiro é o tipo de coisa que ninguém consegue depurar depois. Uma forma recusada **é contada**, e a chamada devolve quantas: um botão que você declarou e não apareceu vira um número, e não um sumiço.
+
+**Os tetos são menores.** 64 pessoas por MOD, 24 nós por cartão, 4 níveis de fundura, e a mídia dos cartões tem contador e orçamento próprios — 64 mídias e 8 MiB, separados dos da região. Um cartão é por pessoa: o que não couber em 24 nós é uma região, e a região já existe.
+
+O retrato vem do **seu servidor**, pela mesma `doServidor` da região; o tamanho dele é da folha do produto. Um cartão sem nada dentro não entra — uma moldura vazia ao lado de um nome é o produto anunciando uma ausência que ninguém pediu. Cada chamada **substitui** os seus cartões, e eles saem junto com a sua região.
 
 ### O que o executor não tem
 
@@ -885,7 +900,7 @@ Promise, JSON, TextEncoder, `setTimeout`, `setInterval`, `clearTimeout`, `clearI
 
 ### Descarregamento
 
-O produto para o executor e retira a região, o tema, as marcas, a mídia montada e os arquivos escolhidos. Não existe mais o evento `seele-mod-unload`. Apague listeners de unload, limpeza de nós, folhas e observadores e restauração de estilos. Temporizadores e promessas do executor não sobrevivem à saída da sessão, e você não precisa registrar nada para que isso aconteça.
+O produto para o executor e retira a região, o tema, os cartões, a mídia montada e os arquivos escolhidos. Não existe mais o evento `seele-mod-unload`. Apague listeners de unload, limpeza de nós, folhas e observadores e restauração de estilos. Temporizadores e promessas do executor não sobrevivem à saída da sessão, e você não precisa registrar nada para que isso aconteça.
 
 **Depois da revogação, um pedido seu recebe recusa, e não silêncio.** Quem sai no meio de um envio recebe `sessao-encerrada` em vez de uma Promise que nunca resolve.
 
@@ -936,8 +951,11 @@ Valores verificados no código da revisão, separados de decisões dos MODs de e
 | Mídia montada | 4 MiB | Janela |
 | Arquivo escolhido | 10 MiB, até 4 de pé por vez | Janela |
 | Pedaço de arquivo escolhido | 65535 bytes, múltiplo de 3 | Janela |
-| Marcas por MOD | 128 pessoas | Janela |
-| Texto de uma marca | 24 caracteres | Janela |
+| Pessoas com cartão, por MOD | 64 | Janela |
+| Nós num cartão | 24 | Janela |
+| Fundura de um cartão | 4 níveis | Janela |
+| Mídias somadas nos cartões | 64 | Janela |
+| Bytes de mídia nos cartões | 8 MiB | Janela |
 
 As 500 consultas são um orçamento de trabalho do interpretador; a documentação do runtime apresenta uma aproximação de cerca de 225 ms no ambiente de referência. Isso não é um timeout garantido de 225 ms em todas as máquinas. Chamadas nativas de rede têm seu próprio limite porque não são interrompidas pelo mesmo contador de instruções.
 
