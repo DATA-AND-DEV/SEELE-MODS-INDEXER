@@ -359,10 +359,10 @@ autoriza instalar programa.
    repositório, sem build remoto — o conteúdo já vem pronto. **Não ligue Web
    Analytics nem Logpush**, e não ponha nada de análise: a seção de cima diz
    por quê, e é a única parte disto que não dá para desfazer depois.
-3. **Gerar a chave de produção.** A que assina hoje é a de desenvolvimento,
-   como `chaves/LEIA.md` diz. Trocar `mods.pub` depois de um cliente publicado
-   é uma release do cliente, não uma edição de arquivo: todo SEELE no mundo tem
-   a chave antiga compilada dentro.
+3. ~~**Gerar a chave de produção.**~~ **Feito em 17/09**, commit `7d4ec1f`. A
+   chave `32D58C50C0AB34E8` assina o catálogo e é a que os clientes publicados
+   trazem compilada. Trocá-la agora seria uma release do cliente, e não uma
+   edição de arquivo.
 4. **Commitar `publicado/`** — o commit é o deploy.
 
 A ordem importa: a chave de produção antes de qualquer cliente publicado

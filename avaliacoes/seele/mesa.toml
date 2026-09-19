@@ -106,3 +106,64 @@ commit = "7ca40d1cc98e57adaed17c0e5f007593041c4eef"
 nivel = "oficial"
 notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
 avaliado_em = 1789691343
+
+# ------------------------------------------------------------------ 2.0.0
+#
+# **Avaliação de 2026-09-19. A ruptura da API 3.**
+#
+# Esta versão não é uma evolução da anterior: é o mesmo MOD reescrito contra uma
+# API que tirou coisa. O que mudou de mais importante para uma avaliação é que
+# **o cliente do MOD deixou de rodar na janela do produto**. Ele roda num
+# contexto QuickJS separado (ADR 0049), e naquele contexto não existem
+# `document`, `window`, `fetch`, `XMLHttpRequest`, `WebSocket`, `Worker`,
+# `localStorage`, `sessionStorage`, `indexedDB` nem o global do Tauri — e não
+# existem porque ninguém os ligou, e não porque alguém os apagou no começo do
+# arquivo. A diferença importa: o segundo caso se contorna.
+#
+# Com isso, a classe inteira de perguntas que a avaliação de 1.0.0 teve de
+# responder deixou de ser respondível pelo código e passou a ser respondida pela
+# arquitetura. Não há `innerHTML` a procurar porque não há DOM; não há `url(...)`
+# num token a barrar porque o MOD não escreve token nenhum — ele nomeia, e o
+# produto escreve.
+#
+# **O que o MOD declara, o produto monta**, com `createElement` e `textContent`.
+# O conjunto de formas é fechado e mora no produto; uma forma que a API não
+# conhece não vira elemento.
+#
+# ------------------------------------------------- o que esta versão acrescenta
+#
+# A MESA é a maior das três e a que mais mudou de forma. Ela **não** dá cartão
+# na lista de pessoas e **não** pede tema: toda a superfície dela é a região.
+#
+# **O tabuleiro passou a ser figura declarada.** Na 1.x era lista de texto;
+# agora o MOD declara retângulos, círculos, linhas e texto numa `tela`, e quem
+# pinta é o produto. O MOD não recebe contexto de canvas — ele recebe de volta
+# qual figura o dedo pegou, e a decisão de qual foi é do produto.
+#
+# O que isso tira de uma avaliação: não há como este MOD desenhar fora da área
+# que o produto lhe deu, nem ler pixel de coisa alguma.
+#
+# **O mapa de cena e o retrato de ficha** vêm do servidor deste MOD, pela mesma
+# origem única da API, com o tipo decidido pelos bytes. Não há endereço livre.
+#
+# **A autorização é do servidor em toda operação que escreve** — criar mesa,
+# mover peça, ferir, curar, publicar verbete —, e o cliente obedece ao que ele
+# responde. Conferido nas operações novas desta versão: `cast`, `rest`,
+# `action-save`, `action-use`, `action-remove`, `entry-save` e `scene-save`.
+#
+# **Nenhuma rede, nenhuma execução dinâmica, nenhum armazenamento do navegador.**
+# O estado persistente é o quintal do servidor do MOD.
+#
+# 41 provas passam, contra o servidor de verdade nas duas metades.
+
+# **O teto de sempre: isto é um filtro, não uma prova.** E vale uma observação
+# de método: esta leitura foi feita por quem escreveu parte do código desta
+# versão, o que a torna mais rápida e menos independente. O veredito abaixo é de
+# quem responde pelo projeto.
+
+[[versoes]]
+versao = "2.0.0"
+commit = "73b627f92cb52dcb138d4442ba1bf5c86b868d18"
+nivel = "oficial"
+notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
+avaliado_em = 1789860366

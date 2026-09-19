@@ -96,3 +96,78 @@ commit = "0fba9a5e346b9417f52bbf8562039b7e8200bd61"
 nivel = "oficial"
 notas = ["roda-no-servidor"]
 avaliado_em = 1789749344
+
+# ------------------------------------------------------------------ 2.0.0
+#
+# **Avaliação de 2026-09-19. A ruptura da API 3.**
+#
+# Esta versão não é uma evolução da anterior: é o mesmo MOD reescrito contra uma
+# API que tirou coisa. O que mudou de mais importante para uma avaliação é que
+# **o cliente do MOD deixou de rodar na janela do produto**. Ele roda num
+# contexto QuickJS separado (ADR 0049), e naquele contexto não existem
+# `document`, `window`, `fetch`, `XMLHttpRequest`, `WebSocket`, `Worker`,
+# `localStorage`, `sessionStorage`, `indexedDB` nem o global do Tauri — e não
+# existem porque ninguém os ligou, e não porque alguém os apagou no começo do
+# arquivo. A diferença importa: o segundo caso se contorna.
+#
+# Com isso, a classe inteira de perguntas que a avaliação de 1.0.0 teve de
+# responder deixou de ser respondível pelo código e passou a ser respondida pela
+# arquitetura. Não há `innerHTML` a procurar porque não há DOM; não há `url(...)`
+# num token a barrar porque o MOD não escreve token nenhum — ele nomeia, e o
+# produto escreve.
+#
+# **O que o MOD declara, o produto monta**, com `createElement` e `textContent`.
+# O conjunto de formas é fechado e mora no produto; uma forma que a API não
+# conhece não vira elemento.
+#
+# ------------------------------------------------- o que esta versão acrescenta
+#
+# **Arredondamento e brilho passaram a ser aplicados.** Na 1.x eles eram
+# guardados no servidor e não desenhados; agora o produto os aceita, e é isso
+# que esta avaliação precisa olhar de perto — é a única coisa que este MOD faz
+# que alcança a aparência de quem entra no servidor.
+#
+# **Duas camadas, e as duas foram conferidas.**
+#
+# 1. **O servidor valida antes de guardar**, como já validava: `radius` é
+#    inteiro entre 0 e 24, `glow` é booleano, cores casam `/^#[0-9a-f]{6}$/i`, e
+#    densidade e fonte vêm de listas fechadas.
+# 2. **O produto valida de novo, e é ele quem escreve o CSS.** O que atravessa a
+#    API é o número `8`, e quem escreve `8px` é o produto; o que atravessa é
+#    `true`, e a sombra que ele liga é montada pelo produto a partir de um token
+#    do produto. Não há caminho por onde uma string deste MOD chegue a uma
+#    propriedade CSS.
+#
+# Esta segunda camada é o que mudou em relação à 1.x, e é uma melhora real: na
+# API 2 este MOD escrevia tokens em `document.documentElement.style`, e a defesa
+# contra `url(...)` era a validação do servidor mais a CSP. Agora ele não
+# escreve nada — ele nomeia valores de um conjunto fechado.
+#
+# O tema é **recurso de sessão**: escrito no contêiner da sessão e retirado com
+# ela, sem tocar em preferência nenhuma de quem usa.
+#
+# Trocar o tema continua exigindo `ctx.admin`, e o cliente só mostra o editor
+# quando o servidor responde `canEdit` — a decisão é do servidor, e a tela
+# obedece.
+#
+# 15 provas passam, contra o servidor de verdade nas duas metades.
+
+# **A observação de 1.0.1 continua valendo, e não foi atendida.** O pacote leva
+# `ferramentas/native/fontes/` — oito `.woff2` com cerca de 188 KiB, que servem
+# à prévia de desenvolvimento e não ao MOD. O pacote passou de 231 para 286 KiB.
+# Quem instalar os três MODs oficiais baixa as mesmas fontes três vezes.
+#
+# Continua não sendo defeito de segurança, e continua sendo peso que quem
+# instala paga sem receber nada. Fica registrado pela segunda vez.
+
+# **O teto de sempre: isto é um filtro, não uma prova.** E vale uma observação
+# de método: esta leitura foi feita por quem escreveu parte do código desta
+# versão, o que a torna mais rápida e menos independente. O veredito abaixo é de
+# quem responde pelo projeto.
+
+[[versoes]]
+versao = "2.0.0"
+commit = "b6dc1cd13746346fd4e7ff8e2ab86fc853abeb5a"
+nivel = "oficial"
+notas = ["roda-no-servidor"]
+avaliado_em = 1789860366
