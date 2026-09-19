@@ -1,59 +1,67 @@
+// API 3: executado no executor do MOD. O produto monta a região e encerra a
+// sessão. Não há `document`, `window` nem o global do Tauri aqui dentro.
 (() => {
-  const id = 'exemplo/contador';
-  const api = globalThis.SeeleMods;
-  if (!api) return;
-  const painel = document.createElement('section');
-  painel.setAttribute('aria-label', 'Contador compartilhado');
-  const titulo = document.createElement('h2'); titulo.textContent = 'Contador';
-  const valor = document.createElement('p'); valor.textContent = 'Carregando…';
-  valor.setAttribute('role', 'status');
-  const somar = document.createElement('button'); somar.type = 'button'; somar.textContent = 'Somar 1';
-  const zerar = document.createElement('button'); zerar.type = 'button'; zerar.textContent = 'Zerar (administrador)';
-  painel.append(titulo, valor, somar, zerar);
-  // CSSOM e estilos de propriedades: não injete <style> inline sob a CSP.
-  Object.assign(painel.style, {
-    border: '1px solid var(--seele-linha-forte)', padding: '16px', margin: '8px',
-    color: 'var(--seele-osso)', background: 'var(--seele-negro-painel)',
-    fontFamily: 'var(--seele-mono)'
-  });
-  let encerrado = false, ocupado = false, revisao = null, timer;
-  const mensagens = {
-    'sem-permissao': 'Sua permissão não permite esta ação.',
-    'conflito': 'O contador mudou. Recarregando; confira o valor antes de tentar de novo.',
-    'bridge-refused': 'O servidor recusou o pedido. Confira o MOD e o log do host.'
+  'use strict';
+
+  // O que este MOD sabe agora. Redesenhar é uma função disto, e de nada mais.
+  let estado = null;
+  let aviso = '';
+  let canalAtual = null;
+
+  const desenho = () => {
+    if (!estado) return [{ forma: 'texto', dentro: 'Consultando o contador…' }];
+    return [
+      { forma: 'titulo', dentro: 'Contador' },
+      { forma: 'texto', dentro: `Valor: ${estado.valor} · revisão ${estado.revisao}` },
+      {
+        forma: 'linha',
+        dentro: [
+          { forma: 'botao', chave: 'somar', dentro: 'SOMAR 1' },
+          { forma: 'botao', chave: 'zerar', dentro: 'ZERAR' },
+        ],
+      },
+      { forma: 'texto', dentro: aviso || 'Quem administra o servidor pode zerar.' },
+    ];
   };
-  async function executar(op = 'ler') {
-    if (encerrado || ocupado) return;
-    ocupado = true; somar.disabled = zerar.disabled = true;
+
+  const pintar = () => SeeleUI.regiao(desenho()).catch(erro => console.error(erro));
+
+  async function pedir(canal, corpo) {
+    const resposta = await SeeleMods.request('exemplo/contador', canal, corpo);
+    // **A recusa é dita pelo nome.** Um botão que não faz nada e não explica é
+    // a forma mais cara de um MOD falhar: quem apertou não tem o que fazer.
+    if (!resposta.ok) throw new Error(resposta.error);
+    return resposta;
+  }
+
+  // Um evento não tem resposta: quem aperta não espera o MOD confirmar.
+  SeeleUI.aoEvento(evento => {
+    if (evento.nome !== 'botao' || canalAtual == null) return;
+    const op = evento.chave === 'somar' ? 'incrementar' : 'zerar';
+    aviso = 'gravando…';
+    void pintar();
+    pedir(canalAtual, { op, revisao: estado?.revisao ?? 0 }).then(
+      resposta => { estado = resposta; aviso = ''; return pintar(); },
+      erro => { aviso = 'não gravou: ' + erro.message; return pintar(); },
+    );
+  });
+
+  async function atualizar() {
     try {
-      const snapshot = await api.snapshot();
-      if (encerrado) return;
+      const snapshot = await SeeleMods.snapshot();
       const canal = snapshot.open_channel ?? snapshot.channels?.[0]?.id;
       if (canal == null) throw new Error('Entre em um servidor com canal de texto.');
-      const destino = document.querySelector('#tela-sessao .painel-canais .canais-rolagem');
-      if (!destino) throw new Error('A interface desta versão não oferece o ponto de montagem esperado.');
-      if (painel.parentNode !== destino) destino.append(painel);
-      const resposta = await api.request(id, canal, {op, revisao});
-      if (encerrado) return;
-      if (!resposta.ok) throw new Error(mensagens[resposta.error] || resposta.error);
-      revisao = resposta.revisao;
-      valor.textContent = `Valor: ${resposta.valor} · revisão ${resposta.revisao}`;
+      canalAtual = canal;
+      estado = await pedir(canal, { op: 'ler' });
+      await pintar();
     } catch (erro) {
-      if (!encerrado) valor.textContent = 'Não concluído: ' + (erro.message || String(erro));
-      // Não repita automaticamente uma mutação após timeout.
+      try { await SeeleUI.regiao({ forma: 'texto', dentro: 'Não concluído: ' + erro.message }); }
+      catch (falha) { console.error(falha); }
     } finally {
-      ocupado = false;
-      if (!encerrado) somar.disabled = zerar.disabled = revisao === null;
+      // Agendado depois de concluir: nunca sobrepõe consultas. O SEELE encerra
+      // o executor e seus temporizadores ao sair da sessão.
+      setTimeout(atualizar, 4000);
     }
   }
-  somar.onclick = () => executar('incrementar');
-  zerar.onclick = () => executar('zerar');
-  function descarregar(evento) {
-    if (evento.detail !== id) return;
-    encerrado = true; clearInterval(timer); painel.remove();
-    globalThis.removeEventListener('seele-mod-unload', descarregar);
-  }
-  globalThis.addEventListener('seele-mod-unload', descarregar);
-  timer = setInterval(() => executar('ler'), 4000);
-  executar('ler');
+  void atualizar();
 })();
