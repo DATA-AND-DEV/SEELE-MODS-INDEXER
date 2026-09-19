@@ -127,7 +127,7 @@ export function filtrar(mods, { nivel, api, busca } = {}) {
   const termo = busca ? achatar(busca.trim()) : "";
   return mods.filter((mod) => {
     if (nivel && mod.nivel !== nivel) return false;
-    if (api !== undefined && !mod.versoes.some((v) => v.api <= api)) return false;
+    if (api !== undefined && !mod.versoes.some((v) => (api >= 3 ? v.api === api : v.api <= api))) return false;
     if (!termo) return true;
     const palheiro = achatar(
       [mod.titulo, mod.id, mod.autor, mod.nome, mod.resumo, mod.repo].join(" "),

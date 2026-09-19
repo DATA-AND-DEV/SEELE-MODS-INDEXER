@@ -28,3 +28,17 @@ def test_generated_downloads_and_links_exist():
             target = SOURCE.parents[1] / 'publicado/guia' / href
         assert target.exists(), href
     assert (root / 'exemplos/contador.zip').is_file()
+
+
+def test_exemplo_zip_exato_e_manifesto_aceito_pela_api_atual():
+    import zipfile
+    from ferramentas.manifesto import ler, VERSAO_DA_API
+    root = SOURCE.parents[1] / 'site/guia/exemplos'
+    with zipfile.ZipFile(root / 'contador.zip') as zip_:
+        assert sorted(zip_.namelist()) == ['cliente/main.js', 'mod.json', 'servidor/main.js']
+        for name in zip_.namelist():
+            assert zip_.read(name) == (root / 'contador' / name).read_bytes()
+        assert ler(zip_.read('mod.json').decode()).api == VERSAO_DA_API
+    assert 'SeeleUI.regiao' in SOURCE.read_text()
+    assert 'SeeleUI.tema' in SOURCE.read_text()
+    assert 'api-too-old' in SOURCE.read_text()

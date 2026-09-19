@@ -61,7 +61,16 @@ def gerar(raiz: Path, chave_secreta: Path, agora: int | None = None) -> dict:
             if "mod.json" not in por_caminho:
                 raise Recusado("sem-manifesto", f"{avaliacao.id} {versao.versao}")
 
-            m = manifestos.ler(por_caminho["mod.json"].decode("utf-8"))
+            hash_atual = conteudo(arquivos)
+            # O catálogo é append-only: conservar uma versão antiga já publicada
+            # não é admitir um pacote novo com API retirada. Exija os mesmos bytes.
+            ja_publicada = any(
+                mod["id"] == avaliacao.id and any(
+                    v["versao"] == versao.versao and v["hash"] == hash_atual
+                    for v in mod["versoes"]
+                ) for mod in (anterior or {}).get("mods", [])
+            )
+            m = manifestos.ler(por_caminho["mod.json"].decode("utf-8"), historico=ja_publicada)
             if m.id != avaliacao.id:
                 # O manifesto e a avaliação têm de falar do mesmo MOD, senão o
                 # catálogo publica sob um id que o app vai recusar.
@@ -79,7 +88,7 @@ def gerar(raiz: Path, chave_secreta: Path, agora: int | None = None) -> dict:
                 versao=versao.versao,
                 api=m.api,
                 publicado_em=versao.avaliado_em,
-                hash=conteudo(arquivos),
+                hash=hash_atual,
                 alcanca=m.reach,
                 arquivos=[caminho for caminho, _ in arquivos],
                 nivel=versao.nivel,

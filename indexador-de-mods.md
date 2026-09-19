@@ -435,3 +435,21 @@ escrita, e o catálogo continua parado. No dia em que existir uma função de bo
 para a submissão, alguém vai propor usá-la para a busca; a resposta é esta seção,
 e o motivo é o de sempre: com API o indexador aprende cada termo digitado, e com
 arquivo aprende que alguém buscou o arquivo.
+
+## API 3 e histórico publicado
+
+A versão aceita para **novos pacotes** é 3, espelhada de `MOD_API_VERSION` do
+SEELE. O cliente do MOD executa em Worker e usa `SeeleUI.regiao` e `SeeleUI.tema`;
+DOM, CSS e eventos de unload não fazem parte dessa arquitetura. API anterior é
+recusada como `api-too-old`; API superior recebe `api-too-new`.
+
+O catálogo continua append-only. O gerador conserva uma versão antiga apenas
+quando ID, versão e hash dos bytes materializados já constam no catálogo
+anterior. Essa exceção é de preservação histórica, não de compatibilidade com o
+runtime atual. Uma nova versão ou bytes substituídos não recebem a exceção.
+O catálogo gerado anuncia `api_oferecida: 3`.
+
+O guia tem fonte em `docs/guia-criacao-mods.md`; gere HTML, Markdown de download e
+ZIP com `python3 -m ferramentas.gerar_guia`. A publicação deve regenerar e assinar
+o catálogo no mesmo passo, com as avaliações dos novos commits. Não edite a API,
+hashes ou assinaturas dentro de `publicado/catalogo.json` manualmente.

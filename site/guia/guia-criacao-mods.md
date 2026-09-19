@@ -183,6 +183,7 @@ O MOD declara conteúdo; o SEELE monta a região, escolhe tipografia, espaçamen
 | campo | Caixa de texto editável | `chave`, `rotulo`, `valor` |
 | escolha | Seleção entre opções declaradas | `chave`, `rotulo`, `valor`, `opcoes` |
 | botao | Botão | `chave`, `dentro`, `desligado` |
+| arquivo | Botão que abre o seletor do sistema | `chave`, `dentro`, `papel` |
 | tela | Desenho e arraste | `chave`, `largura`, `altura`, `figuras`, `tracos` |
 | midia | Som ou imagem | `chave`, `fonte` ou `doServidor`, `descricao`, `tocando` |
 
@@ -201,6 +202,7 @@ SeeleUI.aoEvento(evento => {
   if (evento.nome === 'campo')   { /* evento.chave, evento.valor */ }
   if (evento.nome === 'escolha') { /* evento.chave, evento.valor */ }
   if (evento.nome === 'botao')   { /* evento.chave */ }
+  if (evento.nome === 'arquivo') { /* evento.chave, evento.arquivo ou null + porque */ }
   if (evento.nome === 'traco')   { /* evento.chave, fase, x, y, alvo */ }
   if (evento.nome === 'midia')   { /* evento.chave, estado */ }
 });
@@ -244,23 +246,29 @@ O **tipo do arquivo vem dos bytes**, nunca do nome nem do manifesto: o SEELE rec
 await SeeleUI.tema({
   acento:'#6BFFB6', fundo:'#050403', painel:'#0A0806',
   texto:'#EAE3CF', apagado:'#908574', borda:'#241F19',
-  densidade:'compacta',
+  densidade:'compacta', fonte:'mono',
 });
 ```
 
-As seis cores aceitam somente `#rrggbb`. `densidade` aceita `compacta` ou `confortavel` — é escolha e não número, porque uma cor o produto confere e um espaçamento não: `0px` deixaria a sessão ilegível sem violar regra nenhuma.
+As seis cores aceitam somente `#rrggbb`. `densidade` aceita `compacta` ou `confortavel` e `fonte` aceita `mono` ou `sans` — são escolhas e não números, porque uma cor o produto confere e um espaçamento não: `0px` deixaria a sessão ilegível sem violar regra nenhuma. `fonte` é escolha entre as duas pilhas que o produto declara, e não família livre: a escala de tipo daqui é medida, e uma família qualquer moveria tamanho, entrelinha e contraste de uma vez.
 
 O produto recusa nomes e cores inválidos, disputa de token com outro MOD e contraste texto/fundo abaixo de 4,5:1. Capture o Error e apresente sua mensagem. O tema é aplicado somente à sessão e sai com ela.
 
-### O que ainda não existe, e por quê
+### Escolher um arquivo
 
-**Família de tipo.** A escala de tipo do SEELE é medida e afirmada: tamanho, entrelinha e contraste andam juntos. Trocar a família por escolha de um MOD move os três de uma vez, sem nada que confira o resultado.
+O MOD **não abre o seletor**: ele declara a forma `arquivo`, a pessoa aperta, e o seletor é do produto. O evento traz um identificador, e daí o MOD lê os bytes em pedaços com `SeeleUI.pedaco` e os manda para o servidor dele pelo protocolo que ele já tem.
 
-**Escolher um arquivo do disco.** Nenhum cliente do SEELE abre arquivo por conta de terceiro. Um MOD recebe bytes que já estão no servidor dele; o seletor, quando existir, será do produto.
+Com acesso ao disco, um MOD teria o caminho errado — nenhum cliente do SEELE abre arquivo por conta de terceiro. Solte o identificador com `SeeleUI.soltar` quando terminar; ficam até quatro de pé por vez.
 
-**CSS próprio, cartões na lista de pessoas e decoração de canais.** A região é o lugar onde um MOD desenha, e continua sendo o único.
+Os pedaços são base64 de janelas **múltiplas de três**. Duas janelas seguidas precisam concatenar no arquivo, e um tamanho que não é múltiplo de três deixa `=` no meio do fluxo: a imagem chega corrompida sem erro nenhum.
 
-Não transforme uma interação indisponível em uma alteração automática de dados, e não escreva na tela que algo «aguarda suporte»: se a sua ideia depende de uma dessas quatro, ela ainda não cabe — proponha a extensão.
+### O que não existe, e por quê
+
+**CSS próprio e decoração de canais.** A região é o lugar onde um MOD desenha. A única coisa que um MOD entrega fora dela é uma **marca** na lista de pessoas — e ali ele entrega dado, não desenho: quem monta é o produto.
+
+**Arredondamento e brilho no tema.** `docs/marca.md` proíbe raio e sombra, e a palavra é «nunca». A API recusa os dois pelo nome, com a razão — não é ausência, é decisão.
+
+Não transforme uma interação indisponível em uma alteração automática de dados, e não escreva na tela que algo «aguarda suporte»: se a sua ideia depende de uma dessas, proponha a extensão.
 
 ## Publique e mantenha
 
@@ -307,8 +315,9 @@ Um manifesto precisa declarar **exatamente** a API que o aplicativo oferece — 
 | Cliente | globalThis.SeeleMods.request(id, canal, objeto) |
 | Cliente | globalThis.SeeleUI.regiao(conteudo) |
 | Cliente | globalThis.SeeleUI.tema(valores) |
+| Cliente | globalThis.SeeleUI.marcas(marcas) |
 | Cliente | globalThis.SeeleUI.aoEvento(funcao) |
-| Cliente | globalThis.SeeleUI.pedaco(arquivo, inicio) |
+| Cliente | globalThis.SeeleUI.pedaco(arquivo, inicio) — base64, janelas múltiplas de 3 |
 | Cliente | globalThis.SeeleUI.soltar(arquivo) |
 | Servidor | globalThis.aoPedir(contextoJSON, pedidoJSON) |
 | Servidor | globalThis.aoAcontecer(momento, cargaJSON) |
@@ -320,7 +329,7 @@ Um manifesto precisa declarar **exatamente** a API que o aplicativo oferece — 
 
 `api/v1.json` contém nomes como `mandarMensagem`, `criarSala`, `expulsarPessoa` e leituras como `servidor.pessoas`. Esses nomes mapeiam símbolos do domínio para conferência do contrato. No runtime inspecionado, eles não são instalados como métodos JavaScript chamáveis do MOD. Não escreva `mundo.mandarMensagem()` ou `servidor.criarSala()` supondo que existam.
 
-Também há mais eventos declarados no arquivo de API do que eventos efetivamente encaminhados pelo adaptador atual. A seção Eventos lista os cinco nomes e cargas que o adaptador verificado entrega. Para outras ações, confirme uma implementação concreta ou proponha uma extensão da API; não transforme um comando interno do aplicativo em uma API pública por conveniência.
+Também há mais eventos declarados no arquivo de API do que eventos efetivamente encaminhados pelo adaptador atual. A seção Eventos lista os cinco nomes e cargas que o adaptador verificado entrega ao **servidor** de um MOD; os eventos que chegam ao **cliente**, quando alguém digita ou arrasta, são outros seis e estão na seção Executor. Para outras ações, confirme uma implementação concreta ou proponha uma extensão da API; não transforme um comando interno do aplicativo em uma API pública por conveniência.
 
 ### APIs do navegador e do servidor
 
@@ -328,7 +337,7 @@ O servidor executa JavaScript em QuickJS, não Node.js nem uma página web. Não
 
 O cliente é um script autocontido executado num **motor QuickJS do lado do aplicativo**, fora da janela, com o prelúdio da API. Não use imports de módulo no arquivo de entrada.
 
-`document`, `window`, CSSOM, `fetch`, `localStorage`, `sessionStorage`, `indexedDB`, `caches`, `BroadcastChannel` e o global Tauri **não existem** nesse ambiente — e não existem porque um contexto de QuickJS não os tem, e não porque alguém os apagou no começo do arquivo. Promise, JSON, TextEncoder, `setTimeout`, `setInterval` e `console` continuam disponíveis.
+`document`, `window`, CSSOM, `fetch`, `XMLHttpRequest`, `WebSocket`, `Worker`, `localStorage`, `sessionStorage`, `indexedDB`, `caches`, `BroadcastChannel` e o global Tauri **não existem** nesse ambiente — e não existem porque um contexto de QuickJS não os tem, e não porque alguém os apagou no começo do arquivo. Promise, JSON, TextEncoder, `setTimeout`, `setInterval` e `console` continuam disponíveis.
 
 O primeiro desenho da API 3 usava um `Worker` de `blob:`, e ele foi **reprovado por medição**: um worker de `blob:` herda a origem de quem o criou, e o que um MOD gravou em `indexedDB` sobreviveu ao encerramento do aplicativo e reapareceu na entrada seguinte. `terminate()` mata o contexto e não toca no armazenamento da origem. Se você leu isso numa versão anterior deste guia, era verdade e deixou de ser: hoje há um executor só.
 
@@ -755,52 +764,143 @@ Fonte: [mundo.rs](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e
 
 ## Executor, região, tema e ciclo de vida
 
-A API 3 substitui o código dentro da janela por um executor próprio. As funções assíncronas são `SeeleMods.snapshot()`, `SeeleMods.request(id, canal, valor)`, `SeeleUI.regiao(conteudo)`, `SeeleUI.tema(valores)`, `SeeleUI.pedaco(arquivo, inicio)` e `SeeleUI.soltar(arquivo)`. `SeeleUI.aoEvento(funcao)` é síncrona e registra um ouvinte. As falhas rejeitam a Promise com Error.
+A API 3 substitui o código dentro da janela por um executor próprio. As funções assíncronas são `SeeleMods.snapshot()`, `SeeleMods.request(id, canal, valor)`, `SeeleUI.regiao(conteudo)`, `SeeleUI.tema(valores)`, `SeeleUI.marcas(marcas)`, `SeeleUI.pedaco(arquivo, inicio)` e `SeeleUI.soltar(arquivo)`. `SeeleUI.aoEvento(funcao)` é síncrona e registra um ouvinte. As falhas rejeitam a Promise com Error.
 
 ### Declarar a região
 
 ```js
-await SeeleUI.regiao({
-  forma: 'linha',
-  dentro: [
-    {forma:'titulo', dentro:'FICHA'},
-    {forma:'texto', dentro:`pontos: ${pontos}`},
-    {forma:'lista', dentro:nomes.map(nome => ({forma:'item', dentro:nome}))},
-  ],
+await SeeleUI.regiao([
+  {forma:'titulo', dentro:'FICHA'},
+  {forma:'texto', dentro:`pontos: ${pontos}`},
+  {forma:'campo', chave:'nome', rotulo:'NOME', valor:nome},
+  {forma:'escolha', chave:'classe', rotulo:'CLASSE', valor:classe, opcoes:[
+    {valor:'guerreira', dentro:'GUERREIRA'},
+    {valor:'maga', dentro:'MAGA'},
+  ]},
+  {forma:'linha', dentro:[
+    {forma:'botao', chave:'gravar', dentro:'GRAVAR'},
+    {forma:'botao', chave:'descartar', dentro:'DESCARTAR', desligado:true},
+  ]},
+]);
+```
+
+Uma nova chamada substitui toda a região do MOD. As formas aceitas são `titulo`, `texto`, `linha`, `lista`, `item`, `campo`, `escolha`, `botao`, `arquivo`, `tela` e `midia`. Uma forma desconhecida não vira um agrupamento.
+
+**O produto reconcilia em vez de reconstruir.** Um `campo` com a mesma `chave` é o mesmo campo entre dois desenhos: ele não é removido e recriado, e por isso quem está digitando não perde o foco nem o cursor. Enquanto uma caixa tem o foco, o produto **não sobrescreve o valor dela** — o que você mandar em `valor` só entra quando ninguém está editando ali. É isso que permite consultar o servidor de quatro em quatro segundos sem apagar o que a pessoa escreveu no meio.
+
+O que isso exige de você: guarde o rascunho **separado** do que o servidor diz e desenhe o rascunho enquanto ele existir. O produto preservar o foco não basta sozinho, porque o foco ficaria numa caixa cujo valor o seu próprio MOD acabou de trocar.
+
+### O que a pessoa faz volta como evento
+
+```js
+SeeleUI.aoEvento(evento => {
+  if (evento.nome === 'campo') { rascunho[evento.chave] = evento.valor; repintar(); }
 });
 ```
 
-Uma nova chamada substitui toda a região do MOD. Os nomes aceitos são `titulo`, `texto`, `linha`, `lista` e `item`. Uma forma desconhecida não vira um agrupamento. O renderer corta nós além de oito níveis de recursão; listas também contam nessa profundidade. Prefira árvores rasas. Não há HTML, atributos arbitrários, eventos de clique, formulários ou mídia.
+Um pedido tem número e resposta; um evento não tem nem um nem outro, porque quem digita não espera o MOD confirmar que recebeu a tecla. **Um ouvinte só, e o último vence.**
+
+| `nome` | Vem de | Campos |
+| --- | --- | --- |
+| campo | `campo` | chave, valor |
+| escolha | `escolha` | chave, valor |
+| botao | `botao` | chave |
+| arquivo | `arquivo` | chave, arquivo (`{id, tipo, papel, bytes}`) ou `null` com `porque` |
+| traco | `tela` | chave, fase (`comecou`/`moveu`/`terminou`), x, y, alvo |
+| midia | `midia` | chave, estado |
+
+Cancelar o seletor de arquivo **é uma resposta**: chega um evento `arquivo` com `arquivo: null` e um `porque`. Trate-o; silêncio ali é o seu MOD parecendo travado.
+
+### Desenhar: `tela` e figuras declaradas
+
+Um MOD não escreve pixel. Ele declara figuras e o produto as pinta, e é o produto quem decide qual figura o dedo acertou:
+
+```js
+{forma:'tela', chave:'tabuleiro', largura:640, altura:480, figuras:[
+  {tipo:'retangulo', x:0, y:0, largura:640, altura:480, cor:'#0b0a08'},
+  {tipo:'linha', x:0, y:0, ate_x:640, ate_y:480, cor:'#241F19'},
+  {tipo:'circulo', x:120, y:80, raio:16, cor:'#6BFFB6', chave:'peca-3'},
+  {tipo:'texto', x:120, y:80, dentro:'A', corpo:12, cor:'#EAE3CF'},
+]}
+```
+
+As figuras são `retangulo`, `circulo`, `texto` e `linha`. `retangulo` e `circulo` aceitam `preenchida:false` para sair só de contorno; `texto` aceita `corpo` entre 6 e 64.
+
+Uma figura com `chave` responde ao toque: o evento `traco` traz essa chave em `alvo`, ou `null` quando o dedo caiu no vazio — `null`, e não ausente, porque «não peguei nada» é uma resposta. A **última figura declarada ganha o toque** quando duas se sobrepõem, que é a ordem em que elas foram pintadas. `linha` não recebe toque: ela é grade, parede e régua, e dar-lhe área de acerto roubaria o toque de toda figura em cima dela.
+
+O `alvo` é fixado quando o dedo desce e viaja nas três fases. As coordenadas são as da sua tela declarada, não as da janela, e o movimento é agregado por quadro: um arraste não manda um evento por pixel.
+
+Compare a chave como **texto**. `Number('peca-3')` é `NaN`, e `NaN` não é igual a nada: uma peça comparada assim para de seguir o dedo sem erro nenhum na tela.
+
+### Mídia
+
+A forma `midia` toca som ou vídeo que **vem do seu pacote ou do seu servidor**, e nunca de um endereço na rede:
+
+```js
+{forma:'midia', chave:'trilha', fonte:'som/tema.ogg', tocando:true}
+{forma:'midia', chave:'retrato', doServidor:{canal, pedido:{op:'asset', person:id}, campo:'image'}}
+```
+
+`fonte` é um arquivo do seu pacote, e ele precisa estar declarado em `arquivos` no manifesto. `doServidor` faz o SEELE pedir ao **seu** servidor e ler o base64 no campo que você nomear. Não existe uma terceira origem: um endereço qualquer faria a janela de quem conversa buscar bytes na rede de um estranho.
+
+O tipo é decidido **pelos bytes**, e nunca pelo que o manifesto ou o servidor dizem que é (ADR 0027). Um som mandado no lugar de uma imagem é recusado pelo nome, e a recusa chega até você. Declare `tocando:true` para tocar; o estado real volta pelo evento `midia`, porque o navegador pode recusar tocar sem gesto.
 
 ### Tema da sessão
 
 ```js
-await SeeleUI.tema({acento:'#6BFFB6', fundo:'#050403', texto:'#EAE3CF', borda:'#241F19'});
+await SeeleUI.tema({
+  fundo:'#050403', painel:'#0b0a08', texto:'#EAE3CF',
+  apagado:'#7A7061', acento:'#6BFFB6', borda:'#241F19',
+  densidade:'compacta', fonte:'mono',
+});
 ```
+
+São **seis cores** — `fundo`, `painel`, `texto`, `apagado`, `acento`, `borda` —, mais `densidade` (`compacta` ou `confortavel`) e `fonte` (`mono` ou `sans`). `fonte` escolhe entre as duas pilhas de tipo que o produto declara, e não é família livre: a escala de tipo daqui é medida, e uma família qualquer moveria tamanho, entrelinha e contraste de uma vez.
 
 A chamada substitui o pedido de tema deste MOD. `await SeeleUI.tema({})` retira os tokens pedidos por ele; não escreva cores padrão por cima da escolha pessoal. A saída da sessão também remove a camada automaticamente.
 
-O produto valida nomes, valores `#rrggbb`, posse dos tokens por outro MOD e contraste texto/fundo mínimo de 4,5:1. Uma recusa não confirma o tema solicitado: só registre a aplicação depois de a Promise resolver. Mostre a mensagem do Error sem afirmar que o tema foi salvo ou aplicado.
+O produto valida nomes, valores `#rrggbb`, posse dos tokens por outro MOD e contraste texto/fundo mínimo de 4,5:1. Uma recusa não confirma o tema solicitado: só registre a aplicação depois de a Promise resolver.
+
+**`arredondamento` e `brilho` são recusados pelo nome, com a razão.** Não é que a API não os conheça: `docs/marca.md` proíbe raio e sombra, e a palavra que ele usa é «nunca». Se o seu MOD guarda esses valores para outros produtos, guarde-os — e diga a quem os salvou que estão guardados e não desenhados, em vez de zerá-los. Descobrir a recusa aplicando um tema de mentira para ver o que passa é pior: polui o tema aplicado no caminho.
+
+### Marcar pessoas na lista do produto
+
+```js
+await SeeleUI.marcas({ '7': {texto:'ela/dela', cor:'#a78bfa'} });
+```
+
+Esta é a **única superfície de um MOD fora da região dele**, e ela é estreita de propósito: você entrega dado, e quem desenha é o produto — no lugar dele, com a tipografia dele, com o espaçamento dele. Você não escolhe posição, tamanho nem vizinho, e não alcança nenhum outro nó.
+
+A chave é o `id` da pessoa como aparece no retrato. O texto vale até 24 caracteres e é cortado nesse ponto; a cor, quando vem, precisa ser `#rrggbb` e pinta **o contorno**, nunca o texto. Um MOD marca até 128 pessoas. Uma cor malformada **recusa o conjunto inteiro** — mande só o que já passa nessa forma, para que a recusa seja de quem digitou errado e não da lista toda.
+
+Uma marca sem texto não entra: um retângulo vazio ao lado de um nome é o produto anunciando uma ausência que ninguém pediu para anunciar. Cada chamada **substitui** as suas marcas, e elas saem junto com o MOD.
 
 ### O que o executor não tem
 
-Não existem `document`, `window`, `getComputedStyle`, `CSSStyleSheet`, `document.adoptedStyleSheets`, observação do DOM da página, `localStorage`, `sessionStorage` ou o global do Tauri. `fetch` existe, mas herda a CSP do produto; faça integrações de rede no servidor com `mundo.buscar`.
+Não existem `document`, `window`, `getComputedStyle`, `CSSStyleSheet`, `document.adoptedStyleSheets`, observação do DOM da página, `localStorage`, `sessionStorage`, `indexedDB`, `caches`, `BroadcastChannel` nem o global do Tauri.
+
+**`fetch` também não existe**, nem `XMLHttpRequest`, `WebSocket` ou `Worker`. Eles não existem porque ninguém os ligou num contexto de QuickJS, e não porque alguém os apagou no começo do arquivo — a diferença importa, porque o segundo caso se contorna e o primeiro não. Faça integrações de rede no servidor, com `mundo.buscar`.
+
+Promise, JSON, TextEncoder, `setTimeout`, `setInterval`, `clearTimeout`, `clearInterval` e `console` continuam disponíveis.
 
 ### Descarregamento
 
-O produto para o executor e retira a região, o tema, a mídia montada e os arquivos escolhidos. Não existe mais o evento `seele-mod-unload`. Apague listeners de unload, limpeza de nós, folhas e observadores e restauração de estilos. Temporizadores e promessas do executor não sobrevivem à saída da sessão, e você não precisa registrar nada para que isso aconteça.
+O produto para o executor e retira a região, o tema, as marcas, a mídia montada e os arquivos escolhidos. Não existe mais o evento `seele-mod-unload`. Apague listeners de unload, limpeza de nós, folhas e observadores e restauração de estilos. Temporizadores e promessas do executor não sobrevivem à saída da sessão, e você não precisa registrar nada para que isso aconteça.
+
+**Depois da revogação, um pedido seu recebe recusa, e não silêncio.** Quem sai no meio de um envio recebe `sessao-encerrada` em vez de uma Promise que nunca resolve.
 
 ### Migrar da API 2
 
 1. Declare `api: 3` no manifesto, inclusive em MODs somente de servidor.
 2. Preserve handlers, autorização, persistência e dados do servidor.
-3. Converta o desenho em árvores de `SeeleUI.regiao`.
-4. Converta somente os quatro tokens de cor para `SeeleUI.tema`.
-5. Retire seletores, CSS, listeners de unload e controles sem equivalente.
-6. Documente a indisponibilidade de edição, decoração nativa e mídia.
-7. Teste o pacote exato no SEELE, incluindo saída e reconexão.
+3. Converta o desenho em árvores de `SeeleUI.regiao`, usando `campo`, `escolha` e `botao` no lugar dos controles que você montava em HTML.
+4. Registre `SeeleUI.aoEvento` e guarde o rascunho separado do que o servidor diz.
+5. Converta as seis cores, a densidade e a fonte para `SeeleUI.tema`.
+6. Troque desenho em canvas por figuras declaradas numa `tela`.
+7. Retire seletores, CSS, listeners de unload e qualquer acesso ao DOM.
+8. Teste o pacote exato no SEELE, incluindo saída durante carregamento e troca de servidor.
 
-`api-too-old` recusa pacotes antigos antes de executá-los. Não existe um modo de compatibilidade. Ampliar a apresentação de pessoas, canais ou eventos de entrada exige uma decisão e uma extensão da API.
+`api-too-old` recusa pacotes antigos antes de executá-los. Não existe um modo de compatibilidade.
 
 ## Todos os limites em um lugar
 
@@ -822,6 +922,22 @@ Valores verificados no código da revisão, separados de decisões dos MODs de e
 | Orçamento de execução | 500 consultas de interrupção | QuickJS |
 | Conjunto anunciado | até 12 MODs | Protocolo |
 | Alcances | até 16 itens, 32 bytes cada | Protocolo |
+| Nós de uma região | 512 | Janela |
+| Fundura da região | 8 níveis | Janela |
+| Campos por região | 32 | Janela |
+| Telas por região | 4 | Janela |
+| Mídias por região | 4 | Janela |
+| Figuras por tela | 256 | Janela |
+| Traços guardados por tela | 256 | Janela |
+| Lado de uma tela | 1024 | Janela |
+| Opções de uma escolha | 64 | Janela |
+| Texto de um nó | 4096 caracteres | Janela |
+| Valor de um campo | 1024 caracteres | Janela |
+| Mídia montada | 4 MiB | Janela |
+| Arquivo escolhido | 10 MiB, até 4 de pé por vez | Janela |
+| Pedaço de arquivo escolhido | 65535 bytes, múltiplo de 3 | Janela |
+| Marcas por MOD | 128 pessoas | Janela |
+| Texto de uma marca | 24 caracteres | Janela |
 
 As 500 consultas são um orçamento de trabalho do interpretador; a documentação do runtime apresenta uma aproximação de cerca de 225 ms no ambiente de referência. Isso não é um timeout garantido de 225 ms em todas as máquinas. Chamadas nativas de rede têm seu próprio limite porque não são interrompidas pelo mesmo contador de instruções.
 

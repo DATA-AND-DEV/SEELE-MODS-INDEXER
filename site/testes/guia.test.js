@@ -45,3 +45,48 @@ test('guia: abas e painéis têm relações únicas e todos os capítulos estão
   assert.ok(html.includes('guia-criacao-mods.md'));
   assert.ok(html.includes('ainda sem encaminhamento'));
 });
+
+test('contador API 3 executa sem DOM e declara texto sem escrever estado', async () => {
+  const call = contador(), regions = [], timers = [], operations = [];
+  const client = readFileSync(new URL('exemplos/contador/cliente/main.js', base), 'utf8');
+  const sandbox = vm.createContext({
+    SeeleMods: {
+      snapshot: async () => ({open_channel: 7}),
+      request: async (id, channel, pedido) => { assert.equal(id, 'exemplo/contador'); assert.equal(channel, 7); operations.push(pedido.op); return call(pedido); },
+    },
+    SeeleUI: {
+      regiao: async tree => regions.push(tree),
+      // A API 3 fala com o MOD sem que ele tenha perguntado. Um ouvinte só, e o
+      // último vence — é o que o produto oferece.
+      aoEvento: fn => { ouvinte = fn; },
+    },
+    setTimeout: fn => timers.push(fn), console,
+  });
+  let ouvinte = null;
+  vm.runInContext(client, sandbox);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(operations, ['ler']);
+  assert.match(JSON.stringify(regions), /Valor: 0/);
+  assert.equal(timers.length, 1);
+  assert.equal(call({op:'ler'}).revisao, 0);
+
+  // **O exemplo tem botão, e o botão precisa chegar ao servidor.**
+  //
+  // Sem esta parte, o teste provaria que o exemplo desenha e nada mais — e um
+  // exemplo de API 3 cujo botão não funciona é pior que um exemplo só de
+  // leitura, porque ele promete a interação e não a entrega.
+  assert.ok(ouvinte, 'o exemplo não registrou ouvinte de evento');
+  ouvinte({ nome: 'botao', chave: 'somar' });
+  await new Promise(resolve => setImmediate(resolve));
+  await new Promise(resolve => setImmediate(resolve));
+  assert.deepEqual(operations, ['ler', 'incrementar'], 'o botão não chegou ao servidor');
+  assert.equal(call({op:'ler'}).valor, 1, 'o servidor não contou');
+  assert.match(JSON.stringify(regions), /Valor: 1/, 'a região não mostrou o valor novo');
+
+  // E o que não é botão não vira escrita: um evento de campo passando por aqui
+  // gravaria sem ninguém ter pedido.
+  const antes = operations.length;
+  ouvinte({ nome: 'campo', chave: 'somar', valor: 'x' });
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(operations.length, antes, 'um evento que não é botão virou escrita');
+});

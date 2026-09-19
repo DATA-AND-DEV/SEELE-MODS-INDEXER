@@ -16,13 +16,8 @@ from ferramentas.recusa import Recusado
 
 ESQUEMA_DO_MANIFESTO = 1
 
-# Espelho de `seele_proto::mods::MOD_API_VERSION`. Ele foi a 2 com a ponte de
-# pedidos, e este número ficou em 1 — divergência que só apareceu no primeiro
-# MOD de verdade, recusado com `api-too-new` por pedir uma API que o cliente
-# oferece. O cabeçalho deste módulo já dizia que as duas constantes não podem
-# divergir; dizer não é guardar, então agora o catálogo carrega este número e
-# um teste do SEELE o compara com o dele.
-VERSAO_DA_API = 2
+# Espelho de `seele_proto::mods::MOD_API_VERSION`: ADR 0049 é uma ruptura.
+VERSAO_DA_API = 3
 
 # Toda chave que o esquema 1 conhece. Uma chave fora daqui é recusada em vez
 # de ignorada, pelo motivo que o Rust escreve em `deny_unknown_fields`: uma
@@ -79,8 +74,12 @@ def _bem_formado(identificador: str) -> bool:
     )
 
 
-def ler(texto: str) -> Manifesto:
-    """Lê um `mod.json`, ou levanta `Recusado`."""
+def ler(texto: str, *, historico: bool = False) -> Manifesto:
+    """Lê um pacote atual; histórico é exclusivo de bytes já publicados.
+
+    O gerador só usa historico=True após conferir id, versão e hash contra
+    o catálogo anterior. Não autoriza novos pacotes com uma API retirada.
+    """
     try:
         cru = json.loads(texto)
     except json.JSONDecodeError as erro:
@@ -123,6 +122,8 @@ def ler(texto: str) -> Manifesto:
         raise Recusado("schema-too-new", f'esquema {cru["schema"]}, esta versão lê {ESQUEMA_DO_MANIFESTO}')
     if cru["api"] > VERSAO_DA_API:
         raise Recusado("api-too-new", f'pede API {cru["api"]}, esta versão oferece {VERSAO_DA_API}')
+    if cru["api"] < VERSAO_DA_API and not historico:
+        raise Recusado("api-too-old", f'pede API {cru["api"]}, esta versão oferece somente {VERSAO_DA_API}')
     if not _bem_formado(cru["id"]):
         raise Recusado("malformed-id", cru["id"])
     if cru.get("client") is None and cru.get("server") is None:

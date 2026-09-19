@@ -214,3 +214,10 @@ test("a ação nunca inventa arquivo que a versão não lista", () => {
   const semArquivos = { ...ANTIGA, arquivos: [] };
   assert.deepEqual(acaoDeInstalar(DUAS_VERSOES, semArquivos).arquivos, []);
 });
+
+
+test('API 3 não considera pacotes antigos compatíveis; mantém a consulta histórica', () => {
+  const atual = {...MODS[0], id:'novo/atual', versoes:[{versao:'1', api:3, publicado_em:5000}]};
+  assert.deepEqual(filtrar([...MODS, atual], {api:3}).map(m=>m.id), ['novo/atual']);
+  assert.deepEqual(filtrar([atual], {api:2}), []);
+});

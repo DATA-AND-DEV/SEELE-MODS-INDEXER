@@ -12,7 +12,7 @@ pytestmark = pytest.mark.skipif(shutil.which("minisign") is None, reason="minisi
 
 MOD_JSON = json.dumps(
     {
-        "schema": 1, "id": "juli/cinza-frio", "version": "2.1.0", "api": 1,
+        "schema": 1, "id": "juli/cinza-frio", "version": "2.1.0", "api": 3,
         "repo": "https://github.com/juli/seele-cinza-frio",
         "reach": ["trocar as cores da interface"],
         "client": "cliente/main.js",
@@ -213,7 +213,7 @@ def test_execucao_que_falha_no_meio_nao_altera_publicado(mundo, tmp_path):
     (novo_autor / "cliente").mkdir(parents=True)
     novo_mod_json = json.dumps(
         {
-            "schema": 1, "id": "juli/novo-mod", "version": "1.0.0", "api": 1,
+            "schema": 1, "id": "juli/novo-mod", "version": "1.0.0", "api": 3,
             "repo": "https://github.com/juli/seele-novo-mod",
             "reach": ["algo novo"],
             "client": "cliente/main.js",
@@ -360,7 +360,7 @@ def _segunda_versao(raiz, numero="2.2.0"):
     (autor / "mod.json").write_text(
         json.dumps(
             {
-                "schema": 1, "id": "juli/cinza-frio", "version": numero, "api": 1,
+                "schema": 1, "id": "juli/cinza-frio", "version": numero, "api": 3,
                 "repo": "https://github.com/juli/seele-cinza-frio",
                 "reach": ["trocar as cores da interface"],
                 "client": "cliente/main.js",
@@ -436,3 +436,54 @@ def test_a_versao_antiga_publicada_nao_recebe_a_avaliacao_da_nova(mundo):
     assert antiga["notas"] != nova["notas"]
     assert antiga["commit"] != nova["commit"]
     assert antiga["hash"] != nova["hash"]
+
+
+def _mudar_api_do_fixture(mundo, api):
+    raiz, _, _ = mundo
+    autor = raiz.parent / 'repo-do-autor'
+    manifesto = json.loads((autor / 'mod.json').read_text())
+    manifesto['api'] = api
+    (autor / 'mod.json').write_text(json.dumps(manifesto))
+    git(autor, 'add', '-A')
+    git(autor, 'commit', '-q', '-m', 'API do fixture')
+    commit = git(autor, 'rev-parse', 'HEAD')
+    avaliacao = raiz / 'avaliacoes/juli/cinza-frio.toml'
+    import re
+    avaliacao.write_text(re.sub(r'commit = "[^"]+"', f'commit = "{commit}"', avaliacao.read_text()))
+    return autor, avaliacao
+
+
+def test_pacote_novo_na_api_retirada_nao_entra_no_catalogo(mundo):
+    raiz, secreta, _ = mundo
+    _mudar_api_do_fixture(mundo, 2)
+    with pytest.raises(Recusado) as erro:
+        gerar(raiz, secreta, agora=1757100000)
+    assert erro.value.codigo == 'api-too-old'
+    assert not (raiz / 'publicado').exists()
+
+
+def test_api3_preserva_bytes_do_historico_sem_admitir_substituicao(mundo, monkeypatch):
+    from ferramentas import manifesto
+    raiz, secreta, _ = mundo
+    autor, avaliacao = _mudar_api_do_fixture(mundo, 2)
+    # Produz o catálogo anterior com o mesmo gerador configurado na API anterior.
+    monkeypatch.setattr(manifesto, 'VERSAO_DA_API', 2)
+    gerar(raiz, secreta, agora=1757100000)
+    anterior = json.loads((raiz / 'publicado/catalogo.json').read_text())
+    bytes_antes = (raiz / 'publicado/mods/juli/cinza-frio/2.1.0/mod.json').read_bytes()
+    monkeypatch.setattr(manifesto, 'VERSAO_DA_API', 3)
+    gerar(raiz, secreta, agora=1757100100)
+    atual = json.loads((raiz / 'publicado/catalogo.json').read_text())
+    assert atual['api_oferecida'] == 3
+    assert atual['mods'] == anterior['mods']
+    assert (raiz / 'publicado/mods/juli/cinza-frio/2.1.0/mod.json').read_bytes() == bytes_antes
+    # Mesmo ID/versão com outros bytes não ganha a exceção de histórico.
+    (autor / 'cliente/main.js').write_text('// bytes diferentes')
+    git(autor, 'add', '-A')
+    git(autor, 'commit', '-q', '-m', 'Tentativa de substituir histórico')
+    import re
+    avaliacao.write_text(re.sub(r'commit = "[^"]+"', f'commit = "{git(autor, "rev-parse", "HEAD")}"', avaliacao.read_text()))
+    with pytest.raises(Recusado) as erro:
+        gerar(raiz, secreta, agora=1757100200)
+    assert erro.value.codigo == 'api-too-old'
+    assert json.loads((raiz / 'publicado/catalogo.json').read_text()) == atual
