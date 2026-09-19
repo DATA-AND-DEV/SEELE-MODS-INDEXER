@@ -6,7 +6,7 @@ Guia prático e referência técnica. Revisão de 18/09/2026. Manifesto schema 1
 
 Um MOD é um pacote de JavaScript que acrescenta comportamento ao SEELE. Ele declara uma região com texto, campos, escolhas, botões, desenho e mídia; recebe o que a pessoa faz; pede cores para a sessão; e guarda informações próprias no servidor. Não é necessário alterar o Rust para apresentar um contador, editar uma ficha, arrastar uma peça num tabuleiro ou tocar um som do próprio pacote.
 
-Você entrega uma pasta com um manifesto e pelo menos um script. O manifesto apresenta o pacote; o script faz o trabalho. Quando o MOD tem uma interface e dados compartilhados, o Worker declara uma região de leitura e o servidor decide o que pode ser lido ou alterado.
+Você entrega uma pasta com um manifesto e pelo menos um script. O manifesto apresenta o pacote; o script faz o trabalho. Quando o MOD tem interface e dados compartilhados, a metade de cliente declara a região e recebe o que a pessoa faz; a metade de servidor decide o que pode ser lido ou alterado.
 
 ### Escolha seu caminho
 
@@ -23,7 +23,7 @@ Você não precisa contratar um backend para guardar o estado de um MOD: o servi
 
 ### Três ideias fundamentais
 
-1. O código de cliente roda num Worker próprio de cada participante. Uma variável nele não é compartilhada com outras pessoas.
+1. O código de cliente roda num executor próprio de cada participante — um motor QuickJS do lado do aplicativo, fora da janela. Uma variável nele não é compartilhada com outras pessoas, e o que ele guardar morre com a sessão.
 2. O código de servidor roda no computador de quem hospeda. É ali que ficam as regras de autorização e o estado comum.
 3. A comunicação tem pedido e resposta. O resultado chega somente à pessoa que fez o pedido; os outros clientes precisam consultar novamente para enxergar alterações.
 
@@ -99,7 +99,7 @@ O diretório `dados/` tem finalidade de runtime e é excluído do cálculo de co
 
 ## [guia:primeiro] Faça seu primeiro MOD
 
-O contador tem uma região de leitura executada em Worker. A API 3 atual não oferece cliques ou formulários. A metade de servidor conserva operações de escrita para explicar autorização e concorrência nos testes.
+O contador tem uma região com dois botões e uma metade de servidor que explica autorização, revisão e concorrência. Apertar `SOMAR 1` escreve no servidor; `ZERAR` só funciona para quem administra, e a recusa aparece na região em vez de sumir.
 
 ### Passo 1 — baixe e examine
 
@@ -119,7 +119,7 @@ await SeeleUI.regiao([
 ]);
 ```
 
-O fragmento deve ficar dentro de uma função async no script do Worker. `op`, `ler`, `valor`, `revisao` e `ok` são convenções deste exemplo, não métodos da plataforma.
+O fragmento deve ficar dentro de uma função async no script de cliente. `op`, `ler`, `valor`, `revisao` e `ok` são convenções deste exemplo, não métodos da plataforma.
 
 ### Passo 3 — entenda a alteração no servidor
 
@@ -295,17 +295,21 @@ Teste entrar com pacote antigo, entrar com pacote novo, atualizar durante uma se
 
 O indexador declara `MOD_API_VERSION = 3` e `MANIFEST_SCHEMA = 1`. A ponte de pedidos entrou com o protocolo 6. São três números diferentes: versão do manifesto, versão da API do MOD e versão do protocolo de rede. A versão do seu pacote, por exemplo `1.0.0`, é um quarto identificador.
 
-**A superfície descrita aqui está implementada no SEELE e ainda não publicada.** O aplicativo publicado oferece a API 2, e um manifesto precisa declarar exatamente a API que o aplicativo oferece — não uma mais velha nem uma mais nova. Um MOD escrito contra esta página roda quando o catálogo for regerado com `api_oferecida: 3` e o aplicativo correspondente sair. Até lá, escreva contra ela e teste localmente; não publique um pacote que ninguém consegue instalar.
+**A superfície descrita aqui está implementada no SEELE e ainda não publicada.** O `MOD_API_VERSION` do aplicativo já é 3 e o `VERSAO_DA_API` do indexador também; o que falta é o catálogo assinado ser regerado e os pacotes saírem.
+
+Um manifesto precisa declarar **exatamente** a API que o aplicativo oferece — não uma mais velha nem uma mais nova. Enquanto o catálogo publicado disser `api_oferecida: 2`, o aplicativo que está na mão das pessoas é o que entende a API 2, e um pacote de API 3 não instala nele. Escreva contra esta página, teste localmente, e publique quando a versão sair.
 
 ### Funções que você pode usar
 
 | Ambiente | Superfície executável |
 | --- | --- |
-| Worker | globalThis.SeeleMods.snapshot() |
-| Worker | globalThis.SeeleMods.request(id, canal, objeto) |
-| Worker | globalThis.SeeleUI.regiao(conteudo) |
-| Worker | globalThis.SeeleUI.tema(valores) |
-| Worker | globalThis.SeeleUI.aoEvento(funcao) |
+| Cliente | globalThis.SeeleMods.snapshot() |
+| Cliente | globalThis.SeeleMods.request(id, canal, objeto) |
+| Cliente | globalThis.SeeleUI.regiao(conteudo) |
+| Cliente | globalThis.SeeleUI.tema(valores) |
+| Cliente | globalThis.SeeleUI.aoEvento(funcao) |
+| Cliente | globalThis.SeeleUI.pedaco(arquivo, inicio) |
+| Cliente | globalThis.SeeleUI.soltar(arquivo) |
 | Servidor | globalThis.aoPedir(contextoJSON, pedidoJSON) |
 | Servidor | globalThis.aoAcontecer(momento, cargaJSON) |
 | Servidor | dados: objeto de string para string |
@@ -322,7 +326,13 @@ Também há mais eventos declarados no arquivo de API do que eventos efetivament
 
 O servidor executa JavaScript em QuickJS, não Node.js nem uma página web. Não conte com `document`, `window`, `fetch`, `require`, módulos npm, timers ou uma fila assíncrona de browser. O arquivo do servidor é avaliado como script e o handler de pedido devolve uma string de forma síncrona.
 
-O cliente é um script autocontido executado num Worker clássico de `blob:`, com o prelúdio da API. Não use imports de módulo no arquivo de entrada. `document`, `window`, CSSOM, MutationObserver da página, localStorage, sessionStorage e o global Tauri não existem nesse ambiente. Promise, JSON, TextEncoder, structuredClone e temporizadores continuam disponíveis. O produto termina o Worker ao descarregar o MOD.
+O cliente é um script autocontido executado num **motor QuickJS do lado do aplicativo**, fora da janela, com o prelúdio da API. Não use imports de módulo no arquivo de entrada.
+
+`document`, `window`, CSSOM, `fetch`, `localStorage`, `sessionStorage`, `indexedDB`, `caches`, `BroadcastChannel` e o global Tauri **não existem** nesse ambiente — e não existem porque um contexto de QuickJS não os tem, e não porque alguém os apagou no começo do arquivo. Promise, JSON, TextEncoder, `setTimeout`, `setInterval` e `console` continuam disponíveis.
+
+O primeiro desenho da API 3 usava um `Worker` de `blob:`, e ele foi **reprovado por medição**: um worker de `blob:` herda a origem de quem o criou, e o que um MOD gravou em `indexedDB` sobreviveu ao encerramento do aplicativo e reapareceu na entrada seguinte. `terminate()` mata o contexto e não toca no armazenamento da origem. Se você leu isso numa versão anterior deste guia, era verdade e deixou de ser: hoje há um executor só.
+
+O produto encerra o executor ao descarregar o MOD, e com ele os temporizadores, a região, a mídia montada e os arquivos que alguém escolheu.
 
 Fontes desta seção: [Contrato histórico da ponte API 2](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/api/v2.json), [runtime](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-server/src/mods/mod.rs) e [ponte da janela](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/apps/seele-app/ui/base.js).
 
@@ -650,7 +660,9 @@ Armazene a referência pública apenas quando o conteúdo estiver completo e val
 
 ### Validação de mídia
 
-Esta seção descreve protocolos e dados de servidor preservados; o Worker da API 3 não oferece seletor de arquivos, Image ou formas de mídia. Não há fluxo de upload pela região atual. No servidor, valide envelope, limites e assinatura dos bytes; não confie no MIME informado por quem envia.
+Esta seção descreve protocolos e dados de servidor. O seletor de arquivos **existe** e é do produto: a forma `arquivo` desenha um botão, a pessoa escolhe, e seu MOD recebe um identificador com o tipo que os **bytes** provaram ser e o tamanho — nunca um caminho. Leia com `SeeleUI.pedaco(arquivo, inicio)` e mande ao seu servidor pelo protocolo que você definir; devolva com `SeeleUI.soltar(arquivo)` quando terminar.
+
+No servidor, valide envelope, limites e assinatura dos bytes; não confie no MIME informado por quem envia. O produto já reconheceu o tipo pelos bytes antes de lhe entregar o identificador, e conferir de novo do seu lado continua sendo certo — o produto protege a janela, não o seu formato.
 
 O servidor de PERFIS mantém uploads de até 10 MiB por avatar/banner em fragmentos próprios. O cliente da API 3 não oferece upload nem validação de dimensões; os arquivos anteriores permanecem armazenados. Para uma garantia forte de dimensões/conteúdo no servidor, é necessária uma validação adequada naquele lado.
 
@@ -737,13 +749,13 @@ Registra uma linha com o ID do MOD no log do host. A implementação recorta a m
 
 ### Rede no cliente
 
-O Worker de blob herda a CSP da janela, que admite o canal interno do Tauri. A presença da função fetch não libera consultas arbitrárias para a internet. Faça integrações externas pelo lado de servidor dentro dos limites reais. O simulador web pode ter uma CSP diferente; valide no WebView antes de declarar compatibilidade.
+O executor não é um contexto de navegador: não há CSP para herdar e não há `fetch` para chamar. Faça integrações externas pelo lado de servidor, dentro dos limites reais. Um simulador web que você use para desenvolver **não** é o ambiente final — ele tem APIs que o executor não tem, e um MOD que depende de uma delas passa lá e falha aqui.
 
 Fonte: [mundo.rs](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-server/src/mods/mundo.rs), [CSP do app](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/apps/seele-app/tauri.conf.json).
 
-## [referencia:interface] Worker, região, tema e ciclo de vida
+## [referencia:interface] Executor, região, tema e ciclo de vida
 
-A API 3 substitui o código dentro da janela por um Worker próprio. As quatro funções são assíncronas: `SeeleMods.snapshot()`, `SeeleMods.request(id, canal, valor)`, `SeeleUI.regiao(conteudo)` e `SeeleUI.tema(valores)`. As falhas rejeitam a Promise com Error.
+A API 3 substitui o código dentro da janela por um executor próprio. As funções assíncronas são `SeeleMods.snapshot()`, `SeeleMods.request(id, canal, valor)`, `SeeleUI.regiao(conteudo)`, `SeeleUI.tema(valores)`, `SeeleUI.pedaco(arquivo, inicio)` e `SeeleUI.soltar(arquivo)`. `SeeleUI.aoEvento(funcao)` é síncrona e registra um ouvinte. As falhas rejeitam a Promise com Error.
 
 ### Declarar a região
 
@@ -770,13 +782,13 @@ A chamada substitui o pedido de tema deste MOD. `await SeeleUI.tema({})` retira 
 
 O produto valida nomes, valores `#rrggbb`, posse dos tokens por outro MOD e contraste texto/fundo mínimo de 4,5:1. Uma recusa não confirma o tema solicitado: só registre a aplicação depois de a Promise resolver. Mostre a mensagem do Error sem afirmar que o tema foi salvo ou aplicado.
 
-### O que o Worker não tem
+### O que o executor não tem
 
 Não existem `document`, `window`, `getComputedStyle`, `CSSStyleSheet`, `document.adoptedStyleSheets`, observação do DOM da página, `localStorage`, `sessionStorage` ou o global do Tauri. `fetch` existe, mas herda a CSP do produto; faça integrações de rede no servidor com `mundo.buscar`.
 
 ### Descarregamento
 
-O produto chama `terminate()` e retira a região e o tema. Não existe mais o evento `seele-mod-unload`. Apague listeners de unload, limpeza de nós, folhas e observadores e restauração de estilos. Temporizadores e promessas do Worker não sobrevivem à saída da sessão.
+O produto para o executor e retira a região, o tema, a mídia montada e os arquivos escolhidos. Não existe mais o evento `seele-mod-unload`. Apague listeners de unload, limpeza de nós, folhas e observadores e restauração de estilos. Temporizadores e promessas do executor não sobrevivem à saída da sessão, e você não precisa registrar nada para que isso aconteça.
 
 ### Migrar da API 2
 
@@ -786,7 +798,7 @@ O produto chama `terminate()` e retira a região e o tema. Não existe mais o ev
 4. Converta somente os quatro tokens de cor para `SeeleUI.tema`.
 5. Retire seletores, CSS, listeners de unload e controles sem equivalente.
 6. Documente a indisponibilidade de edição, decoração nativa e mídia.
-7. Teste o pacote exato em Worker e no SEELE, incluindo saída e reconexão.
+7. Teste o pacote exato no SEELE, incluindo saída e reconexão.
 
 `api-too-old` recusa pacotes antigos antes de executá-los. Não existe um modo de compatibilidade. Ampliar a apresentação de pessoas, canais ou eventos de entrada exige uma decisão e uma extensão da API.
 
@@ -813,7 +825,7 @@ Valores verificados no código da revisão, separados de decisões dos MODs de e
 
 As 500 consultas são um orçamento de trabalho do interpretador; a documentação do runtime apresenta uma aproximação de cerca de 225 ms no ambiente de referência. Isso não é um timeout garantido de 225 ms em todas as máquinas. Chamadas nativas de rede têm seu próprio limite porque não são interrompidas pelo mesmo contador de instruções.
 
-O prelúdio admite até oito mensagens pendentes por Worker; os pedidos ao servidor também passam pelo mapa compartilhado de oito pedidos da ponte da janela. Se vários pacotes consultam ao mesmo tempo, todos disputam esse limite. Use concorrência pequena e consultas sem sobreposição.
+O prelúdio admite até oito mensagens pendentes por executor; os pedidos ao servidor também passam pelo mapa compartilhado de oito pedidos da ponte da janela. Se vários pacotes consultam ao mesmo tempo, todos disputam esse limite. Use concorrência pequena e consultas sem sobreposição.
 
 O limite de tamanho de arquivo não torna seguro ocupar indefinidamente o disco, e o limite de resposta não torna barato carregar todas as imagens a cada quatro segundos. Defina limites menores conforme o produto.
 
@@ -842,7 +854,7 @@ Códigos da interface podem variar conforme a versão. Erros de `invoke` também
 
 ### MOD instalado, mas sem interface
 
-Confira se está ligado no servidor, se a conexão aceitou o conjunto, se o conteúdo instalado corresponde ao exigido, se `client` aponta para um arquivo existente e se o script inicializa sem exceção. Confira se o Worker usa apenas as quatro funções, se a árvore contém formas aceitas e se existe um canal válido. O estado carregado, sozinho, não prova que a inicialização interna concluiu.
+Confira se está ligado no servidor, se a conexão aceitou o conjunto, se o conteúdo instalado corresponde ao exigido, se `client` aponta para um arquivo existente e se o script inicializa sem exceção. Confira se o cliente usa apenas as funções que o prelúdio expõe, se a árvore contém formas aceitas e se existe um canal válido. O estado carregado, sozinho, não prova que a inicialização interna concluiu.
 
 ### bridge-refused
 
@@ -893,7 +905,7 @@ Uma VM Node é um teste de lógica, não uma reprodução do QuickJS. Execute ta
 
 ### Camada 3 — interface
 
-Execute o cliente final num Worker real com a ponte simulada. Verifique formas renderizadas, limites de profundidade, mensagens de erro, leitura autorizada, rejeição de tema, fim do Worker e remoção da região na saída. Marque a prévia como simulada. Não deixe um endpoint que aceita identidade arbitrária virar um backend de produção.
+Execute o cliente final com a ponte simulada. Verifique formas renderizadas, limites de profundidade, mensagens de erro, leitura autorizada, rejeição de tema, fim do executor e remoção da região na saída. Marque a prévia como simulada. Não deixe um endpoint que aceita identidade arbitrária virar um backend de produção.
 
 ### Camada 4 — SEELE nativo
 
@@ -905,7 +917,7 @@ Informe versão do SEELE, sistema operacional, papel testado, tipo de pacote, co
 
 ## [referencia:seguranca] Segurança, privacidade e coexistência
 
-O cliente executa num Worker e só pode apresentar o que a API declarativa oferece. `reach` descreve o alcance do pacote; avaliação e isolamento não substituem validação e minimização de dados. O código deve fazer apenas o necessário para o recurso apresentado.
+O cliente executa num executor fora da janela e só pode apresentar o que a API declarativa oferece. `reach` descreve o alcance do pacote; avaliação e isolamento não substituem validação e minimização de dados. O código deve fazer apenas o necessário para o recurso apresentado.
 
 ### Fronteiras de confiança
 
@@ -948,7 +960,7 @@ O cliente só consulta. As operações de escrita existem no handler e são test
 
 ### Receita: tema compartilhado
 
-Guarde as cores e a revisão no servidor. Uma leitura devolve a configuração; uma escrita exige `ctx.admin`. O Worker mapeia os valores para `acento`, `fundo`, `texto` e `borda` e chama `SeeleUI.tema`. Se estiver desativado, envie `{}`. Trate recusas de contraste e conflito; não marque o tema como aplicado antes da confirmação. Não há editor ou prévia interativa na gramática atual.
+Guarde as cores e a revisão no servidor. Uma leitura devolve a configuração; uma escrita exige `ctx.admin`. O cliente mapeia os valores para `fundo`, `painel`, `texto`, `apagado`, `acento` e `borda`, escolhe `densidade` e `fonte`, e chama `SeeleUI.tema`. Se estiver desativado, envie `{}`. Trate recusas de contraste e conflito; não marque o tema como aplicado antes da confirmação. O editor é seu: `campo` para cada cor, `escolha` para densidade e fonte, `botao` para gravar.
 
 ### Receita: perfil por servidor
 
@@ -964,7 +976,7 @@ Use o canal autenticado como escopo e filtre as fichas pelo papel e identidade. 
 
 ## [referencia:fontes] Fontes, manutenção e glossário
 
-Esta revisão foi construída a partir do código local do SEELE no commit `fbcb09786c29219a18e20289381aa7d0e0ae13ac`, do ADR 0049, do guia de migração API 2 → 3, do Worker e do indexador. Os contratos API 1/2 permanecem referências históricas do domínio e do servidor. Quando um comentário histórico diverge de uma função executável, o guia descreve a função e explicita a diferença. As afirmações de implementação devem ser revalidadas ao atualizar o runtime.
+Esta revisão foi construída a partir do código local do SEELE, do ADR 0049 e das emendas de 19/09/2026, do guia de migração API 2 → 3, do executor e do indexador. Os contratos API 1/2 permanecem referências históricas do domínio e do servidor. Quando um comentário histórico diverge de uma função executável, o guia descreve a função e explicita a diferença. As afirmações de implementação devem ser revalidadas ao atualizar o runtime.
 
 ### Fontes primárias
 
@@ -986,7 +998,7 @@ Esta revisão foi construída a partir do código local do SEELE no commit `fbcb
 | --- | --- |
 | Manifesto | mod.json que identifica o pacote e seus scripts |
 | Host | Máquina/pessoa que hospeda o servidor |
-| Cliente do MOD | Worker próprio da sessão |
+| Cliente do MOD | Executor QuickJS próprio da sessão, fora da janela |
 | Handler | Função chamada pelo runtime para um pedido/evento |
 | KV ou quintal | Objeto dados persistido como chave/valor textual |
 | Snapshot | Consulta do estado exposto pelo aplicativo |
@@ -994,7 +1006,7 @@ Esta revisão foi construída a partir do código local do SEELE no commit `fbcb
 | Idempotência | Repetir uma operação sem aplicar o efeito duas vezes |
 | Hash de conteúdo | Identidade calculada sobre caminhos e bytes do pacote |
 | CSP | Política do WebView para scripts, estilos e conexões |
-| Descarregamento | terminate do Worker e retirada da região/tema pelo produto |
+| Descarregamento | parada do executor e retirada de região, tema, mídia e arquivos pelo produto |
 | Avaliação | Revisão de um commit/conteúdo para publicação no catálogo |
 
 ### Como manter este guia
