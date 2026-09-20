@@ -1084,7 +1084,11 @@ Três garantias do produto, e elas não são negociáveis:
 
 Um MOD revoga o que ele registrou. Os punhos são sequenciais, e passar o punho de outro MOD é recusado pelo nome. A saída da sessão limpa tudo sem perguntar; você não precisa registrar nada para isso acontecer.
 
-**`decorar` não existe nesta versão.** O plano da API previu um terceiro modo — mudar a apresentação de um nó **do SEELE** sem trocar o conteúdo dele. Ele foi suspenso: as propriedades que um MOD já pode declarar dentro da própria raiz (`opacidade`, `escalar`, `mover`) somem com o nome que abre a moderação quando aplicadas a um nó do produto, e o subconjunto de estilo que impede isso ainda não existe. Registrar `decorar` é recusado com essa razão escrita, em vez de aceito sem efeito.
+**`decorar` não existe nesta versão, e continua pendente.** O plano da API previu um terceiro modo — mudar a apresentação de um nó **do SEELE** sem trocar o conteúdo dele: pôr uma cor num canal sem assumir o desenho do item.
+
+O que falta é o contrato dele. O vocabulário de estilo que existe hoje é um só, pensado para o que você desenha **dentro da sua raiz**, onde sumir com o próprio conteúdo é escolha sua; aplicado a um nó do produto, ele inclui propriedades que encobrem um controle nativo. A resposta para isso é um segundo conjunto — quais propriedades, em quais pontos, sobre quais nós —, e ele ainda não foi escrito. Nada nisso diz que decorar seja incompatível com segurança: cor, tipografia, fundo e borda em pontos determinados não exigem oferecer deslocamento nem opacidade sobre o nome que abre a moderação.
+
+Enquanto isso, registrar `decorar` é recusado com essa razão escrita, em vez de aceito sem efeito.
 
 ### Estilos: propriedades declaradas, nunca texto de CSS
 
@@ -1114,7 +1118,9 @@ Por isso não há nenhuma função que receba CSS e tente limpá-lo. Limpeza por
 | Recorte | `recortar` |
 | Transição e animação | duração, suavização, e animações por nome |
 
-Cores são `#rgb`, `#rrggbb` ou `#rrggbbaa`. Nomes e funções de cor não entram. Animações são **presets** — `nenhuma`, `pulso`, `aurora`, `brilho`, `flutuar` —, e não `@keyframes`, pela mesma razão da sombra: um keyframe declarado por um MOD é um texto que vira regra. Todas param sob `prefers-reduced-motion`.
+Cores são `#rgb`, `#rrggbb` ou `#rrggbbaa`. Nomes e funções de cor não entram.
+
+`familia` escolhe entre as fontes que o produto já carrega (`mono` e `sans`). **Fonte arbitrária de rede não entra** — é a janela de quem conversa buscando bytes de um terceiro. Fonte empacotada no seu MOD, ou escolhida de um conjunto que o produto gerencie, é outra coisa: não é o mesmo acesso, e não foi decidida nesta versão. Se você precisa de uma, proponha a extensão em vez de contorná-la. Animações são **presets** — `nenhuma`, `pulso`, `aurora`, `brilho`, `flutuar` —, e não `@keyframes`, pela mesma razão da sombra: um keyframe declarado por um MOD é um texto que vira regra. Todas param sob `prefers-reduced-motion`.
 
 **Estado é seletor, e seletor é regra.** `sobre`, `foco`, `ativo`, `desligado`, `invalido` e `escolhido` não existem como propriedade de um nó — por isso eles vêm por classe, e não por `estilo`:
 
