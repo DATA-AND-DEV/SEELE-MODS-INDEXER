@@ -1,12 +1,12 @@
 # Como criar MODs para o SEELE
 
-Guia prático e referência técnica. Revisão de 18/09/2026. Manifesto schema 1, API de MOD 2. A documentação distingue funcionalidades executáveis, convenções de autoria e contratos declarados que ainda não têm uma ligação completa no runtime.
+Guia prático e referência técnica. Revisão de 18/09/2026. Manifesto schema 1, API de MOD 3. A documentação distingue funcionalidades executáveis, convenções de autoria e contratos declarados que ainda não têm uma ligação completa no runtime.
 
 ## Comece por aqui
 
-Um MOD é um pacote de JavaScript que acrescenta comportamento ao SEELE. Ele pode mudar a interface, guardar informações próprias no servidor ou combinar os dois. Não é necessário alterar o Rust do aplicativo para criar um contador, um painel, um tema compartilhado ou uma ficha de personagem.
+Um MOD é um pacote de JavaScript que acrescenta comportamento ao SEELE. Ele declara uma região com texto, campos, escolhas, botões, desenho e mídia; recebe o que a pessoa faz; pede cores para a sessão; e guarda informações próprias no servidor. Não é necessário alterar o Rust para apresentar um contador, editar uma ficha, arrastar uma peça num tabuleiro ou tocar um som do próprio pacote.
 
-Você entrega uma pasta com um manifesto e pelo menos um script. O manifesto apresenta o pacote; o script faz o trabalho. Quando o MOD tem uma interface e dados compartilhados, a janela mostra os controles e o servidor decide o que pode ser lido ou alterado.
+Você entrega uma pasta com um manifesto e pelo menos um script. O manifesto apresenta o pacote; o script faz o trabalho. Quando o MOD tem interface e dados compartilhados, a metade de cliente declara a região e recebe o que a pessoa faz; a metade de servidor decide o que pode ser lido ou alterado.
 
 ### Escolha seu caminho
 
@@ -17,19 +17,19 @@ Você entrega uma pasta com um manifesto e pelo menos um script. O manifesto apr
 
 ### O que você precisa
 
-Um editor de texto e conhecimentos básicos de JavaScript, JSON, funções, objetos e tratamento de erros. Para a interface, HTML/DOM e CSS ajudam. Node.js é útil para verificar sintaxe e rodar testes, mas não é uma dependência exigida pelo runtime do MOD. Git é recomendado para versionar e publicar. Rust e Cargo só são necessários se você for compilar o SEELE ou usar os testes nativos de runtime.
+Um editor de texto e conhecimentos básicos de JavaScript, JSON, funções, objetos e tratamento de erros. Para a interface, use árvores de objetos com `forma` e `dentro`; HTML e CSS não fazem parte da API. Node.js é útil para verificar sintaxe e rodar testes, mas não é uma dependência exigida pelo runtime do MOD. Git é recomendado para versionar e publicar. Rust e Cargo só são necessários se você for compilar o SEELE ou usar os testes nativos de runtime.
 
 Você não precisa contratar um backend para guardar o estado de um MOD: o servidor SEELE fornece armazenamento próprio. Integrações externas podem precisar de infraestrutura adicional, mas isso é uma escolha do seu produto.
 
 ### Três ideias fundamentais
 
-1. O código de cliente roda na janela de cada participante. Uma variável nele não é compartilhada com outras pessoas.
+1. O código de cliente roda num executor próprio de cada participante — um motor QuickJS do lado do aplicativo, fora da janela. Uma variável nele não é compartilhada com outras pessoas, e o que ele guardar morre com a sessão.
 2. O código de servidor roda no computador de quem hospeda. É ali que ficam as regras de autorização e o estado comum.
 3. A comunicação tem pedido e resposta. O resultado chega somente à pessoa que fez o pedido; os outros clientes precisam consultar novamente para enxergar alterações.
 
 ### Exemplo completo
 
-O [contador de exemplo](exemplos/contador.zip) tem três arquivos, usa a API 2 e inclui leitura, alteração com revisão, autorização administrativa e limpeza da interface. Extraia o ZIP antes de instalar. O código é didático e não depende de Estilo, Perfis ou Mesa.
+O [contador de exemplo](exemplos/contador.zip) tem três arquivos, usa a API 3 e inclui uma região com um botão que grava no servidor. O servidor mantém revisão e autorização administrativa, exercitados pelos testes. Extraia o ZIP antes de instalar. O código é didático e não depende de Estilo, Perfis ou Mesa.
 
 ## Planeje seu MOD
 
@@ -79,9 +79,9 @@ meu-mod/
   "schema": 1,
   "id": "exemplo/contador",
   "version": "1.0.0",
-  "api": 2,
+  "api": 3,
   "repo": "https://github.com/DATA-AND-DEV/SEELE-MODS-INDEXER",
-  "reach": ["dom", "contador compartilhado"],
+  "reach": ["regiao", "contador compartilhado"],
   "client": "cliente/main.js",
   "server": "servidor/main.js"
 }
@@ -99,47 +99,43 @@ O diretório `dados/` tem finalidade de runtime e é excluído do cálculo de co
 
 ## Faça seu primeiro MOD
 
-O contador é um exercício pequeno com um fluxo real: ler estado, pedir uma alteração e mostrar o resultado confirmado pelo servidor.
+O contador tem uma região com dois botões e uma metade de servidor que explica autorização, revisão e concorrência. Apertar `SOMAR 1` escreve no servidor; `ZERAR` só funciona para quem administra, e a recusa aparece na região em vez de sumir.
 
 ### Passo 1 — baixe e examine
 
-Baixe o ZIP no capítulo inicial. Leia `mod.json`, `cliente/main.js` e `servidor/main.js`. Os mesmos arquivos estão disponíveis individualmente na seção Exemplo executável da referência.
-
-No cliente, `SeeleMods.snapshot()` encontra um canal e `SeeleMods.request()` transporta o pedido. No servidor, `aoPedir()` recebe o contexto autenticado, valida a operação e grava o contador em `dados.contador`.
+Baixe o [contador](exemplos/contador.zip) e leia os três arquivos. O manifesto usa `api: 3`. O cliente consulta `snapshot()` para descobrir um canal, faz `request()` e declara o resultado com `SeeleUI.regiao()`.
 
 ### Passo 2 — entenda a leitura
 
-O cliente envia um objeto como este:
-
-```json
-{"op":"ler"}
+```js
+const s = await SeeleMods.snapshot();
+const canal = s.open_channel ?? s.channels?.[0]?.id;
+if (canal == null) throw new Error('Entre em um canal.');
+const r = await SeeleMods.request('exemplo/contador', canal, {op:'ler'});
+if (!r.ok) throw new Error(r.error);
+await SeeleUI.regiao([
+  {forma:'titulo', dentro:'Contador'},
+  {forma:'texto', dentro:`Valor: ${r.valor} · revisão ${r.revisao}`},
+]);
 ```
 
-O servidor responde com um objeto serializado:
+O fragmento deve ficar dentro de uma função async no script de cliente. `op`, `ler`, `valor`, `revisao` e `ok` são convenções deste exemplo, não métodos da plataforma.
 
-```json
-{"ok":true,"schema":1,"valor":0,"revisao":0}
-```
-
-Os nomes `op`, `ler`, `valor`, `revisao` e `ok` são escolhas deste exemplo. A plataforma não fornece uma função universal de “incrementar contador”. Ela entrega um canal de pedidos; o protocolo de aplicação pertence ao MOD.
-
-### Passo 3 — entenda a alteração
+### Passo 3 — entenda a alteração no servidor
 
 ```json
 {"op":"incrementar","revisao":0}
 ```
 
-O servidor compara a revisão recebida com a revisão salva, confere a permissão atual e somente então altera o estado. Se outra pessoa já mudou o contador, a operação recebe `conflito`. O cliente busca o estado novamente e permite que a pessoa decida se quer repetir a ação.
-
-O exemplo não repete uma mutação automaticamente após um timeout. Um timeout pode ocorrer depois de uma gravação. Repetir cegamente um incremento poderia contar duas vezes. A revisão protege este exemplo de aplicar novamente a mesma versão antiga, mas um produto com operações complexas deve considerar recibos e chaves de idempotência.
+O handler confere a permissão e a revisão antes de gravar. Os testes chamam `incrementar` e `zerar` diretamente para verificar persistência, concorrência e autorização. O cliente distribuído só envia `ler`; não há um controle de incremento na região. Não substitua a falta de um botão por uma escrita automática ao carregar.
 
 ### Passo 4 — experimente
 
-Depois de instalar e ligar em um servidor de teste, encontre Contador abaixo dos canais. Some uma unidade, feche e reabra a sessão, e confirme a persistência. Conecte outra pessoa e confira a atualização periódica. Tente zerar com uma pessoa sem administração. A recusa precisa acontecer no servidor, mesmo que alguém altere os controles da janela.
+Instale num servidor de teste e observe a região Contador. Conecte outra pessoa, saia e reconecte. Confira que a região desaparece ao sair e reaparece uma vez. O ciclo de leitura aguarda a resposta antes de agendar outra consulta.
 
 ### Passo 5 — transforme a ideia
 
-Troque o contador por seu estado, mantendo as mesmas responsabilidades: o cliente apresenta; o servidor valida; `dados` persiste; a resposta confirma. Acrescente um campo por vez e teste um caso válido, um inválido e um concorrente antes de aumentar a interface.
+Troque o contador por dados autorizados de seu MOD. Se sua ideia exige entrada da pessoa, imagem, som ou personalização dos painéis nativos, ela depende de uma extensão escrita e versionada da API. Não prometa essas capacidades com a gramática atual.
 
 ## Instale e teste no SEELE
 
@@ -160,10 +156,10 @@ A localização habitual no ambiente desktop usado durante o desenvolvimento é 
 | --- | --- |
 | Primeira entrada | Interface aparece uma vez, sem erro |
 | Leitura | Estado correto do servidor |
-| Salvamento | Confirmação depois da resposta |
+| Escrita no handler, em teste | Confirmação depois da resposta |
 | Segundo participante | Alteração aparece após a consulta |
 | Sem permissão | Servidor recusa; estado não muda |
-| Dois editores | Conflito explicado, sem sobrescrita silenciosa |
+| Duas escritas concorrentes, em teste | Conflito explicado, sem sobrescrita silenciosa |
 | Saída/desligamento | Timers, estilos e interface retirados |
 | Reconexão | Estado salvo continua; interface não duplica |
 | Troca de servidor | Dados e tema do anterior não vazam |
@@ -173,34 +169,108 @@ Um simulador de API no navegador ajuda a testar a interface. Ele não prova aute
 
 ## Desenhe como parte do SEELE
 
-O padrão visual usa Saira Condensed nos títulos e IBM Plex Mono nos dados e controles. Reutilize os tokens existentes, em vez de trazer fontes remotas ou uma folha global que redefina tudo.
+O MOD declara conteúdo; o SEELE monta a região, escolhe tipografia, espaçamento e a apresentação acessível. Não há acesso aos seletores ou estilos da página.
 
-| Token | Uso |
+### Formas disponíveis
+
+| forma | Finalidade | Campos |
+| --- | --- | --- |
+| titulo | Cabeçalho do bloco | `dentro` |
+| texto | Parágrafo | `dentro` |
+| linha | Agrupamento | `dentro` |
+| lista | Lista | `dentro` |
+| item | Item da lista | `dentro` |
+| campo | Caixa de texto editável | `chave`, `rotulo`, `valor` |
+| escolha | Seleção entre opções declaradas | `chave`, `rotulo`, `valor`, `opcoes` |
+| botao | Botão | `chave`, `dentro`, `desligado` |
+| arquivo | Botão que abre o seletor do sistema | `chave`, `dentro`, `papel` |
+| tela | Desenho e arraste | `chave`, `largura`, `altura`, `figuras`, `tracos` |
+| midia | Som ou imagem | `chave`, `fonte` ou `doServidor`, `descricao`, `tocando` |
+
+`dentro` aceita texto, outra forma ou uma lista. Números precisam ser convertidos para string. Uma forma desconhecida não produz conteúdo. A árvore tem teto de profundidade e de número de nós: prefira listas rasas. Texto nunca é interpretado como HTML.
+
+A `chave` é o que liga uma declaração à seguinte. O SEELE reaproveita o nó que já está na tela quando a chave e a forma são as mesmas — e é isso que faz uma caixa em edição **não perder o foco** quando o MOD redesenha. Declare a região inteira a cada vez; não tente mandar só a diferença.
+
+O SEELE **não escreve** o `valor` de um campo ou de uma escolha enquanto ele está em foco. Guarde um rascunho do que está sendo editado e declare o rascunho: se você declarar o que o servidor devolveu, a sua própria consulta periódica apaga o que a pessoa estava digitando.
+
+### Interação
+
+O que a pessoa faz chega por evento, e um evento **não tem resposta**: quem digita não espera o MOD confirmar que recebeu a tecla.
+
+```js
+SeeleUI.aoEvento(evento => {
+  if (evento.nome === 'campo')   { /* evento.chave, evento.valor */ }
+  if (evento.nome === 'escolha') { /* evento.chave, evento.valor */ }
+  if (evento.nome === 'botao')   { /* evento.chave */ }
+  if (evento.nome === 'arquivo') { /* evento.chave, evento.arquivo ou null + porque */ }
+  if (evento.nome === 'traco')   { /* evento.chave, fase, x, y, alvo */ }
+  if (evento.nome === 'midia')   { /* evento.chave, estado */ }
+});
+```
+
+Um ouvinte só, e o último registrado vence. Um erro dentro dele fica com o seu MOD e não impede o próximo evento de chegar.
+
+### Desenho e arraste
+
+Uma `tela` aceita **figuras declaradas** e traços. Uma figura com `chave` pode ser pega: o evento `traco` traz `alvo` com a chave da figura mais em cima sob o dedo, ou `null` quando o toque caiu no vazio.
+
+| tipo | Campos |
 | --- | --- |
-| --seele-display | Família dos títulos |
-| --seele-mono | Família de dados/controles |
-| --seele-negro-absoluto | Fundo principal |
-| --seele-negro-painel | Fundo de painel |
-| --seele-osso | Texto principal |
-| --seele-rotulo-painel | Texto secundário |
-| --seele-laranja-nerv | Destaque |
-| --seele-linha-forte | Bordas |
+| retangulo | `x`, `y`, `largura`, `altura`, `cor`, `preenchida` |
+| circulo | `x`, `y`, `raio`, `cor`, `preenchida` |
+| texto | `x`, `y`, `dentro`, `corpo`, `cor` |
+| linha | `x`, `y`, `ate_x`, `ate_y`, `cor` |
 
-Use uma grade de 8, 16 e 24 px, bordas retas, títulos claros e controles que caibam em janelas menores. Um botão como “Atualizar MOD” precisa quebrar ou reorganizar o layout sem sair do cartão. Não use dimensões fixas que presumam um monitor grande.
+A **última figura declarada fica por cima**, e é a primeira que o toque encontra. Uma `linha` nunca é pega: ela é grade, parede e régua, e dar-lhe área de acerto roubaria o toque de toda figura em cima dela — declare uma peça como círculo ou retângulo.
 
-### Interface acessível
+O `alvo` é fixado quando o dedo desce e viaja nas três fases (`comecou`, `moveu`, `terminou`). As coordenadas são as da sua tela declarada, não as da janela. O movimento é agregado por quadro: um arraste não manda um evento por pixel.
 
-Use botões reais para ações e links para navegação. Dê nome aos campos com `label`, mantenha foco visível e explique estados com texto. Um erro não pode depender apenas de uma borda vermelha. Um indicador de voz não pode desaparecer ao acrescentar uma personalização.
+### Mídia
 
-Diálogos devem ter nome, botão Fechar, navegação por teclado e retorno de foco. Use `textContent` para nomes, biografias e dados recebidos. Nunca interprete texto de participante como HTML. Valide cores e opções antes de aplicá-las a CSS.
+Som e imagem vêm de **duas origens, e só duas**:
 
-### Movimento e identidade
+```js
+{forma:'midia', chave:'toque', fonte:'som/toque.wav'}                       // do seu pacote
+{forma:'midia', chave:'mapa', doServidor:{canal, pedido:{op:'asset'}, campo:'image'}}  // do seu servidor
+```
 
-Um banner animado pode aparecer no cartão completo e na lista lateral, mas precisa respeitar `prefers-reduced-motion` e oferecer pausa. GIF, APNG e WebP podem conter animação; desabilitar apenas uma animação CSS não pausa a mídia. Uma solução simples é ocultar/substituir a imagem enquanto a pausa estiver ativa.
+Do pacote: o arquivo precisa estar em `arquivos` no manifesto. Do servidor: o SEELE faz o pedido com o `id` do seu MOD e lê o base64 no campo que você nomear. Uma resposta grande pode devolver `proximo`, um objeto que o SEELE junta ao pedido seguinte **sem interpretar** — a forma da paginação é sua.
 
-Ao personalizar a lista de pessoas, preserve identidade nativa, ações de moderação, estado de fala e informações de acessibilidade. O nome visual do MOD pode coexistir com o nome original. Não associe perfis apenas por nomes duplicados. Quando não houver um identificador estável exposto naquele elemento, use um diretório com os IDs do snapshot ou deixe a linha sem decoração.
+Não existe uma terceira origem. Um endereço qualquer faria a janela de quem conversa buscar bytes na rede de um estranho, e é por isso que a API não o aceita.
 
-Os seletores do DOM são detalhes de implementação, não uma API de componentes estável. Teste seu MOD a cada versão do aplicativo que você pretende suportar.
+O **tipo do arquivo vem dos bytes**, nunca do nome nem do manifesto: o SEELE reconhece PNG, JPEG, GIF, WebP, WAV, Ogg e MP3, e monta `<img>` ou `<audio>` conforme o que os bytes provaram ser. Declare `tocando: true` para tocar; o estado real volta pelo evento `midia`, porque o navegador pode recusar tocar sem gesto.
+
+### Tema da sessão
+
+```js
+await SeeleUI.tema({
+  acento:'#6BFFB6', fundo:'#050403', painel:'#0A0806',
+  texto:'#EAE3CF', apagado:'#908574', borda:'#241F19',
+  densidade:'compacta', fonte:'mono', arredondamento:8, brilho:false,
+});
+```
+
+As seis cores aceitam somente `#rrggbb`. `densidade` aceita `compacta` ou `confortavel` e `fonte` aceita `mono` ou `sans` — são escolhas e não números, porque uma cor o produto confere e um espaçamento não: `0px` deixaria a sessão ilegível sem violar regra nenhuma. `fonte` é escolha entre as duas pilhas que o produto declara, e não família livre: a escala de tipo daqui é medida, e uma família qualquer moveria tamanho, entrelinha e contraste de uma vez.
+
+`arredondamento` é inteiro de 0 a 24 e `brilho` é `true` ou `false`. O produto escreve o `px` e monta a sombra a partir de um token dele: um raio livre aceitaria `9999`, e uma sombra livre aceitaria qualquer `box-shadow`. O produto abre em canto reto e sem sombra, e o tema de servidor é a exceção nomeada em `specs/07-estetica.md` — vale só naquela sessão.
+
+O produto recusa nomes e cores inválidos, disputa de token com outro MOD e contraste texto/fundo abaixo de 4,5:1. Capture o Error e apresente sua mensagem. O tema é aplicado somente à sessão e sai com ela.
+
+### Escolher um arquivo
+
+O MOD **não abre o seletor**: ele declara a forma `arquivo`, a pessoa aperta, e o seletor é do produto. O evento traz um identificador, e daí o MOD lê os bytes em pedaços com `SeeleUI.pedaco` e os manda para o servidor dele pelo protocolo que ele já tem.
+
+Com acesso ao disco, um MOD teria o caminho errado — nenhum cliente do SEELE abre arquivo por conta de terceiro. Solte o identificador com `SeeleUI.soltar` quando terminar; ficam até quatro de pé por vez.
+
+Os pedaços são base64 de janelas **múltiplas de três**. Duas janelas seguidas precisam concatenar no arquivo, e um tamanho que não é múltiplo de três deixa `=` no meio do fluxo: a imagem chega corrompida sem erro nenhum.
+
+### O que não existe, e por quê
+
+**CSS próprio e decoração de canais.** A região é o lugar onde um MOD desenha. A única coisa que um MOD entrega fora dela é um **cartão** na lista de pessoas — e ali ele declara, não desenha: quem monta é o mesmo renderer, com uma gramática menor.
+
+**Nada.** As duas ausências que esta seção listava — arredondamento e brilho no tema, e o cartão na lista de pessoas — foram implementadas. O que continua fora é só o que está acima: CSS próprio e decoração de canais.
+
+Não transforme uma interação indisponível em uma alteração automática de dados, e não escreva na tela que algo «aguarda suporte»: se a sua ideia depende de uma dessas, proponha a extensão.
 
 ## Publique e mantenha
 
@@ -233,15 +303,24 @@ Teste entrar com pacote antigo, entrar com pacote novo, atualizar durante uma se
 
 ## Superfície implementada e compatibilidade
 
-A versão verificada nesta revisão declara `MOD_API_VERSION = 2` e `MANIFEST_SCHEMA = 1`. A ponte de pedidos entrou com o protocolo 6. São três números diferentes: versão do manifesto, versão da API do MOD e versão do protocolo de rede. A versão do seu pacote, por exemplo `1.0.0`, é um quarto identificador.
+O indexador declara `MOD_API_VERSION = 3` e `MANIFEST_SCHEMA = 1`. A ponte de pedidos entrou com o protocolo 6. São três números diferentes: versão do manifesto, versão da API do MOD e versão do protocolo de rede. A versão do seu pacote, por exemplo `1.0.0`, é um quarto identificador.
+
+**A superfície descrita aqui está implementada no SEELE e ainda não publicada.** O `MOD_API_VERSION` do aplicativo já é 3 e o `VERSAO_DA_API` do indexador também; o que falta é o catálogo assinado ser regerado e os pacotes saírem.
+
+Um manifesto precisa declarar **exatamente** a API que o aplicativo oferece — não uma mais velha nem uma mais nova. Enquanto o catálogo publicado disser `api_oferecida: 2`, o aplicativo que está na mão das pessoas é o que entende a API 2, e um pacote de API 3 não instala nele. Escreva contra esta página, teste localmente, e publique quando a versão sair.
 
 ### Funções que você pode usar
 
 | Ambiente | Superfície executável |
 | --- | --- |
-| Janela | globalThis.SeeleMods.snapshot() |
-| Janela | globalThis.SeeleMods.request(id, canal, objeto) |
-| Janela | DOM, CSSOM e APIs oferecidas pelo WebView, limitadas pela CSP |
+| Cliente | globalThis.SeeleMods.snapshot() |
+| Cliente | globalThis.SeeleMods.request(id, canal, objeto) |
+| Cliente | globalThis.SeeleUI.regiao(conteudo) |
+| Cliente | globalThis.SeeleUI.tema(valores) |
+| Cliente | globalThis.SeeleUI.cartoes(cartoes) |
+| Cliente | globalThis.SeeleUI.aoEvento(funcao) |
+| Cliente | globalThis.SeeleUI.pedaco(arquivo, inicio) — base64, janelas múltiplas de 3 |
+| Cliente | globalThis.SeeleUI.soltar(arquivo) |
 | Servidor | globalThis.aoPedir(contextoJSON, pedidoJSON) |
 | Servidor | globalThis.aoAcontecer(momento, cargaJSON) |
 | Servidor | dados: objeto de string para string |
@@ -252,15 +331,21 @@ A versão verificada nesta revisão declara `MOD_API_VERSION = 2` e `MANIFEST_SC
 
 `api/v1.json` contém nomes como `mandarMensagem`, `criarSala`, `expulsarPessoa` e leituras como `servidor.pessoas`. Esses nomes mapeiam símbolos do domínio para conferência do contrato. No runtime inspecionado, eles não são instalados como métodos JavaScript chamáveis do MOD. Não escreva `mundo.mandarMensagem()` ou `servidor.criarSala()` supondo que existam.
 
-Também há mais eventos declarados no arquivo de API do que eventos efetivamente encaminhados pelo adaptador atual. A seção Eventos lista os cinco nomes e cargas que o adaptador verificado entrega. Para outras ações, confirme uma implementação concreta ou proponha uma extensão da API; não transforme um comando interno do aplicativo em uma API pública por conveniência.
+Também há mais eventos declarados no arquivo de API do que eventos efetivamente encaminhados pelo adaptador atual. A seção Eventos lista os cinco nomes e cargas que o adaptador verificado entrega ao **servidor** de um MOD; os eventos que chegam ao **cliente**, quando alguém digita ou arrasta, são outros seis e estão na seção Executor. Para outras ações, confirme uma implementação concreta ou proponha uma extensão da API; não transforme um comando interno do aplicativo em uma API pública por conveniência.
 
 ### APIs do navegador e do servidor
 
 O servidor executa JavaScript em QuickJS, não Node.js nem uma página web. Não conte com `document`, `window`, `fetch`, `require`, módulos npm, timers ou uma fila assíncrona de browser. O arquivo do servidor é avaliado como script e o handler de pedido devolve uma string de forma síncrona.
 
-Na janela, o carregador usa scripts de módulo. Ainda assim, empacotar em um arquivo final autocontido simplifica a revisão e evita dependências ausentes. Imports de rede não são um mecanismo de distribuição aceito pela CSP.
+O cliente é um script autocontido executado num **motor QuickJS do lado do aplicativo**, fora da janela, com o prelúdio da API. Não use imports de módulo no arquivo de entrada.
 
-Fontes desta seção: [API 2](https://github.com/DATA-AND-DEV/SEELE/blob/6a525d19c9967e0527be7d845ee16712b3f4d9e8/api/v2.json), [runtime](https://github.com/DATA-AND-DEV/SEELE/blob/6a525d19c9967e0527be7d845ee16712b3f4d9e8/crates/seele-server/src/mods/mod.rs) e [ponte da janela](https://github.com/DATA-AND-DEV/SEELE/blob/6a525d19c9967e0527be7d845ee16712b3f4d9e8/apps/seele-app/ui/base.js).
+`document`, `window`, CSSOM, `fetch`, `XMLHttpRequest`, `WebSocket`, `Worker`, `localStorage`, `sessionStorage`, `indexedDB`, `caches`, `BroadcastChannel` e o global Tauri **não existem** nesse ambiente — e não existem porque um contexto de QuickJS não os tem, e não porque alguém os apagou no começo do arquivo. Promise, JSON, TextEncoder, `setTimeout`, `setInterval` e `console` continuam disponíveis.
+
+O primeiro desenho da API 3 usava um `Worker` de `blob:`, e ele foi **reprovado por medição**: um worker de `blob:` herda a origem de quem o criou, e o que um MOD gravou em `indexedDB` sobreviveu ao encerramento do aplicativo e reapareceu na entrada seguinte. `terminate()` mata o contexto e não toca no armazenamento da origem. Se você leu isso numa versão anterior deste guia, era verdade e deixou de ser: hoje há um executor só.
+
+O produto encerra o executor ao descarregar o MOD, e com ele os temporizadores, a região, a mídia montada e os arquivos que alguém escolheu.
+
+Fontes desta seção: [Contrato histórico da ponte API 2](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/api/v2.json), [runtime](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-server/src/mods/mod.rs) e [ponte da janela](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/apps/seele-app/ui/base.js).
 
 ## Manifesto e limites de anúncio
 
@@ -271,14 +356,14 @@ O manifesto é JSON estrito. Chaves desconhecidas são recusadas. Comentários, 
 | schema | número inteiro | Use 1 nesta revisão |
 | id | string | autor/nome; minúsculas ASCII, dígitos e hífen; uma barra |
 | version | string | Versão do autor; o core não a interpreta como SemVer |
-| api | número inteiro | Use 2 para request/aoPedir |
+| api | número inteiro | Use 3, inclusive em MODs somente de servidor |
 | repo | string | Repositório público do pacote |
 | reach | string[] | Opcional no parser; declare alcances úteis para quem aceita |
 | state | inteiro ou ausente | Versão declarativa dos seus dados; sem migração automática |
 | client | string ou ausente | Script de cliente relativo à raiz |
 | server | string ou ausente | Script de servidor relativo à raiz |
 
-Ao menos `client` ou `server` precisa existir. Uma API mais nova que a oferecida pelo aplicativo é recusada. O ID da pasta instalada deve concordar com o manifesto. A pasta de desenvolvimento selecionada pode ter um nome amigável; a identidade instalada é `autor/nome`.
+Ao menos `client` ou `server` precisa existir. Uma API mais nova é recusada como `api-too-new`; uma anterior à 3 é recusada como `api-too-old`, antes de executar código. Não existe compatibilidade com cliente de API 2. O ID da pasta instalada deve concordar com o manifesto. A pasta de desenvolvimento selecionada pode ter um nome amigável; a identidade instalada é `autor/nome`.
 
 ### Limites no anúncio do protocolo
 
@@ -304,7 +389,7 @@ Caracteres acentuados e emoji podem ocupar mais de um byte. Não use `texto.leng
 
 `reach` informa o que o pacote declara alcançar; não é uma lista de permissões que transforma código inseguro em sandbox. Declare a realidade, incluindo integrações externas. Não acrescente campos inventados como `permissions`, `author` ou `description` sem uma mudança oficial do schema.
 
-Fontes: [manifesto](https://github.com/DATA-AND-DEV/SEELE/blob/6a525d19c9967e0527be7d845ee16712b3f4d9e8/crates/seele-proto/src/mods.rs), [limites do controle](https://github.com/DATA-AND-DEV/SEELE/blob/6a525d19c9967e0527be7d845ee16712b3f4d9e8/crates/seele-proto/src/control.rs).
+Fontes: [manifesto](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-proto/src/mods.rs), [limites do controle](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-proto/src/control.rs).
 
 ## Pedidos e respostas
 
@@ -366,7 +451,7 @@ O pedido especial com ID vazio é usado pelo carregador para consultar o conjunt
 
 A resposta não aparece no chat, no histórico ou como transmissão. Ela não é enviada aos demais participantes. Não existe `broadcast()` público nesta ponte. Use consultas periódicas ou proponha uma extensão de API quando seu produto precisar de outro modelo.
 
-Fonte: [execução autenticada e fragmentação](https://github.com/DATA-AND-DEV/SEELE/blob/6a525d19c9967e0527be7d845ee16712b3f4d9e8/crates/seele-server/src/mods/pedidos.rs).
+Fonte: [execução autenticada e fragmentação](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-server/src/mods/pedidos.rs).
 
 ## Leitura, snapshot e sincronização
 
@@ -400,18 +485,18 @@ Use um único ciclo de consulta, sem sobrepor requests se o servidor estiver len
 ```js
 let emConsulta = false;
 async function consultar() {
-  if (emConsulta || encerrado) return;
+  if (emConsulta) return;
   emConsulta = true;
   try {
     const r = await SeeleMods.request(id, canal, {op:'ler'});
-    if (!encerrado && r.ok && r.revisao !== revisaoExibida) desenhar(r);
+    if (r.ok && r.revisao !== revisaoExibida) await desenhar(r);
   } finally {
     emConsulta = false;
   }
 }
 ```
 
-Adapte o tratamento de erro antes de usar esse fragmento. Uma chamada disparada por timer precisa capturar rejeições. Evite redesenhar o formulário inteiro enquanto alguém digita; guarde um rascunho local e separe a revisão editada da revisão recebida.
+Adapte o tratamento de erro antes de usar esse fragmento. Uma chamada disparada por timer precisa capturar rejeições. O desenho atual é de leitura. Declare o resultado autorizado e evite apresentar uma resposta de canal antigo após a navegação.
 
 ### Paginação e visibilidade
 
@@ -470,7 +555,7 @@ Uma resposta `{ok:false}` é uma resposta normal, não uma exceção. Se você j
 
 ## Persistência e migrações
 
-`dados` é um objeto de chaves e valores textuais fornecido ao handler. O estado pertence ao MOD no banco do servidor. A API 2 carrega esse estado para uma nova execução de pedido e o grava depois de uma conclusão bem-sucedida, quando há mudança.
+`dados` é um objeto de chaves e valores textuais fornecido ao handler. O estado pertence ao MOD no banco do servidor. O runtime carrega esse estado para uma nova execução de pedido e o grava depois de uma conclusão bem-sucedida, quando há mudança.
 
 ```js
 const config = JSON.parse(dados.config || '{"schema":1,"revisao":0}');
@@ -518,7 +603,7 @@ Esse exemplo só transforma memória. Antes de persistir, valide invariantes, or
 
 Pedidos usam um runtime novo. O caminho de eventos mantém o hospedeiro carregado e entrega o quintal a cada chamada. Há coordenação de persistência no produto, mas evite que os dois caminhos regravem objetos grandes com base em cópias antigas. Prefira uma responsabilidade clara para cada tipo de alteração e teste concorrência entre um evento e um pedido.
 
-Fonte: [runtime e coleta](https://github.com/DATA-AND-DEV/SEELE/blob/6a525d19c9967e0527be7d845ee16712b3f4d9e8/crates/seele-server/src/mods/mod.rs), [persistência dos pedidos](https://github.com/DATA-AND-DEV/SEELE/blob/6a525d19c9967e0527be7d845ee16712b3f4d9e8/crates/seele-server/src/mods/pedidos.rs).
+Fonte: [runtime e coleta](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-server/src/mods/mod.rs), [persistência dos pedidos](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-server/src/mods/pedidos.rs).
 
 ## Arquivos: ler, escrever, listar e apagar
 
@@ -558,7 +643,7 @@ Para substituir um recurso, uma estratégia é escrever em um caminho novo, veri
 
 O par “arquivo novo + referência no banco” não é uma transação distribuída automática. Documente seu procedimento de recuperação e teste falha de disco, falha de KV e repetição de um fragmento.
 
-Fonte: [operações de arquivos](https://github.com/DATA-AND-DEV/SEELE/blob/6a525d19c9967e0527be7d845ee16712b3f4d9e8/crates/seele-server/src/mods/arquivos.rs).
+Fonte: [operações de arquivos](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-server/src/mods/arquivos.rs).
 
 ## Uploads, imagens e respostas grandes
 
@@ -586,17 +671,19 @@ Armazene a referência pública apenas quando o conteúdo estiver completo e val
 
 ### Validação de mídia
 
-No cliente, limite bytes, formato e dimensões antes de enviar. No servidor, valide novamente o envelope, limites e assinatura do arquivo. Confiar apenas no MIME informado pelo navegador não é suficiente. A validação do cliente melhora a experiência, mas pode ser contornada.
+Esta seção descreve protocolos e dados de servidor. O seletor de arquivos **existe** e é do produto: a forma `arquivo` desenha um botão, a pessoa escolhe, e seu MOD recebe um identificador com o tipo que os **bytes** provaram ser e o tamanho — nunca um caminho. Leia com `SeeleUI.pedaco(arquivo, inicio)` e mande ao seu servidor pelo protocolo que você definir; devolva com `SeeleUI.soltar(arquivo)` quando terminar.
 
-No Perfis de referência, o limite de interface é 256 KiB por imagem e as dimensões são verificadas no cliente; isso não deve ser apresentado como prova de decodificação completa no host. Para uma garantia forte de dimensões/conteúdo no servidor, é necessária uma validação adequada naquele lado.
+No servidor, valide envelope, limites e assinatura dos bytes; não confie no MIME informado por quem envia. O produto já reconheceu o tipo pelos bytes antes de lhe entregar o identificador, e conferir de novo do seu lado continua sendo certo — o produto protege a janela, não o seu formato.
 
-Não interprete SVG ou HTML enviado por participante como conteúdo confiável. Para imagens, prefira formatos previstos pelo MOD e aplique-os em `img` com texto alternativo. Se usar data URI, confira o prefixo e o conteúdo antes de renderizar. Uma resposta do seu servidor ainda pode conter dados originados de outra pessoa.
+O servidor de PERFIS mantém uploads de até 10 MiB por avatar/banner em fragmentos próprios. O cliente da API 3 não oferece upload nem validação de dimensões; os arquivos anteriores permanecem armazenados. Para uma garantia forte de dimensões/conteúdo no servidor, é necessária uma validação adequada naquele lado.
+
+Não interprete SVG ou HTML enviado por participante como conteúdo confiável. Não há forma `img` ou renderização de data URI na API 3. Não tente passar marcação como texto para reproduzir essas capacidades. Uma resposta do seu servidor ainda pode conter dados originados de outra pessoa.
 
 ### Memória e desempenho
 
 Um limite de 4 MiB no arquivo não garante que um fluxo com várias cópias de base64 e JSON caiba em 8 MiB de runtime. Somam-se fonte, objetos, estado, strings de entrada, buffers e resultado. Teste o pior caso no QuickJS real, não só no Node.
 
-Use metadados leves na listagem; carregue imagens separadamente; limite o cache; evite reatribuir `src` ou recriar o elemento de uma animação em toda atualização. Na lista lateral de pessoas, reutilize os cartões e preserve os controles nativos.
+Use somente metadados leves na região. Não baixe imagens que a API não pode exibir. A lista de pessoas e seus controles pertencem ao produto.
 
 ## Eventos e aoAcontecer
 
@@ -639,7 +726,7 @@ O despachante executa eventos em sequência. Uma chamada lenta pode atrasar o pr
 
 Um MOD sem `aoAcontecer` é válido quando sua metade de servidor usa apenas `aoPedir`. O inverso também pode ser válido, mas tentar fazer um request a um servidor sem `aoPedir` não cria o handler automaticamente.
 
-Fonte: [momento_de e despacho](https://github.com/DATA-AND-DEV/SEELE/blob/6a525d19c9967e0527be7d845ee16712b3f4d9e8/crates/seele-server/src/mods/despacho.rs).
+Fonte: [momento_de e despacho](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-server/src/mods/despacho.rs).
 
 ## Rede, relógio e registro
 
@@ -673,57 +760,162 @@ Registra uma linha com o ID do MOD no log do host. A implementação recorta a m
 
 ### Rede no cliente
 
-A CSP do aplicativo autoriza a ponte IPC e recursos previstos, incluindo os scripts do protocolo do MOD. Ela não libera fetch arbitrário para a internet. Faça integrações externas pelo lado de servidor dentro dos limites reais. O simulador web pode ter uma CSP diferente; valide no WebView antes de declarar compatibilidade.
+O executor não é um contexto de navegador: não há CSP para herdar e não há `fetch` para chamar. Faça integrações externas pelo lado de servidor, dentro dos limites reais. Um simulador web que você use para desenvolver **não** é o ambiente final — ele tem APIs que o executor não tem, e um MOD que depende de uma delas passa lá e falha aqui.
 
-Fonte: [mundo.rs](https://github.com/DATA-AND-DEV/SEELE/blob/6a525d19c9967e0527be7d845ee16712b3f4d9e8/crates/seele-server/src/mods/mundo.rs), [CSP do app](https://github.com/DATA-AND-DEV/SEELE/blob/6a525d19c9967e0527be7d845ee16712b3f4d9e8/apps/seele-app/tauri.conf.json).
+Fonte: [mundo.rs](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-server/src/mods/mundo.rs), [CSP do app](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/apps/seele-app/tauri.conf.json).
 
-## DOM, CSS e ciclo de vida
+## Executor, região, tema e ciclo de vida
 
-A metade de cliente tem acesso à janela. Isso possibilita personalizações amplas, mas exige cuidado com coexistência e limpeza. Não redefina seletores genéricos como `button`, `body` e `h1` globalmente para estilizar apenas seu painel.
+A API 3 substitui o código dentro da janela por um executor próprio. As funções assíncronas são `SeeleMods.snapshot()`, `SeeleMods.request(id, canal, valor)`, `SeeleUI.regiao(conteudo)`, `SeeleUI.tema(valores)`, `SeeleUI.cartoes(cartoes)`, `SeeleUI.pedaco(arquivo, inicio)` e `SeeleUI.soltar(arquivo)`. `SeeleUI.aoEvento(funcao)` é síncrona e registra um ouvinte. As falhas rejeitam a Promise com Error.
 
-### Montagem
-
-Use uma classe ou atributo com o namespace do MOD, mantenha a referência à sua raiz e confira se já existe uma instância montada. Um ponto usado pelos exemplos é `#tela-sessao .painel-canais .canais-rolagem`. Ele deve ser tratado como um seletor compatível com os builds testados, não como um contrato permanente.
-
-A interface nativa pode redesenhar uma lista. Um elemento removido por esse redesenho pode precisar ser remontado. Prefira uma checagem limitada e idempotente; um MutationObserver deve ter debounce e ignorar alterações que ele mesmo já resolveu.
-
-### CSS e CSP
-
-Uma tag `style` inline pode ser bloqueada. CSSOM, folhas adotadas quando suportadas e alteração de propriedades são opções já usadas pelos MODs. Teste o mecanismo no WebView. Não remova ou relaxe a CSP do produto para fazer seu MOD funcionar.
+### Declarar a região
 
 ```js
-const folha = new CSSStyleSheet();
-document.adoptedStyleSheets = [...document.adoptedStyleSheets, folha];
-folha.insertRule('.meu-mod-painel { padding:16px; border:1px solid var(--seele-linha-forte); }');
+await SeeleUI.regiao([
+  {forma:'titulo', dentro:'FICHA'},
+  {forma:'texto', dentro:`pontos: ${pontos}`},
+  {forma:'campo', chave:'nome', rotulo:'NOME', valor:nome},
+  {forma:'escolha', chave:'classe', rotulo:'CLASSE', valor:classe, opcoes:[
+    {valor:'guerreira', dentro:'GUERREIRA'},
+    {valor:'maga', dentro:'MAGA'},
+  ]},
+  {forma:'linha', dentro:[
+    {forma:'botao', chave:'gravar', dentro:'GRAVAR'},
+    {forma:'botao', chave:'descartar', dentro:'DESCARTAR', desligado:true},
+  ]},
+]);
 ```
 
-Esse fragmento depende do suporte a folhas adotadas. Tenha um fallback testado se a sua matriz de plataformas exigir. Na limpeza, remova somente a folha ou regras que seu MOD criou.
+Uma nova chamada substitui toda a região do MOD. As formas aceitas são `titulo`, `texto`, `linha`, `lista`, `item`, `campo`, `escolha`, `botao`, `arquivo`, `tela` e `midia`. Uma forma desconhecida não vira um agrupamento.
+
+**O produto reconcilia em vez de reconstruir.** Um `campo` com a mesma `chave` é o mesmo campo entre dois desenhos: ele não é removido e recriado, e por isso quem está digitando não perde o foco nem o cursor. Enquanto uma caixa tem o foco, o produto **não sobrescreve o valor dela** — o que você mandar em `valor` só entra quando ninguém está editando ali. É isso que permite consultar o servidor de quatro em quatro segundos sem apagar o que a pessoa escreveu no meio.
+
+O que isso exige de você: guarde o rascunho **separado** do que o servidor diz e desenhe o rascunho enquanto ele existir. O produto preservar o foco não basta sozinho, porque o foco ficaria numa caixa cujo valor o seu próprio MOD acabou de trocar.
+
+### O que a pessoa faz volta como evento
+
+```js
+SeeleUI.aoEvento(evento => {
+  if (evento.nome === 'campo') { rascunho[evento.chave] = evento.valor; repintar(); }
+});
+```
+
+Um pedido tem número e resposta; um evento não tem nem um nem outro, porque quem digita não espera o MOD confirmar que recebeu a tecla. **Um ouvinte só, e o último vence.**
+
+| `nome` | Vem de | Campos |
+| --- | --- | --- |
+| campo | `campo` | chave, valor |
+| escolha | `escolha` | chave, valor |
+| botao | `botao` | chave |
+| arquivo | `arquivo` | chave, arquivo (`{id, tipo, papel, bytes}`) ou `null` com `porque` |
+| traco | `tela` | chave, fase (`comecou`/`moveu`/`terminou`), x, y, alvo |
+| midia | `midia` | chave, estado |
+
+Cancelar o seletor de arquivo **é uma resposta**: chega um evento `arquivo` com `arquivo: null` e um `porque`. Trate-o; silêncio ali é o seu MOD parecendo travado.
+
+### Desenhar: `tela` e figuras declaradas
+
+Um MOD não escreve pixel. Ele declara figuras e o produto as pinta, e é o produto quem decide qual figura o dedo acertou:
+
+```js
+{forma:'tela', chave:'tabuleiro', largura:640, altura:480, figuras:[
+  {tipo:'retangulo', x:0, y:0, largura:640, altura:480, cor:'#0b0a08'},
+  {tipo:'linha', x:0, y:0, ate_x:640, ate_y:480, cor:'#241F19'},
+  {tipo:'circulo', x:120, y:80, raio:16, cor:'#6BFFB6', chave:'peca-3'},
+  {tipo:'texto', x:120, y:80, dentro:'A', corpo:12, cor:'#EAE3CF'},
+]}
+```
+
+As figuras são `retangulo`, `circulo`, `texto` e `linha`. `retangulo` e `circulo` aceitam `preenchida:false` para sair só de contorno; `texto` aceita `corpo` entre 6 e 64.
+
+Uma figura com `chave` responde ao toque: o evento `traco` traz essa chave em `alvo`, ou `null` quando o dedo caiu no vazio — `null`, e não ausente, porque «não peguei nada» é uma resposta. A **última figura declarada ganha o toque** quando duas se sobrepõem, que é a ordem em que elas foram pintadas. `linha` não recebe toque: ela é grade, parede e régua, e dar-lhe área de acerto roubaria o toque de toda figura em cima dela.
+
+O `alvo` é fixado quando o dedo desce e viaja nas três fases. As coordenadas são as da sua tela declarada, não as da janela, e o movimento é agregado por quadro: um arraste não manda um evento por pixel.
+
+Compare a chave como **texto**. `Number('peca-3')` é `NaN`, e `NaN` não é igual a nada: uma peça comparada assim para de seguir o dedo sem erro nenhum na tela.
+
+### Mídia
+
+A forma `midia` toca som ou vídeo que **vem do seu pacote ou do seu servidor**, e nunca de um endereço na rede:
+
+```js
+{forma:'midia', chave:'trilha', fonte:'som/tema.ogg', tocando:true}
+{forma:'midia', chave:'retrato', doServidor:{canal, pedido:{op:'asset', person:id}, campo:'image'}}
+```
+
+`fonte` é um arquivo do seu pacote, e ele precisa estar declarado em `arquivos` no manifesto. `doServidor` faz o SEELE pedir ao **seu** servidor e ler o base64 no campo que você nomear. Não existe uma terceira origem: um endereço qualquer faria a janela de quem conversa buscar bytes na rede de um estranho.
+
+O tipo é decidido **pelos bytes**, e nunca pelo que o manifesto ou o servidor dizem que é (ADR 0027). Um som mandado no lugar de uma imagem é recusado pelo nome, e a recusa chega até você. Declare `tocando:true` para tocar; o estado real volta pelo evento `midia`, porque o navegador pode recusar tocar sem gesto.
+
+### Tema da sessão
+
+```js
+await SeeleUI.tema({
+  fundo:'#050403', painel:'#0b0a08', texto:'#EAE3CF',
+  apagado:'#7A7061', acento:'#6BFFB6', borda:'#241F19',
+  densidade:'compacta', fonte:'mono',
+  arredondamento:8, brilho:false,
+});
+```
+
+São **seis cores** — `fundo`, `painel`, `texto`, `apagado`, `acento`, `borda` —, mais `densidade` (`compacta` ou `confortavel`), `fonte` (`mono` ou `sans`), `arredondamento` (inteiro de 0 a 24) e `brilho` (`true` ou `false`). `fonte` escolhe entre as duas pilhas de tipo que o produto declara, e não é família livre: a escala de tipo daqui é medida, e uma família qualquer moveria tamanho, entrelinha e contraste de uma vez.
+
+**O arredondamento é número, e o brilho é booleano.** Quem escreve o `px` é o produto, e a sombra que o brilho liga é montada pelo produto a partir de um token dele. Mande `8`, e não `'8px'`; mande `true`, e não um `box-shadow`. Fora do intervalo é recusa com o intervalo escrito.
+
+O produto abre em **canto reto e sem sombra** — é a estética dele, em `specs/07-estetica.md` —, e o tema de servidor é a exceção nomeada ali: o efeito vale só naquela sessão e sai com ela.
+
+A chamada substitui o pedido de tema deste MOD. `await SeeleUI.tema({})` retira os tokens pedidos por ele; não escreva cores padrão por cima da escolha pessoal. A saída da sessão também remove a camada automaticamente.
+
+O produto valida nomes, valores `#rrggbb`, posse dos tokens por outro MOD e contraste texto/fundo mínimo de 4,5:1. Uma recusa não confirma o tema solicitado: só registre a aplicação depois de a Promise resolver.
+
+### Dar cartão a pessoas na lista do produto
+
+```js
+const recusados = await SeeleUI.cartoes({
+  '7': [
+    {forma:'midia', chave:'retrato', doServidor:{canal, pedido:{op:'asset', person:'7'}, campo:'image'}},
+    {forma:'titulo', chave:'nome', dentro:'Lia da Torre'},
+    {forma:'texto', chave:'pronome', dentro:'ela/dela'},
+  ],
+});
+```
+
+Esta é a **única superfície de um MOD fora da região dele**. O que você manda é a **mesma declaração da região**, e quem monta é o **mesmo renderer** — `createElement` e `textContent`, como em todo o resto. Você não escolhe posição, tamanho, tipografia nem vizinho, e não alcança nenhum outro nó.
+
+A chave é o `id` da pessoa como aparece no retrato. Duas coisas mudam em relação à região:
+
+**A gramática é menor.** Um cartão aceita `titulo`, `texto`, `linha`, `lista`, `item` e `midia`. Não aceita `campo`, `escolha`, `botao`, `arquivo` nem `tela` — nada que receba foco ou clique. A linha do roster já tem um botão do produto, e dividir a ordem de tabulação e a área de toque com um terceiro é o tipo de coisa que ninguém consegue depurar depois. Uma forma recusada **é contada**, e a chamada devolve quantas: um botão que você declarou e não apareceu vira um número, e não um sumiço.
+
+**Os tetos são menores.** 64 pessoas por MOD, 24 nós por cartão, 4 níveis de fundura, e a mídia dos cartões tem contador e orçamento próprios — 64 mídias e 8 MiB, separados dos da região. Um cartão é por pessoa: o que não couber em 24 nós é uma região, e a região já existe.
+
+O retrato vem do **seu servidor**, pela mesma `doServidor` da região; o tamanho dele é da folha do produto. Um cartão sem nada dentro não entra — uma moldura vazia ao lado de um nome é o produto anunciando uma ausência que ninguém pediu. Cada chamada **substitui** os seus cartões, e eles saem junto com a sua região.
+
+### O que o executor não tem
+
+Não existem `document`, `window`, `getComputedStyle`, `CSSStyleSheet`, `document.adoptedStyleSheets`, observação do DOM da página, `localStorage`, `sessionStorage`, `indexedDB`, `caches`, `BroadcastChannel` nem o global do Tauri.
+
+**`fetch` também não existe**, nem `XMLHttpRequest`, `WebSocket` ou `Worker`. Eles não existem porque ninguém os ligou num contexto de QuickJS, e não porque alguém os apagou no começo do arquivo — a diferença importa, porque o segundo caso se contorna e o primeiro não. Faça integrações de rede no servidor, com `mundo.buscar`.
+
+Promise, JSON, TextEncoder, `setTimeout`, `setInterval`, `clearTimeout`, `clearInterval` e `console` continuam disponíveis.
 
 ### Descarregamento
 
-O carregador emite `seele-mod-unload` com `event.detail` igual ao ID do pacote. Limpe timers, observadores, listeners, nós de interface, CSS e propriedades que alterou.
+O produto para o executor e retira a região, o tema, os cartões, a mídia montada e os arquivos escolhidos. Não existe mais o evento `seele-mod-unload`. Apague listeners de unload, limpeza de nós, folhas e observadores e restauração de estilos. Temporizadores e promessas do executor não sobrevivem à saída da sessão, e você não precisa registrar nada para que isso aconteça.
 
-```js
-function descarregar(evento) {
-  if (evento.detail !== 'autor/meu-mod') return;
-  encerrado = true;
-  clearInterval(timer);
-  observer?.disconnect();
-  painel.remove();
-  globalThis.removeEventListener('seele-mod-unload', descarregar);
-}
-globalThis.addEventListener('seele-mod-unload', descarregar);
-```
+**Depois da revogação, um pedido seu recebe recusa, e não silêncio.** Quem sai no meio de um envio recebe `sessao-encerrada` em vez de uma Promise que nunca resolve.
 
-`timer`, `observer`, `painel` e `encerrado` são referências mantidas pelo seu código. Uma chamada já em andamento pode concluir depois da limpeza; cheque `encerrado` após cada `await` antes de tocar no DOM. Remover a tag de script não desfaz listeners ou efeitos que ela criou.
+### Migrar da API 2
 
-Para temas globais, guarde o valor e a prioridade originais das propriedades alteradas e restaure ao sair. Se dois MODs alteram a mesma propriedade, defina uma política de coexistência; restaurar cegamente uma cópia antiga pode apagar o tema de outro pacote.
+1. Declare `api: 3` no manifesto, inclusive em MODs somente de servidor.
+2. Preserve handlers, autorização, persistência e dados do servidor.
+3. Converta o desenho em árvores de `SeeleUI.regiao`, usando `campo`, `escolha` e `botao` no lugar dos controles que você montava em HTML.
+4. Registre `SeeleUI.aoEvento` e guarde o rascunho separado do que o servidor diz.
+5. Converta as seis cores, a densidade e a fonte para `SeeleUI.tema`.
+6. Troque desenho em canvas por figuras declaradas numa `tela`.
+7. Retire seletores, CSS, listeners de unload e qualquer acesso ao DOM.
+8. Teste o pacote exato no SEELE, incluindo saída durante carregamento e troca de servidor.
 
-### Formulários e mídia
-
-Não substitua o editor em toda consulta periódica. Preserve o rascunho, a seleção e o foco. Desabilite apenas ações que realmente dependem da operação em andamento. Deixe claro quando uma imagem é publicada imediatamente ao terminar o upload e quando textos ainda precisam ser salvos.
-
-Reutilize elementos de avatar e banner na lista de pessoas para reduzir reinício de animação. Conserve botões de moderação, nome original e indicadores de áudio. Garanta que a pausa de movimento vale tanto para o perfil completo quanto para os cartões laterais.
+`api-too-old` recusa pacotes antigos antes de executá-los. Não existe um modo de compatibilidade.
 
 ## Todos os limites em um lugar
 
@@ -745,16 +937,35 @@ Valores verificados no código da revisão, separados de decisões dos MODs de e
 | Orçamento de execução | 500 consultas de interrupção | QuickJS |
 | Conjunto anunciado | até 12 MODs | Protocolo |
 | Alcances | até 16 itens, 32 bytes cada | Protocolo |
+| Nós de uma região | 512 | Janela |
+| Fundura da região | 8 níveis | Janela |
+| Campos por região | 32 | Janela |
+| Telas por região | 4 | Janela |
+| Mídias por região | 4 | Janela |
+| Figuras por tela | 256 | Janela |
+| Traços guardados por tela | 256 | Janela |
+| Lado de uma tela | 1024 | Janela |
+| Opções de uma escolha | 64 | Janela |
+| Texto de um nó | 4096 caracteres | Janela |
+| Valor de um campo | 1024 caracteres | Janela |
+| Mídia montada | 4 MiB | Janela |
+| Arquivo escolhido | 10 MiB, até 4 de pé por vez | Janela |
+| Pedaço de arquivo escolhido | 65535 bytes, múltiplo de 3 | Janela |
+| Pessoas com cartão, por MOD | 64 | Janela |
+| Nós num cartão | 24 | Janela |
+| Fundura de um cartão | 4 níveis | Janela |
+| Mídias somadas nos cartões | 64 | Janela |
+| Bytes de mídia nos cartões | 8 MiB | Janela |
 
 As 500 consultas são um orçamento de trabalho do interpretador; a documentação do runtime apresenta uma aproximação de cerca de 225 ms no ambiente de referência. Isso não é um timeout garantido de 225 ms em todas as máquinas. Chamadas nativas de rede têm seu próprio limite porque não são interrompidas pelo mesmo contador de instruções.
 
-Os 8 pedidos pendentes pertencem ao mapa compartilhado da ponte da janela, não a uma reserva de oito por MOD. Se vários pacotes consultam ao mesmo tempo, todos disputam esse limite. Use concorrência pequena e consultas sem sobreposição.
+O prelúdio admite até oito mensagens pendentes por executor; os pedidos ao servidor também passam pelo mapa compartilhado de oito pedidos da ponte da janela. Se vários pacotes consultam ao mesmo tempo, todos disputam esse limite. Use concorrência pequena e consultas sem sobreposição.
 
 O limite de tamanho de arquivo não torna seguro ocupar indefinidamente o disco, e o limite de resposta não torna barato carregar todas as imagens a cada quatro segundos. Defina limites menores conforme o produto.
 
 ### Regras dos exemplos, não da plataforma
 
-Perfis usa 256 KiB por imagem, lotes de até 32 pessoas e um número máximo de perfis. Estilo usa paletas e regras de contraste. Esses valores pertencem aos MODs e podem evoluir. Não os descreva como constantes universais da API.
+O servidor de Perfis mantém limites próprios de upload, lotes de até 32 pessoas e um número máximo de perfis. Estilo mantém regras próprias de validação das opções salvas; a API impõe contraste texto/fundo mínimo de 4,5:1. Esses valores pertencem aos MODs e podem evoluir. Não os descreva como constantes universais da API.
 
 ## Erros e diagnóstico
 
@@ -763,6 +974,7 @@ Há três classes de falha: o pacote não carrega; o transporte não conclui; a 
 | Sinal | Significado provável | Próximo passo |
 | --- | --- | --- |
 | malformed | JSON/campo/tipo inválido no manifesto | Validar chaves, tipos e sintaxe |
+| api-too-old | API retirada, anterior à 3 | Migrar o pacote; não há compatibilidade |
 | api-too-new | API pedida superior ao build | Usar build compatível ou API suportada |
 | request-too-large | Pedido excede 12 KiB UTF-8 | Reduzir corpo ou implementar fragmentos |
 | too-many-requests | Oito pedidos já pendentes | Evitar sobreposição e limitar concorrência |
@@ -776,7 +988,7 @@ Códigos da interface podem variar conforme a versão. Erros de `invoke` também
 
 ### MOD instalado, mas sem interface
 
-Confira se está ligado no servidor, se a conexão aceitou o conjunto, se o conteúdo instalado corresponde ao exigido, se `client` aponta para um arquivo existente e se o script inicializa sem exceção. Depois confira o seletor de montagem e se existe um canal válido. O evento de carregamento de uma tag de script, sozinho, não prova que a inicialização interna funcionou.
+Confira se está ligado no servidor, se a conexão aceitou o conjunto, se o conteúdo instalado corresponde ao exigido, se `client` aponta para um arquivo existente e se o script inicializa sem exceção. Confira se o cliente usa apenas as funções que o prelúdio expõe, se a árvore contém formas aceitas e se existe um canal válido. O estado carregado, sozinho, não prova que a inicialização interna concluiu.
 
 ### bridge-refused
 
@@ -827,19 +1039,19 @@ Uma VM Node é um teste de lógica, não uma reprodução do QuickJS. Execute ta
 
 ### Camada 3 — interface
 
-Use a API simulada para testar formulário, foco, teclado, rascunho, mensagens de erro, revisão, pausa de movimento e descarregamento. Marque a prévia como simulada. Não deixe um endpoint que aceita identidade arbitrária virar um backend de produção.
+Execute o cliente final com a ponte simulada. Verifique formas renderizadas, limites de profundidade, mensagens de erro, leitura autorizada, rejeição de tema, fim do executor e remoção da região na saída. Marque a prévia como simulada. Não deixe um endpoint que aceita identidade arbitrária virar um backend de produção.
 
 ### Camada 4 — SEELE nativo
 
-Teste host e participante reais. Observe instalação, anúncio, aceite, hash, carregamento, edição, leitura por outra pessoa, desconexão, reinício e atualização. O ambiente nativo pode ter CSP, suporte de CSS e restrições de rede diferentes do navegador.
+Teste host e participante reais. Observe instalação, anúncio, aceite, hash, carregamento, leitura por outra pessoa, desconexão, reinício e atualização. O ambiente nativo pode ter CSP e restrições de rede diferentes do navegador.
 
 ### Matriz a publicar no README
 
-Informe versão do SEELE, sistema operacional, papel testado, tipo de pacote, commit do MOD e quais caminhos passaram. Não declare “funciona em todas as plataformas” só porque funcionou em um navegador desktop. Para uma interface que usa a faixa lateral, teste uma janela estreita e uma largura em que a coluna direita está disponível no app.
+Informe versão do SEELE, sistema operacional, papel testado, tipo de pacote, commit do MOD e quais caminhos passaram. Não declare “funciona em todas as plataformas” só porque funcionou em um navegador desktop. Teste a região em janelas estreitas e largas com outros MODs ativos.
 
 ## Segurança, privacidade e coexistência
 
-O MOD de cliente tem poder de modificar a janela. `reach` e avaliação tornam esse poder visível, mas não substituem validação e minimização de dados. O código deve fazer apenas o necessário para o recurso apresentado.
+O cliente executa num executor fora da janela e só pode apresentar o que a API declarativa oferece. `reach` descreve o alcance do pacote; avaliação e isolamento não substituem validação e minimização de dados. O código deve fazer apenas o necessário para o recurso apresentado.
 
 ### Fronteiras de confiança
 
@@ -847,10 +1059,10 @@ O MOD de cliente tem poder de modificar a janela. `reach` e avaliação tornam e
 | --- | --- |
 | Contexto de aoPedir | Autoridade de identidade/permissões da sessão |
 | Corpo do pedido | Entrada não confiável, validar integralmente |
-| Texto de perfil/chat | Dados de participante, usar textContent |
+| Texto de perfil/chat | Dados de participante, enviar como string em dentro |
 | Resposta HTTP externa | Dados externos, conferir forma e limites |
 | Arquivo enviado | Bytes não confiáveis, não confiar só no MIME |
-| Seletor do DOM | Detalhe do app que pode mudar |
+| Árvore declarativa | Apenas as formas da API, sem HTML |
 
 Não exponha a lista inteira de dados só porque a resposta é privada no transporte. Uma operação de leitura deve filtrar campos e recursos conforme a política. Guarde apenas o que precisa e explique para o usuário o que é público no servidor.
 
@@ -858,9 +1070,9 @@ Evite URLs de mídia arbitrárias, pois podem causar requisições de participan
 
 ### Regras de convivência
 
-Use namespaces de classe, chaves e listeners. Limpe seus recursos sem remover os de outro MOD. Não substitua funções internas do aplicativo nem sobrescreva os controles de áudio para facilitar sua interface. Preserve o acesso ao botão de sair, configurações e moderação.
+Use chaves próprias no estado e consulte apenas os dados necessários. A região é do MOD; painéis nativos, controles de áudio e ações de moderação pertencem ao SEELE.
 
-Um theme MOD e um profile MOD podem coexistir se os componentes de perfil herdam tokens do tema e limitam efeitos ao próprio cartão. A cor de um banner não precisa redefinir o fundo de todo o aplicativo.
+Um MOD de tema e um MOD de perfis podem coexistir com regiões independentes. Tokens de tema não podem ter dois donos na mesma sessão; uma disputa é recusada explicitamente.
 
 ### Limites da privacidade
 
@@ -868,53 +1080,50 @@ O host executa o código de servidor e mantém seu banco e arquivos. A ponte aut
 
 ## Exemplo executável e receitas
 
-O exemplo Contador usa somente três arquivos de runtime. Você pode baixar o [pacote completo](exemplos/contador.zip), o [manifesto](exemplos/contador/mod.json), o [cliente](exemplos/contador/cliente/main.js) e o [servidor](exemplos/contador/servidor/main.js).
+O Contador contém somente [manifesto](exemplos/contador/mod.json), [cliente](exemplos/contador/cliente/main.js) e [servidor](exemplos/contador/servidor/main.js). Baixe o [ZIP](exemplos/contador.zip) da API 3.
 
 ### O que ele demonstra
 
-- `snapshot()` para descobrir um canal.
-- Operações `ler`, `incrementar` e `zerar` definidas pelo MOD.
-- Leitura do estado e escrita em `dados`.
-- Permissões `write` e `admin` vindas do contexto.
-- Revisão para recusar alterações concorrentes.
-- Consulta periódica sem sobreposição.
-- Tratamento de erro e ausência de repetição automática de mutação.
-- Montagem com namespace lógico e limpeza em `seele-mod-unload`.
+- Descoberta do canal com snapshot e consulta por request.
+- Região de leitura declarada com titulo e texto.
+- Ciclo periódico sem consultas sobrepostas e com erros tratados.
+- Persistência, revisão e autorização no servidor, inalteradas desde a API 2.
+- Testes de incrementar e zerar sem fingir botões que a API não oferece.
 
-### O que ainda é didático
-
-O contador não tem migração além de reconhecer seu schema, recibos de idempotência, paginação ou uploads. Ele não tenta descobrir a permissão administrativa no cliente: o botão explica a restrição e o servidor a aplica. Seu seletor de montagem precisa ser verificado na versão do SEELE usada. Essas escolhas mantêm o exemplo pequeno sem esconder a regra de autorização.
+O cliente só consulta. As operações de escrita existem no handler e são testadas diretamente; não há edição pela região. O exemplo não implementa uploads, paginação ou recibos de idempotência.
 
 ### Receita: tema compartilhado
 
-Guarde um objeto com cores, opções e revisão. Uma leitura devolve a configuração; uma escrita exige `ctx.admin`. Valide formato de cores, valores de espaçamento e contraste. Aplique em propriedades conhecidas e restaure as anteriores no unload. A interface pode mostrar uma amostra local antes de publicar para todos.
+Guarde as cores e a revisão no servidor. Uma leitura devolve a configuração; uma escrita exige `ctx.admin`. O cliente mapeia os valores para `fundo`, `painel`, `texto`, `apagado`, `acento` e `borda`, escolhe `densidade` e `fonte`, e chama `SeeleUI.tema`. Se estiver desativado, envie `{}`. Trate recusas de contraste e conflito; não marque o tema como aplicado antes da confirmação. O editor é seu: `campo` para cada cor, `escolha` para densidade e fonte, `botao` para gravar.
 
 ### Receita: perfil por servidor
 
-Use `ctx.person` como dono. Separe metadados, avatar e banner. A leitura pública devolve somente campos públicos; a escrita exige a identidade do dono. Atualize a lista lateral com metadados em lotes e imagens em cache. Preserve nome e moderação nativos. Teste GIF, movimento reduzido, duplicidade de apelidos e reconexão.
+Use `ctx.person` como dono e mantenha a autorização no servidor. Consulte metadados em lotes e apresente nome, ID, pronomes, status e biografia na região. Não busque imagens que a API não pode exibir. Edição, avatar, banner e decoração da lista nativa aguardam extensão da API.
 
 ### Receita: ficha por canal
 
-Use o ID do canal como parte do escopo do estado, sem acreditar em um campo de “canal autorizado” enviado no corpo. Defina se a ficha é pública ou privada. Se houver dono, autorização precisa verificar tanto o escopo quanto a identidade. Migração de schema e histórico de revisão pertencem ao MOD.
+Use o canal autenticado como escopo e filtre as fichas pelo papel e identidade. Declare os dados autorizados como texto e listas; não exponha notas privadas para simular uma interface completa. Criação, edição, rolagens por clique, tabuleiro, retratos e som aguardam uma superfície de interação.
 
 ### Projetos para leitura
 
-[ESTILO](https://github.com/DATA-AND-DEV/ESTILO), [PERFIS](https://github.com/DATA-AND-DEV/PERFIS) e [MESA](https://github.com/DATA-AND-DEV/MESA) demonstram produtos maiores. Leia a documentação e o código da versão avaliada; não copie limitações ou nomes de operações como se fossem parte da API oficial.
+[ESTILO](https://github.com/DATA-AND-DEV/ESTILO), [PERFIS](https://github.com/DATA-AND-DEV/PERFIS) e [MESA](https://github.com/DATA-AND-DEV/MESA) mantêm a lógica de servidor e os dados anteriores. As versões 2.0.0 migram o cliente para a API 3 e documentam os recursos suspensos. Versões anteriores são históricas e não executam no runtime atual.
 
 ## Fontes, manutenção e glossário
 
-Esta revisão foi construída a partir do código local do SEELE no commit `6a525d19c9967e0527be7d845ee16712b3f4d9e8`, dos arquivos de contrato API 1/2 e do indexador. Quando um comentário histórico diverge de uma função executável, o guia descreve a função e explicita a diferença. As afirmações de implementação devem ser revalidadas ao atualizar o runtime.
+Esta revisão foi construída a partir do código local do SEELE, do ADR 0049 e das emendas de 19/09/2026, do guia de migração API 2 → 3, do executor e do indexador. Os contratos API 1/2 permanecem referências históricas do domínio e do servidor. Quando um comentário histórico diverge de uma função executável, o guia descreve a função e explicita a diferença. As afirmações de implementação devem ser revalidadas ao atualizar o runtime.
 
 ### Fontes primárias
 
-- [Contrato API 1](https://github.com/DATA-AND-DEV/SEELE/blob/6a525d19c9967e0527be7d845ee16712b3f4d9e8/api/v1.json)
-- [Contrato API 2](https://github.com/DATA-AND-DEV/SEELE/blob/6a525d19c9967e0527be7d845ee16712b3f4d9e8/api/v2.json)
-- [Manifesto e hash de conteúdo](https://github.com/DATA-AND-DEV/SEELE/blob/6a525d19c9967e0527be7d845ee16712b3f4d9e8/crates/seele-proto/src/mods.rs)
-- [Runtime QuickJS](https://github.com/DATA-AND-DEV/SEELE/blob/6a525d19c9967e0527be7d845ee16712b3f4d9e8/crates/seele-server/src/mods/mod.rs)
-- [Ponte autenticada](https://github.com/DATA-AND-DEV/SEELE/blob/6a525d19c9967e0527be7d845ee16712b3f4d9e8/crates/seele-server/src/mods/pedidos.rs)
-- [Adaptador de eventos](https://github.com/DATA-AND-DEV/SEELE/blob/6a525d19c9967e0527be7d845ee16712b3f4d9e8/crates/seele-server/src/mods/despacho.rs)
-- [Cliente da ponte](https://github.com/DATA-AND-DEV/SEELE/blob/6a525d19c9967e0527be7d845ee16712b3f4d9e8/apps/seele-app/ui/base.js)
-- [Tipos do snapshot](https://github.com/DATA-AND-DEV/SEELE/blob/6a525d19c9967e0527be7d845ee16712b3f4d9e8/crates/seele-ffi/src/types.rs)
+- [Migração API 2 → 3](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/docs/migracao-de-mods-api-2-para-3.md)
+
+- [Contrato histórico API 1](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/api/v1.json)
+- [Contrato histórico API 2](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/api/v2.json)
+- [Manifesto e hash de conteúdo](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-proto/src/mods.rs)
+- [Runtime QuickJS](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-server/src/mods/mod.rs)
+- [Ponte autenticada](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-server/src/mods/pedidos.rs)
+- [Adaptador de eventos](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-server/src/mods/despacho.rs)
+- [Cliente da ponte](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/apps/seele-app/ui/base.js)
+- [Tipos do snapshot](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-ffi/src/types.rs)
 - [Indexador e processo de publicação](https://github.com/DATA-AND-DEV/SEELE-MODS-INDEXER)
 
 ### Glossário
@@ -923,7 +1132,7 @@ Esta revisão foi construída a partir do código local do SEELE no commit `6a52
 | --- | --- |
 | Manifesto | mod.json que identifica o pacote e seus scripts |
 | Host | Máquina/pessoa que hospeda o servidor |
-| Cliente | Janela de uma pessoa conectada |
+| Cliente do MOD | Executor QuickJS próprio da sessão, fora da janela |
 | Handler | Função chamada pelo runtime para um pedido/evento |
 | KV ou quintal | Objeto dados persistido como chave/valor textual |
 | Snapshot | Consulta do estado exposto pelo aplicativo |
@@ -931,11 +1140,13 @@ Esta revisão foi construída a partir do código local do SEELE no commit `6a52
 | Idempotência | Repetir uma operação sem aplicar o efeito duas vezes |
 | Hash de conteúdo | Identidade calculada sobre caminhos e bytes do pacote |
 | CSP | Política do WebView para scripts, estilos e conexões |
-| Unload | Notificação para retirar recursos de um MOD |
+| Descarregamento | parada do executor e retirada de região, tema, mídia e arquivos pelo produto |
 | Avaliação | Revisão de um commit/conteúdo para publicação no catálogo |
 
 ### Como manter este guia
 
 Atualize a fonte Markdown, regenere a página, execute os testes do exemplo e da navegação, confira links e abra a página em larguras diferentes. Se um novo evento ou método for implementado, inclua sua assinatura, origem dos dados, autorização, retorno, erros, limites e um exemplo testável. Preserve a distinção entre contrato declarado e binding executável.
+
+O indexador aceita novos pacotes somente na API 3. Versões antigas já publicadas permanecem no histórico append-only apenas quando ID, versão e hash correspondem ao catálogo anterior; isso não as torna executáveis no SEELE atual. O catálogo assinado precisa ser regenerado junto da publicação, anunciando `api_oferecida: 3`.
 
 O hash não é o SHA-256 do ZIP. O algoritmo de conteúdo ordena caminhos e inclui contagem de arquivos, comprimentos dos caminhos, bytes dos caminhos, comprimentos dos conteúdos e bytes dos conteúdos, usando comprimentos inteiros de 64 bits em big-endian. Use as ferramentas oficiais e os vetores do indexador para reproduzi-lo; não crie um cálculo simplificado em um script de release.

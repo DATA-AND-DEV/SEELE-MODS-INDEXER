@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "id": "seele/mesa",
+  "version": "2.0.0",
+  "api": 3,
+  "repo": "https://github.com/DATA-AND-DEV/MESA",
+  "reach": [
+    "regiao",
+    "estado da campanha no servidor",
+    "arquivos de mapas e cenas"
+  ],
+  "client": "cliente/main.js",
+  "server": "servidor/main.js"
+}

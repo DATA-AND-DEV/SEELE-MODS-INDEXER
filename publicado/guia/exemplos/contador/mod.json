@@ -1,10 +1,13 @@
 {
   "schema": 1,
   "id": "exemplo/contador",
-  "version": "1.0.0",
-  "api": 2,
+  "version": "2.0.0",
+  "api": 3,
   "repo": "https://github.com/DATA-AND-DEV/SEELE-MODS-INDEXER",
-  "reach": ["dom", "contador compartilhado"],
+  "reach": [
+    "regiao",
+    "contador no servidor"
+  ],
   "client": "cliente/main.js",
   "server": "servidor/main.js"
 }

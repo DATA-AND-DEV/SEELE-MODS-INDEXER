@@ -1,0 +1,16 @@
+{
+  "name": "seele-mod-mesa",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "test": "node --test test/*.test.cjs",
+    "test:ui": "node ferramentas/test-ui.cjs",
+    "preview": "node ferramentas/preview.cjs",
+    "check": "node --check cliente/main.js && node --check servidor/main.js",
+    "build": "node ferramentas/build.mjs",
+    "package": "node ferramentas/package.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}
