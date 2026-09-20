@@ -1113,7 +1113,7 @@ Por isso não há nenhuma função que receba CSS e tente limpá-lo. Limpeza por
 | Borda e raio | `borda: { largura, estilo, cor }`, `raio` |
 | Sombra | `sombra: { x, y, desfoque, espalha, cor }` |
 | Tipografia | `familia`, `peso`, `corpo`, `entrelinha`, `espacamento`, `alinhamento`, `transformar` |
-| Layout | direção, alinhamento, distribuição, quebra, espaço, colunas |
+| Layout | `direcao`, `alinhar`, `distribuir`, `quebra`, `crescer`, `encolher`, `base`, `intervalo`, `preenchimento`, `margem`, medidas |
 | Transformação | `girar`, `escalar`, `mover` |
 | Recorte | `recortar` |
 | Transição e animação | duração, suavização, e animações por nome |
@@ -1142,6 +1142,35 @@ await janela.classes({
 O nome da classe é higienizado e prefixado com a identidade **daquela superfície**: duas superfícies suas com a classe `cartao` não se alcançam, e nenhuma das duas alcança nada do SEELE.
 
 `estilo` por nó funciona em qualquer declaração — região, cartão ou superfície. **Declarar classes é por superfície**: uma região não tem folha própria, então um `classe` numa região nomeia uma classe que nenhuma regra desenha.
+
+### Compor lado a lado
+
+Três propriedades, e as três precisam estar juntas. É o erro mais comum, e ele não avisa — a declaração é aceita e o desenho sai empilhado.
+
+```js
+caixa([
+  caixa([formulario], { crescer: 1, base: 0, larguraMinima: 300 }),
+  caixa([previa],     { crescer: 1, base: 0, larguraMinima: 260 }),
+], { direcao: 'linha', intervalo: 20, quebra: 'sim', alinhar: 'inicio' })
+```
+
+- **`direcao: 'linha'`** faz a caixa ser uma linha. Ela sozinha já basta para isso: declarar uma direção liga o contêiner, e não é preciso escolher uma primitiva específica antes.
+- **`base: 0`** é o que divide. Sem ele cada coluna parte do tamanho do próprio conteúdo; o par não cabe, e `quebra: 'sim'` as põe uma debaixo da outra.
+- **`larguraMinima`** é o que faz a quebra acontecer pelo motivo certo: enquanto as duas mínimas couberem, elas dividem o espaço; quando não couberem, a linha quebra sozinha — sem consulta de contêiner nenhuma.
+
+`pilha` é uma coluna com a régua da superfície e `grade` são colunas iguais. Use-as quando for isso que você quer; `caixa` com `direcao` é para quando a proporção é sua.
+
+### O que o produto já desenha por você
+
+Você não precisa reconstruir a aparência do SEELE. A casca de uma superfície — cabeçalho com o título em cartela, a origem, a saída, o rodapé de ações fixas, a rolagem, o foco — é do produto, e os controles saem com a tipografia, a altura e os estados desta casa:
+
+- um `campo` é rótulo em cima e caixa embaixo, na largura da coluna;
+- um `botao` tem a altura dos botões do SEELE, e `variante: 'primaria'` é bloco sólido, como a ação principal do produto;
+- uma `marca` ou um `interruptor` são uma linha: controle e texto lado a lado;
+- uma `cor` traz amostra e hexadecimal juntos, no mesmo controle;
+- o corpo de uma superfície separa o que você declara no primeiro nível, sem você pedir `intervalo`.
+
+O que sobra para você é a composição e a personalidade do seu conteúdo — que é onde `estilo` e `classes` existem para ser usados.
 
 ### Migrar da API 3 para a 4
 
