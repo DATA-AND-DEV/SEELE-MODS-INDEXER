@@ -303,29 +303,85 @@ Teste entrar com pacote antigo, entrar com pacote novo, atualizar durante uma se
 
 ## [referencia:visao] Superfície implementada e compatibilidade
 
-O indexador declara `MOD_API_VERSION = 3` e `MANIFEST_SCHEMA = 1`. A ponte de pedidos entrou com o protocolo 6. São três números diferentes: versão do manifesto, versão da API do MOD e versão do protocolo de rede. A versão do seu pacote, por exemplo `1.0.0`, é um quarto identificador.
+O indexador declara `MOD_API_VERSION = 4` e `MANIFEST_SCHEMA = 1`. A ponte de pedidos entrou com o protocolo 6. São três números diferentes: versão do manifesto, versão da API do MOD e versão do protocolo de rede. A versão do seu pacote, por exemplo `2.0.0`, é um quarto identificador.
 
-**A superfície descrita aqui está implementada no SEELE e ainda não publicada.** O `MOD_API_VERSION` do aplicativo já é 3 e o `VERSAO_DA_API` do indexador também; o que falta é o catálogo assinado ser regerado e os pacotes saírem.
+**Esta página descreve a API 4, que é candidata em validação e ainda não publicada.** O que está no catálogo assinado hoje é o que o comando abaixo responde, e é a única resposta que vale sobre o que já chegou na máquina de alguém:
 
-Um manifesto precisa declarar **exatamente** a API que o aplicativo oferece — não uma mais velha nem uma mais nova. Enquanto o catálogo publicado disser `api_oferecida: 2`, o aplicativo que está na mão das pessoas é o que entende a API 2, e um pacote de API 3 não instala nele. Escreva contra esta página, teste localmente, e publique quando a versão sair.
+```sh
+curl -sS "https://api.github.com/repos/DATA-AND-DEV/SEELE-RELEASES/releases" | head -40
+```
+
+### A conferência é um conjunto, e não uma igualdade
+
+Uma versão anterior deste guia dizia que um manifesto precisa declarar **exatamente** a API que o aplicativo oferece, «não uma mais velha nem uma mais nova». **Isso deixou de ser verdade na API 4**, e a mudança é deliberada.
+
+A API 4 não tirou nada da 3: ela acrescenta superfícies, contribuições e estilos sobre o mesmo executor, o mesmo renderer e o mesmo manifesto. Então o cliente passou a executar um **conjunto** — `APIS_ACEITAS = [4, 3]` — e o catálogo publica o conjunto ao lado do teto:
+
+| O que o número diz | Onde ele está | Valor nesta revisão |
+| --- | --- | --- |
+| O teto que o cliente entende | `MOD_API_VERSION` | 4 |
+| O conjunto que o cliente executa | `APIS_ACEITAS` | 4, 3 |
+| O teto que o indexador publica | `api_oferecida` no catálogo | acompanha o cliente publicado |
+| O conjunto que o indexador aceita | `apis_aceitas` no catálogo | o mesmo do cliente |
+| O que o seu pacote declara | `api` no manifesto | 4 para a superfície nova, 3 para continuar como está |
+
+Com a igualdade, subir a versão recusaria no mesmo instante todo pacote já publicado — inclusive os que estão instalados agora. Com o conjunto, o aplicativo compatível pode sair **antes** dos pacotes novos, que é a única ordem em que ninguém fica sem MOD.
+
+Um pacote que pede mais do que o conjunto é recusado como `api-too-new`; um que pede menos do que o menor item do conjunto, como `api-too-old`. As duas recusas acontecem antes de executar qualquer código.
+
+### Aceitar a API 3 não dá à API 3 o que a 4 tem
+
+Esta é a parte que custa tempo se você descobrir sozinho. O aplicativo monta `SeeleUI` **a partir do que o seu manifesto declara**, e não a partir do que ele sabe fazer:
+
+```js
+// Num pacote com `"api": 3`
+SeeleUI.superficies          // undefined
+SeeleUI.superficies.criar()  // TypeError: Cannot read properties of undefined
+```
+
+O método **não existe**, em vez de existir e falhar com um código. É deliberado: um `superficies` que sempre recusasse faria você descobrir o problema dentro de um `catch`, em produção. Um método ausente é um `TypeError` com pilha, na primeira linha que o chama, enquanto você escreve.
+
+E a conferência não é só do prelúdio. O prelúdio roda **dentro** do contexto do seu MOD, e `seele.postar` continua lá: emitir a mensagem `contribuir` na mão, de um pacote que declara 3, é recusado pelo anfitrião com a razão escrita — «não existe na API 3, que é a que este pacote declara». A versão conferida é a do manifesto cujo hash o aplicativo verificou, nunca um campo que a mensagem carregue.
+
+### Degradar em vez de falhar
+
+Se o seu pacote precisa rodar nas duas, pergunte antes de chamar:
+
+```js
+const tem = new Set(SeeleUI.capacidades());
+if (tem.has('superficies')) {
+  const janela = await SeeleUI.superficies.criar({ id: 'perfil', tipo: 'dialogo', titulo: 'Perfil' });
+  await janela.montar(arvore);
+} else {
+  await SeeleUI.regiao(arvore);   // o caminho da API 3, que continua existindo
+}
+```
+
+`SeeleUI.capacidades()` devolve a lista da **sua** API: `['regiao','tema','cartoes','arquivo']` na 3, e mais `'superficies'`, `'contribuicoes'`, `'estilos'` e `'classes'` na 4.
 
 ### Funções que você pode usar
 
-| Ambiente | Superfície executável |
-| --- | --- |
-| Cliente | globalThis.SeeleMods.snapshot() |
-| Cliente | globalThis.SeeleMods.request(id, canal, objeto) |
-| Cliente | globalThis.SeeleUI.regiao(conteudo) |
-| Cliente | globalThis.SeeleUI.tema(valores) |
-| Cliente | globalThis.SeeleUI.cartoes(cartoes) |
-| Cliente | globalThis.SeeleUI.aoEvento(funcao) |
-| Cliente | globalThis.SeeleUI.pedaco(arquivo, inicio) — base64, janelas múltiplas de 3 |
-| Cliente | globalThis.SeeleUI.soltar(arquivo) |
-| Servidor | globalThis.aoPedir(contextoJSON, pedidoJSON) |
-| Servidor | globalThis.aoAcontecer(momento, cargaJSON) |
-| Servidor | dados: objeto de string para string |
-| Servidor | arquivos.ler, escrever, listar, apagar |
-| Servidor | mundo.buscar, agora, registrar |
+| Ambiente | API | Superfície executável |
+| --- | --- | --- |
+| Cliente | 3 e 4 | globalThis.SeeleMods.snapshot() |
+| Cliente | 3 e 4 | globalThis.SeeleMods.request(id, canal, objeto) |
+| Cliente | 3 e 4 | globalThis.SeeleUI.regiao(conteudo) |
+| Cliente | 3 e 4 | globalThis.SeeleUI.tema(valores) |
+| Cliente | 3 e 4 | globalThis.SeeleUI.cartoes(cartoes) |
+| Cliente | 3 e 4 | globalThis.SeeleUI.aoEvento(funcao) |
+| Cliente | 3 e 4 | globalThis.SeeleUI.pedaco(arquivo, inicio) — base64, janelas múltiplas de 3 |
+| Cliente | 3 e 4 | globalThis.SeeleUI.soltar(arquivo) |
+| Cliente | 3 e 4 | globalThis.SeeleUI.capacidades() |
+| Cliente | 4 | globalThis.SeeleUI.superficies.criar(descricao) → punho |
+| Cliente | 4 | globalThis.SeeleUI.superficies.avisar(texto, tom) |
+| Cliente | 4 | punho.montar, classes, mostrar, ocultar, suja, titulo, fechar, descartar |
+| Cliente | 4 | globalThis.SeeleUI.contribuicoes.registrar(pedido) → handle |
+| Cliente | 4 | globalThis.SeeleUI.contribuicoes.revogar(handle) |
+| Servidor | 3 e 4 | globalThis.aoPedir(contextoJSON, pedidoJSON) |
+| Servidor | 3 e 4 | globalThis.aoAcontecer(momento, cargaJSON) |
+| Servidor | 3 e 4 | dados: objeto de string para string |
+| Servidor | 3 e 4 | arquivos.ler, escrever, listar, apagar |
+| Servidor | 3 e 4 | mundo.buscar, agora, registrar |
 
 ### Contrato declarado não é uma função global
 
@@ -356,14 +412,16 @@ O manifesto é JSON estrito. Chaves desconhecidas são recusadas. Comentários, 
 | schema | número inteiro | Use 1 nesta revisão |
 | id | string | autor/nome; minúsculas ASCII, dígitos e hífen; uma barra |
 | version | string | Versão do autor; o core não a interpreta como SemVer |
-| api | número inteiro | Use 3, inclusive em MODs somente de servidor |
+| api | número inteiro | 4 para a superfície nova, 3 para continuar como está — inclusive em MODs somente de servidor |
 | repo | string | Repositório público do pacote |
 | reach | string[] | Opcional no parser; declare alcances úteis para quem aceita |
 | state | inteiro ou ausente | Versão declarativa dos seus dados; sem migração automática |
 | client | string ou ausente | Script de cliente relativo à raiz |
 | server | string ou ausente | Script de servidor relativo à raiz |
 
-Ao menos `client` ou `server` precisa existir. Uma API mais nova é recusada como `api-too-new`; uma anterior à 3 é recusada como `api-too-old`, antes de executar código. Não existe compatibilidade com cliente de API 2. O ID da pasta instalada deve concordar com o manifesto. A pasta de desenvolvimento selecionada pode ter um nome amigável; a identidade instalada é `autor/nome`.
+Ao menos `client` ou `server` precisa existir. Uma API fora do conjunto aceito é recusada antes de executar código: acima do teto, como `api-too-new`; abaixo do menor item, como `api-too-old`. Nesta revisão o conjunto é `4, 3`, e não existe compatibilidade com cliente de API 2.
+
+**Um MOD só de servidor não ganha nada declarando 4.** O número escolhe o `SeeleUI` do cliente, e um pacote sem `client` não tem cliente. Declare 4 quando você usar superfícies, contribuições ou classes de estilo; nos outros casos, 3 continua sendo executado e alcança mais gente. O ID da pasta instalada deve concordar com o manifesto. A pasta de desenvolvimento selecionada pode ter um nome amigável; a identidade instalada é `autor/nome`.
 
 ### Limites no anúncio do protocolo
 
@@ -906,7 +964,7 @@ O produto para o executor e retira a região, o tema, os cartões, a mídia mont
 
 ### Migrar da API 2
 
-1. Declare `api: 3` no manifesto, inclusive em MODs somente de servidor.
+1. Declare `api: 3` no manifesto — ou `api: 4`, se você for usar superfícies, contribuições ou classes de estilo. As duas são executadas.
 2. Preserve handlers, autorização, persistência e dados do servidor.
 3. Converta o desenho em árvores de `SeeleUI.regiao`, usando `campo`, `escolha` e `botao` no lugar dos controles que você montava em HTML.
 4. Registre `SeeleUI.aoEvento` e guarde o rascunho separado do que o servidor diz.
@@ -916,6 +974,200 @@ O produto para o executor e retira a região, o tema, os cartões, a mídia mont
 8. Teste o pacote exato no SEELE, incluindo saída durante carregamento e troca de servidor.
 
 `api-too-old` recusa pacotes antigos antes de executá-los. Não existe um modo de compatibilidade.
+
+## [referencia:api4] A API 4: superfícies, contribuições e estilos
+
+Três acréscimos, e a mesma fronteira de sempre: o MOD **declara**, e quem monta é o renderer do produto. Nenhum deles entrega um nó do documento, um seletor ou um texto de CSS.
+
+Tudo nesta seção exige `"api": 4` no manifesto. Num pacote de API 3 estes objetos não existem — ver «Aceitar a API 3 não dá à API 3 o que a 4 tem».
+
+### Superfícies: janela, página, painel e aviso
+
+Na API 3, um MOD tinha uma região e nada mais: tudo o que ele quisesse mostrar dividia a mesma faixa com todos os outros. A API 4 dá quatro lugares, e o produto monta a casca de cada um.
+
+| Tipo | Onde ela aparece | O que o produto garante |
+| --- | --- | --- |
+| `dialogo` | Por cima da aplicação, numa camada própria | Foco contido, Escape que pede a saída, o resto da aplicação inerte de verdade, o foco de volta ao acionador ao fechar |
+| `pagina` | No centro, no lugar da conversa | Um VOLTAR do produto, e o foco entrando ao abrir |
+| `painel` | Numa coluna à esquerda ou à direita | Largura entre 200 e 640; a conversa não é empurrada para fora |
+| `aviso` | Numa fila curta, no canto | Até 4 na fila; os mais velhos saem sozinhos |
+
+```js
+const janela = await SeeleUI.superficies.criar({
+  id: 'perfil',                       // seu, até 64 caracteres
+  tipo: 'dialogo',                    // dialogo | pagina | painel | aviso
+  titulo: 'Perfil',                   // o nome acessível da janela
+  tamanho: { largura: 480 },          // pedido; o produto contém na área útil
+  modal: true,                        // só para `dialogo`; padrão é `true`
+  lado: 'direita',                    // só para `painel`
+  focoInicial: 'apelido',             // a `chave` do nó que recebe o foco
+  fecharComAlteracoes: 'confirmar',   // 'fechar' (padrão) ou 'confirmar'
+});
+
+await janela.titulo('Perfil de Alex');
+await janela.classes({ destaque: { base: { cor: '#6BFFB6', peso: 'forte' } } });
+await janela.montar([
+  { forma: 'titulo', chave: 't', dentro: 'PERFIL' },
+  { forma: 'campo', chave: 'apelido', rotulo: 'APELIDO', valor: '' },
+  { forma: 'acoes', chave: 'fixas', fixas: true, dentro: [
+    { forma: 'botao', chave: 'gravar', dentro: 'GRAVAR' },
+  ] },
+]);
+
+await janela.suja(true);      // há alterações não gravadas
+await janela.ocultar();       // continua montada; o que foi digitado permanece
+await janela.mostrar();       // volta ao palco, com o conteúdo de antes
+await janela.fechar('pronto');// sai do palco; o punho continua válido
+await janela.descartar();     // acaba com ela
+```
+
+**O que a casca é, e por que você não a monta.** O cabeçalho com o título, a linha que diz **de qual MOD** a janela é, o botão de sair, o foco e a camada são do produto. Uma janela que pudesse desenhar o próprio cabeçalho poderia desenhar o cabeçalho do SEELE — e uma tela de confiança que se pode imitar não é uma tela de confiança.
+
+**`ocultar` não é `fechar`, e `fechar` não é `descartar`.** Ocultar mantém tudo montado; fechar tira do palco e preserva o punho; descartar acaba com a superfície e solta o que ela segurava. `mostrar` depois de qualquer um dos dois traz a superfície de volta ao documento. Depois de `descartar`, qualquer método recusa — em vez de devolver sucesso numa janela que não existe.
+
+**Alterações não gravadas não vetam a saída.** Com `fecharComAlteracoes: 'confirmar'` e `suja(true)`, a primeira tentativa de fechar manda o evento `fechar-pedido` **e** abre a confirmação do produto. Quem decide é quem está olhando. Um MOD não prende ninguém numa janela.
+
+```js
+SeeleUI.aoEvento(evento => {
+  if (evento.nome === 'fechar-pedido') { /* grave agora, se der */ }
+  if (evento.nome === 'fechar') { /* ela saiu; `descartou` diz se foi sem gravar */ }
+});
+```
+
+O atalho para o caso curto:
+
+```js
+await SeeleUI.superficies.avisar('perfil gravado', 'normal');  // ou 'erro'
+```
+
+### Contribuições: entrar na interface do SEELE
+
+Uma contribuição é o MOD entrando num **ponto semântico** de um componente do produto — por ID e por modo, nunca por seletor.
+
+| Ponto | Modos | O que ele é |
+| --- | --- | --- |
+| `pessoa.identidade` | `adicionar` | Ao lado do nome, na linha do roster: pronome, distintivo, marca de papel |
+| `pessoa.cartao` | `substituir`, `adicionar` | A linha inteira da pessoa, ou um bloco a mais nela |
+| `pessoa.detalhes` | `adicionar` | Seções no perfil detalhado, dentro do recolhível do produto |
+| `pessoa.acoes` | `adicionar` | Um botão do produto, com o seu rótulo, no rodapé do cartão |
+| `canal.item` | `adicionar` | Ao lado do nome do canal, na lista |
+| `canal.cabecalho` | `adicionar` | Conteúdo e ações na barra do canal aberto |
+| `compositor.ferramentas` | `adicionar` | Ações ao lado do ENVIAR |
+| `sala.acoes` | `adicionar` | Ações no cabeçalho de um grupo de sala de voz |
+| `servidor.navegacao` | `adicionar` | Uma entrada na navegação lateral, que abre o seu MOD |
+| `servidor.aparencia` | `substituir` | O tema da sessão |
+
+```js
+const { handle } = await SeeleUI.contribuicoes.registrar({
+  ponto: 'pessoa.acoes',
+  modo: 'adicionar',
+  alvo: pessoaId,          // obrigatório nos pontos por alvo; ausente vale para todos
+  prioridade: 0,           // -100 a 100; ordena, e não autoriza
+  rotulo: 'FICHA',         // o texto do botão
+  nomeAcessivel: 'abrir a ficha desta pessoa',
+  acaoPrincipal: 'ficha',  // volta em `evento.acao` quando alguém aperta
+  conteudo: [{ forma: 'texto', chave: 'c', dentro: '·rpg' }],
+});
+
+await SeeleUI.contribuicoes.revogar(handle);
+```
+
+**Um exemplo por ponto** está no vetor de referência do repositório do SEELE, em `apps/seele-app/testes/mod-de-referencia/cliente/main.js`: ele registra nos dez, com o alvo vindo do retrato, e revoga um para exercitar a volta.
+
+Três garantias do produto, e elas não são negociáveis:
+
+- **trocar o que se desenha não troca a identidade.** O botão é montado pelo produto e carrega o **ID real** da pessoa ou do canal. O que volta em `evento.pessoa` é esse ID, e nunca o texto que você desenhou;
+- **o diagnóstico nativo recolhe em vez de sumir.** Substituir o cartão de uma pessoa não apaga sinal, estado do microfone nem o caminho até a moderação: eles descem para um recolhível do produto;
+- **ao revogar, o nativo é recalculado do estado de agora** — nunca restaurado de um desenho guardado. A pessoa pode ter mudado de sala enquanto a sua janela estava aberta.
+
+**Dois MODs no mesmo ponto de `substituir`** não se resolvem por quem respondeu por último: a prioridade declarada decide, a disputa fica visível na gestão de MODs, e quem administra o servidor pode escolher o provedor — ou **a apresentação nativa**, que é uma terceira escolha e não a ausência de escolha.
+
+Um MOD revoga o que ele registrou. Os punhos são sequenciais, e passar o punho de outro MOD é recusado pelo nome. A saída da sessão limpa tudo sem perguntar; você não precisa registrar nada para isso acontecer.
+
+**`decorar` não existe nesta versão.** O plano da API previu um terceiro modo — mudar a apresentação de um nó **do SEELE** sem trocar o conteúdo dele. Ele foi suspenso: as propriedades que um MOD já pode declarar dentro da própria raiz (`opacidade`, `escalar`, `mover`) somem com o nome que abre a moderação quando aplicadas a um nó do produto, e o subconjunto de estilo que impede isso ainda não existe. Registrar `decorar` é recusado com essa razão escrita, em vez de aceito sem efeito.
+
+### Estilos: propriedades declaradas, nunca texto de CSS
+
+A fronteira nunca foi «cantos arredondados são feios». Ela é **alcance**: o estilo de um MOD não pode alcançar a janela inteira, buscar bytes na rede, cobrir uma confirmação do produto nem sobreviver à saída do servidor.
+
+Nada disso exige proibir gradiente, sombra ou animação. Exige que o **valor** de cada propriedade seja construído pelo produto a partir de partes que ele conferiu:
+
+```js
+// aceito: partes conferidas, uma a uma
+{ sombra: { x: 0, y: 4, desfoque: 12, cor: '#00000055' } }
+
+// não existe: um texto que o motor de CSS interpreta
+{ boxShadow: '0 4px 12px rgba(0,0,0,.3), url(http://…)' }
+```
+
+Por isso não há nenhuma função que receba CSS e tente limpá-lo. Limpeza por substituição de texto é uma corrida contra o analisador do navegador, e quem escreve o analisador não sabe que a corrida existe.
+
+| Categoria | Exemplos de propriedade |
+| --- | --- |
+| Cor e transparência | `cor`, `fundo`, `opacidade` |
+| Preenchimento e gradiente | `gradiente: { angulo, paradas: [{ cor, em }] }` |
+| Borda e raio | `borda: { largura, estilo, cor }`, `raio` |
+| Sombra | `sombra: { x, y, desfoque, espalha, cor }` |
+| Tipografia | `familia`, `peso`, `corpo`, `entrelinha`, `espacamento`, `alinhamento`, `transformar` |
+| Layout | direção, alinhamento, distribuição, quebra, espaço, colunas |
+| Transformação | `girar`, `escalar`, `mover` |
+| Recorte | `recortar` |
+| Transição e animação | duração, suavização, e animações por nome |
+
+Cores são `#rgb`, `#rrggbb` ou `#rrggbbaa`. Nomes e funções de cor não entram. Animações são **presets** — `nenhuma`, `pulso`, `aurora`, `brilho`, `flutuar` —, e não `@keyframes`, pela mesma razão da sombra: um keyframe declarado por um MOD é um texto que vira regra. Todas param sob `prefers-reduced-motion`.
+
+**Estado é seletor, e seletor é regra.** `sobre`, `foco`, `ativo`, `desligado`, `invalido` e `escolhido` não existem como propriedade de um nó — por isso eles vêm por classe, e não por `estilo`:
+
+```js
+await janela.classes({
+  cartao: {
+    base: { fundo: '#101014', raio: 8, borda: { largura: 1, estilo: 'solida', cor: '#2A2A33' } },
+    sobre: { borda: { largura: 1, estilo: 'solida', cor: '#FF6B00' } },
+    foco: { cor: '#FFFFFF' },
+    // Do **contêiner**, e não da janela: um painel arrastado para 300 px
+    // continua dentro de uma janela de 1400.
+    consultas: [{ ateLargura: 360, estilo: { corpo: 11 } }],
+  },
+});
+// e no nó:
+{ forma: 'texto', chave: 'n', classe: 'cartao', dentro: 'Alex' }
+```
+
+O nome da classe é higienizado e prefixado com a identidade **daquela superfície**: duas superfícies suas com a classe `cartao` não se alcançam, e nenhuma das duas alcança nada do SEELE.
+
+`estilo` por nó funciona em qualquer declaração — região, cartão ou superfície. **Declarar classes é por superfície**: uma região não tem folha própria, então um `classe` numa região nomeia uma classe que nenhuma regra desenha.
+
+### Migrar da API 3 para a 4
+
+Nada quebra. A 4 não tirou nada da 3, e um pacote que declara 3 continua sendo executado.
+
+1. Troque `"api": 3` por `"api": 4` no manifesto — só se você for usar o que ela acrescenta.
+2. O que estava em `SeeleUI.regiao` continua funcionando. Mova para uma superfície o que **interrompe**: editar um perfil, criar uma campanha, confirmar algo. A região é para o que fica de pé ao lado da conversa.
+3. Troque a faixa permanente por uma entrada em `servidor.navegacao`: uma região que desenha ao conectar é o produto decidindo, por omissão, que a sua atividade está acontecendo o tempo todo.
+4. Se você desenhava cartões com `SeeleUI.cartoes`, ele continua existindo. `pessoa.cartao` no modo `substituir` é o caminho novo, e é o que participa da disputa e da escolha nativa.
+5. Onde você fazia contas de cor no cliente, declare classes com estados e consultas.
+6. Se o seu pacote precisa rodar nas duas versões, pergunte a `SeeleUI.capacidades()` antes de chamar, e mantenha o caminho da 3 vivo.
+7. Teste os dois pacotes — o de API 3 e o de API 4 — no mesmo aplicativo. É o que o conjunto aceito promete, e é o que a publicação vai encontrar.
+
+### Limites desta seção
+
+| Recurso | Limite | Responsável |
+| --- | --- | --- |
+| Superfícies de pé por MOD | 12 | Janela |
+| Avisos na fila | 4, os mais velhos saem | Janela |
+| Nós de uma superfície | 4096 | Janela |
+| Fundura de uma superfície | 16 níveis | Janela |
+| Campos por superfície | 128 | Janela |
+| Mídias por superfície | 24 | Janela |
+| Bytes de mídia por superfície | 24 MiB | Janela |
+| Contribuições de pé por MOD | 128 | Janela |
+| Classes por superfície | 64 | Janela |
+| Consultas de contêiner por classe | 4 | Janela |
+| Regras compiladas por superfície | 512 | Janela |
+| Paradas de um gradiente | 8 | Janela |
+| Corpo de texto | 9 a 96 | Janela |
+
+Uma declaração que não couber no orçamento do ponto **não some em silêncio**: a recusa é contada e volta como evento `contribuicao`, com o ponto e quantos nós foram recusados.
 
 ## [referencia:limites] Todos os limites em um lugar
 

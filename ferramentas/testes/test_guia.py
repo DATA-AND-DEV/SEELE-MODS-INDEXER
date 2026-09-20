@@ -4,8 +4,9 @@ from ferramentas.gerar_guia import chapters, render, inline, SOURCE
 
 def test_documentation_topics_and_code_fences():
     entries = chapters()
-    assert len(entries) == 24
-    assert len({(mode, slug) for mode, slug, _, _ in entries}) == 24
+    # 25 desde a API 4, que trouxe o capítulo `referencia/api4`.
+    assert len(entries) == 25
+    assert len({(mode, slug) for mode, slug, _, _ in entries}) == 25
     assert {mode for mode, *_ in entries} == {'guia', 'referencia'}
     assert SOURCE.read_text().count('```') % 2 == 0
     for _, _, _, body in entries:

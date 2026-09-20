@@ -77,9 +77,26 @@ def render(text):
 
 
 def chapters():
+    """Os capítulos, e a recusa de um cabeçalho que não virou capítulo.
+
+    O dígito de `api4` não estava na classe de caracteres do slug, e um `##`
+    que a expressão não reconhece não reprova: ele cai no corpo do capítulo
+    anterior e é renderizado como parágrafo. A seção inteira da API 4 foi
+    publicada assim — presente no HTML, ausente do sumário e da busca.
+
+    Reconhecer dígitos é metade; a outra é o `assert`, que é o que impede a
+    próxima forma de slug não prevista de sumir do mesmo jeito.
+    """
     source = SOURCE.read_text()
-    parts = re.split(r'^## \[(guia|referencia):([a-z-]+)\] (.+)\n', source, flags=re.M)
-    return [(parts[i],parts[i+1],parts[i+2],parts[i+3]) for i in range(1,len(parts),4)]
+    parts = re.split(r'^## \[(guia|referencia):([a-z0-9-]+)\] (.+)\n', source, flags=re.M)
+    capitulos = [(parts[i],parts[i+1],parts[i+2],parts[i+3]) for i in range(1,len(parts),4)]
+    cabecalhos = re.findall(r'^## (.*)$', source, flags=re.M)
+    assert len(cabecalhos) == len(capitulos), (
+        'estes `##` não viraram capítulo e vão sair como parágrafo no meio do '
+        'capítulo anterior: '
+        + str([c for c in cabecalhos if not re.match(r'\[(guia|referencia):[a-z0-9-]+\] ', c)])
+    )
+    return capitulos
 
 
 def shell():
