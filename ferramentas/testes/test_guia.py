@@ -32,13 +32,18 @@ def test_generated_downloads_and_links_exist():
 
 def test_exemplo_zip_exato_e_manifesto_aceito_pela_api_atual():
     import zipfile
-    from ferramentas.manifesto import ler, VERSAO_DA_API
+    from ferramentas.manifesto import ler, APIS_ACEITAS
     root = SOURCE.parents[1] / 'site/guia/exemplos'
     with zipfile.ZipFile(root / 'contador.zip') as zip_:
         assert sorted(zip_.namelist()) == ['cliente/main.js', 'mod.json', 'servidor/main.js']
         for name in zip_.namelist():
             assert zip_.read(name) == (root / 'contador' / name).read_bytes()
-        assert ler(zip_.read('mod.json').decode()).api == VERSAO_DA_API
+        # **Aceito, e não igual ao teto.** Desde a API 4 o gerador executa um
+        # conjunto: a 4 não tirou nada da 3, e o exemplo do guia continua sendo
+        # um MOD de API 3 válido. Exigir igualdade aqui faria o guia ter de ser
+        # regerado a cada versão da API mesmo quando nada nele mudou — e um
+        # exemplo regerado sem motivo é um exemplo que ninguém revisou.
+        assert ler(zip_.read('mod.json').decode()).api in APIS_ACEITAS
     assert 'SeeleUI.regiao' in SOURCE.read_text()
     assert 'SeeleUI.tema' in SOURCE.read_text()
     assert 'api-too-old' in SOURCE.read_text()

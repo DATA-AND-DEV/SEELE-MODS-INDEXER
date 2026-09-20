@@ -16,8 +16,31 @@ from ferramentas.recusa import Recusado
 
 ESQUEMA_DO_MANIFESTO = 1
 
-# Espelho de `seele_proto::mods::MOD_API_VERSION`: ADR 0049 é uma ruptura.
-VERSAO_DA_API = 3
+# Espelho de `seele_proto::mods::MOD_API_VERSION`.
+VERSAO_DA_API = 4
+
+# Espelho de `seele_proto::mods::APIS_ACEITAS`, da mais nova para a mais velha.
+#
+# # Por que um conjunto, e não um número
+#
+# Até a API 3 a conferência era igualdade dos dois lados, e ela estava certa:
+# o ADR 0049 é uma ruptura — a API 3 **tirou** capacidades, e «serve uma API
+# mais velha» tinha deixado de ser verdade.
+#
+# A API 4 não tira nada. Ela acrescenta superfícies, contribuições, composição
+# e estilos sobre o mesmo executor e o mesmo renderer, e um pacote de API 3
+# continua sendo exatamente o que era: uma região, um tema e cartões.
+#
+# Com a igualdade, subir a constante recusaria no catálogo **todo pacote
+# publicado**, no mesmo instante — inclusive os três oficiais, que é o que está
+# instalado na máquina de quem usa. O conjunto é o que permite publicar o
+# aplicativo compatível antes dos pacotes novos, que é a única ordem em que
+# ninguém fica sem MOD.
+#
+# Aceitar a 3 não dá à 3 o que a 4 tem: as capacidades são por versão e quem as
+# aplica é o prelúdio do executor, do lado do cliente. A 2 não volta — ela
+# executava na janela.
+APIS_ACEITAS = (4, 3)
 
 # Toda chave que o esquema 1 conhece. Uma chave fora daqui é recusada em vez
 # de ignorada, pelo motivo que o Rust escreve em `deny_unknown_fields`: uma
@@ -122,8 +145,12 @@ def ler(texto: str, *, historico: bool = False) -> Manifesto:
         raise Recusado("schema-too-new", f'esquema {cru["schema"]}, esta versão lê {ESQUEMA_DO_MANIFESTO}')
     if cru["api"] > VERSAO_DA_API:
         raise Recusado("api-too-new", f'pede API {cru["api"]}, esta versão oferece {VERSAO_DA_API}')
-    if cru["api"] < VERSAO_DA_API and not historico:
-        raise Recusado("api-too-old", f'pede API {cru["api"]}, esta versão oferece somente {VERSAO_DA_API}')
+    # **Um conjunto, e não uma igualdade** — ver `APIS_ACEITAS`. `historico`
+    # continua existindo para o que já foi publicado sob uma API que saiu de
+    # circulação; o que mudou é que a 3 não é um desses casos.
+    if cru["api"] not in APIS_ACEITAS and not historico:
+        aceitas = ", ".join(str(n) for n in APIS_ACEITAS)
+        raise Recusado("api-too-old", f'pede API {cru["api"]}, esta versão executa {aceitas}')
     if not _bem_formado(cru["id"]):
         raise Recusado("malformed-id", cru["id"])
     if cru.get("client") is None and cru.get("server") is None:

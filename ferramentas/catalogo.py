@@ -8,7 +8,7 @@ alguém buscou o catálogo."""
 from dataclasses import dataclass, field
 
 from ferramentas.avaliacoes import Avaliacao
-from ferramentas.manifesto import VERSAO_DA_API
+from ferramentas import manifesto
 from ferramentas.recusa import Recusado
 
 ESQUEMA = 1
@@ -108,9 +108,20 @@ def montar(
     # dele. As duas constantes já eram espelho uma da outra sem nada as amarrar,
     # e a divergência custou uma publicação recusada. O catálogo é o único
     # arquivo que atravessa os dois repositórios, então o guarda mora nele.
+    #
+    # **`apis_aceitas` chegou com a API 4**, e ela não é decoração: desde que a
+    # 4 passou a executar também a 3, «que API o indexador oferece» deixou de
+    # responder «que pacotes ele publica». Um cliente que lê só o teto conclui
+    # que um pacote de API 3 no catálogo é um pacote velho demais — e ele não é.
+    #
+    # Lidas de `manifesto` pelo módulo, e não importadas por nome: um `from …
+    # import VERSAO_DA_API` prende o valor no carregamento, e um teste que
+    # patcha a constante ficava com este número intocado. Foi assim que uma
+    # asserção passou dois anos afirmando o que ela não media.
     return {
         "esquema": ESQUEMA,
-        "api_oferecida": VERSAO_DA_API,
+        "api_oferecida": manifesto.VERSAO_DA_API,
+        "apis_aceitas": list(manifesto.APIS_ACEITAS),
         "gerado_em": gerado_em,
         "mods": mods,
     }

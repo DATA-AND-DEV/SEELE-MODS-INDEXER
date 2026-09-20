@@ -467,14 +467,25 @@ def test_api3_preserva_bytes_do_historico_sem_admitir_substituicao(mundo, monkey
     raiz, secreta, _ = mundo
     autor, avaliacao = _mudar_api_do_fixture(mundo, 2)
     # Produz o catálogo anterior com o mesmo gerador configurado na API anterior.
+    #
+    # **Os dois, e não só o teto.** Desde a API 4 o gerador executa um conjunto
+    # (`APIS_ACEITAS`) e não um número: patchar só `VERSAO_DA_API` deixaria a
+    # conferência de verdade olhando o conjunto de hoje, e o gerador «na API 2»
+    # recusaria o próprio fixture de API 2.
     monkeypatch.setattr(manifesto, 'VERSAO_DA_API', 2)
+    monkeypatch.setattr(manifesto, 'APIS_ACEITAS', (2,))
     gerar(raiz, secreta, agora=1757100000)
     anterior = json.loads((raiz / 'publicado/catalogo.json').read_text())
     bytes_antes = (raiz / 'publicado/mods/juli/cinza-frio/2.1.0/mod.json').read_bytes()
     monkeypatch.setattr(manifesto, 'VERSAO_DA_API', 3)
+    monkeypatch.setattr(manifesto, 'APIS_ACEITAS', (3,))
     gerar(raiz, secreta, agora=1757100100)
     atual = json.loads((raiz / 'publicado/catalogo.json').read_text())
+    # O catálogo agora lê a constante pelo módulo, então o `monkeypatch` a
+    # alcança — e este número deixa de ser uma asserção que passava sem medir
+    # nada. Ver o comentário em `catalogo.py`.
     assert atual['api_oferecida'] == 3
+    assert atual['apis_aceitas'] == [3]
     assert atual['mods'] == anterior['mods']
     assert (raiz / 'publicado/mods/juli/cinza-frio/2.1.0/mod.json').read_bytes() == bytes_antes
     # Mesmo ID/versão com outros bytes não ganha a exceção de histórico.
