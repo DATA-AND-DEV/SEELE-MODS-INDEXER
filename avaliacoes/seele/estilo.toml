@@ -171,3 +171,41 @@ commit = "b6dc1cd13746346fd4e7ff8e2ab86fc853abeb5a"
 nivel = "oficial"
 notas = ["roda-no-servidor"]
 avaliado_em = 1789860366
+
+# ---------------------------------------------------------------------------
+# ESTILO 3.0.0 — avaliação de 2026-09-21, por delta contra a 2.0.0.
+#
+# **Esta leitura é um delta, e não uma releitura.** Ela vale o que a avaliação
+# da 2.0.0 vale, mais o que mudou de `b6dc1cd1` até `f206ef82`.
+#
+# **A metade de servidor não mudou.** `git diff b6dc1cd1..f206ef82 -- servidor`
+# é vazio. A exigência de `ctx.admin` para gravar, o escopo por servidor e a
+# revisão concorrente continuam sendo o código já lido — e neste MOD isso é o
+# ponto sensível inteiro, porque é ele que decide a aparência que todo mundo
+# num servidor recebe.
+#
+# **A metade de janela cresceu 757 linhas, e nenhuma delas alcança mais.** A
+# contagem de linhas acrescentadas em `cliente/` e `servidor/` casando com
+# `fetch(`, `XMLHttpRequest`, `WebSocket`, `eval(`, `new Function`, `import(`,
+# `require(`, `innerHTML`, `outerHTML`, `insertAdjacentHTML` ou `document.` é
+# **zero**.
+#
+# **A recusa de CSS injetado continua sendo do produto, e não deste pacote.**
+# O MOD declara cores validadas; não há caminho por onde ele entregue texto CSS
+# ao hospedeiro. `test/cliente-api3.test.cjs` mantém o caso que prova a recusa
+# de contraste e o de opção fora da lista.
+#
+# **O peso, registrado pela terceira vez.** 286 KiB em 33 arquivos → 423 KiB em
+# 35, pelos mesmos motivos do PERFIS: teste, cliente, espelho de laboratório e
+# prévia. A recomendação é a mesma: publicar sem `ferramentas/` e `test/`.
+#
+# **O teto de sempre: isto é um filtro, não uma prova.** Quem leu escreveu
+# parte do código desta versão. O veredito abaixo é de quem responde pelo
+# projeto.
+
+[[versoes]]
+versao = "3.0.0"
+commit = "f206ef82fdd534508a20afe105af0f8580443aad"
+nivel = "oficial"
+notas = ["roda-no-servidor"]
+avaliado_em = 1789960855

@@ -295,3 +295,48 @@ commit = "e218ff6e52b6d8ecaa55ac075b0496023c2deabe"
 nivel = "oficial"
 notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
 avaliado_em = 1789860366
+
+# ---------------------------------------------------------------------------
+# PERFIS 3.0.0 — avaliação de 2026-09-21, por delta contra a 2.0.0.
+#
+# **Esta leitura é um delta, e não uma releitura.** Ela vale exatamente o que a
+# avaliação da 2.0.0 vale, mais o que mudou de `e218ff6e` até `f6d5b1a2`. Se
+# você quiser a prova independente, é a releitura inteira que a dá — esta aqui
+# responde «o que esta versão acrescentou à superfície?», e nada além.
+#
+# **A metade de servidor não mudou.** `git diff e218ff6e..f6d5b1a2 -- servidor`
+# é vazio: `servidor/main.js` é byte a byte o que já foi lido. Toda a
+# autorização, a projeção de privacidade, os limites de crescimento e a
+# travessia de caminho continuam sendo o código avaliado em 17/09. É o fato que
+# mais encurta esta leitura, e por isso está primeiro.
+#
+# **A metade de janela cresceu 1.065 linhas, e nenhuma delas alcança mais.**
+# A contagem de linhas *acrescentadas* em `cliente/` e `servidor/` casando com
+# `fetch(`, `XMLHttpRequest`, `WebSocket`, `eval(`, `new Function`, `import(`,
+# `require(`, `innerHTML`, `outerHTML`, `insertAdjacentHTML` ou `document.` é
+# **zero**. Não é acaso: na API 4 o cliente deixou de escrever no documento e
+# passou a declarar o que quer, e quem desenha é o renderer do produto. O
+# caminho que a avaliação da 2.0.0 chamou de «o que mais custou a fechar» — os
+# três `innerHTML` — deixou de existir no pacote.
+#
+# Os achados de `fetch`, `child_process` e `playwright` que uma varredura larga
+# encontra estão todos em `ferramentas/`, que é o laboratório: ele viaja no
+# pacote, mas `mod.json` aponta `client` e `server`, e nada mais é executado.
+#
+# **O peso, registrado pela terceira vez.** 312 KiB em 36 arquivos → 469 KiB em
+# 38. O crescimento é o teste (+45 KiB), o cliente (+35), o espelho de
+# laboratório (+26), a prévia (+19) e o `quickjs-check` (+8). Continua não
+# sendo defeito de segurança e continua sendo peso que quem instala paga sem
+# receber nada; a terceira anotação seguida sugere que a resposta certa é
+# publicar o pacote sem `ferramentas/` e `test/`, e não anotar de novo.
+#
+# **O teto de sempre: isto é um filtro, não uma prova.** E vale a mesma
+# observação de método da 2.0.0: quem leu escreveu parte do código desta
+# versão. O veredito abaixo é de quem responde pelo projeto.
+
+[[versoes]]
+versao = "3.0.0"
+commit = "f6d5b1a23fcf0e6bdca68efb7b8a4f1e8a8c63c2"
+nivel = "oficial"
+notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
+avaliado_em = 1789960855

@@ -167,3 +167,44 @@ commit = "73b627f92cb52dcb138d4442ba1bf5c86b868d18"
 nivel = "oficial"
 notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
 avaliado_em = 1789860366
+
+# ---------------------------------------------------------------------------
+# MESA 3.0.0 — avaliação de 2026-09-21, por delta contra a 2.0.0.
+#
+# **Esta leitura é um delta, e não uma releitura.** Ela vale o que a avaliação
+# da 2.0.0 vale, mais o que mudou de `73b627f9` até `a128b8a6`.
+#
+# **A metade de servidor não mudou.** `git diff 73b627f9..a128b8a6 -- servidor`
+# é vazio. A projeção de privacidade — fichas ao GM e ao responsável, só a cena
+# publicada e ativa, `notes` e `upload` apagados antes de sair, peças e
+# iniciativa ocultas filtradas — continua sendo o código já lido, e é o que
+# mais importa neste pacote.
+#
+# **A metade de janela cresceu 1.021 linhas, e nenhuma delas alcança mais.** A
+# contagem de linhas acrescentadas em `cliente/` e `servidor/` casando com
+# `fetch(`, `XMLHttpRequest`, `WebSocket`, `eval(`, `new Function`, `import(`,
+# `require(`, `innerHTML`, `outerHTML`, `insertAdjacentHTML` ou `document.` é
+# **zero**. É a mudança de maior consequência desta versão para esta leitura:
+# a 2.0.0 gastou o parágrafo mais longo da sua avaliação classificando 119
+# interpolações dentro de três `innerHTML`, e na API 4 esse caminho não existe
+# mais — o cliente declara, e quem desenha é o renderer do produto.
+#
+# **O peso, e aqui ele é outra ordem de grandeza.** 206 KiB em 23 arquivos →
+# 2.300 KiB em 25. Onze vezes, e a causa não é o laboratório: são
+# `som/exploracao.wav`, `som/misterio.wav` e `som/combate.wav`, cerca de 2,1
+# MiB de PCM. Eles estão declarados em `mod.json` e o MOD os usa de verdade —
+# não é peso morto como `ferramentas/`. Mas WAV é a codificação mais cara
+# possível para isso, e quem instala baixa os 2,1 MiB inteiros: em Opus ou
+# FLAC o mesmo material cai para uma fração. Fica registrado como observação,
+# não como impedimento.
+#
+# **O teto de sempre: isto é um filtro, não uma prova.** Quem leu escreveu
+# parte do código desta versão. O veredito abaixo é de quem responde pelo
+# projeto.
+
+[[versoes]]
+versao = "3.0.0"
+commit = "a128b8a6ac31e813dd23fd1751b2b467291993a7"
+nivel = "oficial"
+notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
+avaliado_em = 1789960855
