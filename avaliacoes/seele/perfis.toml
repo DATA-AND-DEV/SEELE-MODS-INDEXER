@@ -372,3 +372,54 @@ commit = "3d24757e491d8c2220fbdb999793362c4353e359"
 nivel = "oficial"
 notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
 avaliado_em = 1790014621
+
+# ---------------------------------------------------------------------------
+# PERFIS 3.1.1 — avaliação de 2026-09-21, por delta contra a 3.1.0.
+#
+# **Leitura por delta**, de `3d24757e` até o commit abaixo: 88 linhas, e só 22
+# delas em código que roda — `cliente/main.js` e o gêmeo `ferramentas/perfis.js`.
+# O resto é laboratório e teste.
+#
+# ## O que mudou no que roda
+#
+# Duas coisas, as duas de prévia e nenhuma de permissão:
+#
+#   - `emEdicao` passa a combinar o rascunho de texto e aparência com as
+#     **imagens já gravadas**, em vez de deixar o rascunho carregar referências
+#     velhas de foto e banner. O rascunho escondia a imagem nova enquanto
+#     houvesse texto em edição.
+#   - o pedido de mídia passa a levar o caminho do recurso (`path`), o que
+#     distingue duas versões do mesmo campo. É carga do pedido **deste** MOD,
+#     lida pelo servidor **deste** MOD.
+#
+# **Nenhuma API nova do cliente é chamada.** Conferido no delta: zero chamadas
+# novas a `SeeleUI` ou `seele`. Esta versão roda em qualquer cliente, inclusive
+# nos anteriores à v0.14.1 — ela não depende da correção que foi para lá.
+#
+# ## O que esta versão não conserta, e é honesto dizer
+#
+# As fotos não aparecerem na v0.14.0 **não era defeito deste MOD**. As imagens
+# subiam inteiras e eram gravadas; quem recusava era a conversão nativa dentro
+# do aplicativo, que não aceitava o endereço `data:` — e recusava em silêncio.
+# Isso é consertado na v0.14.1 do SEELE. Instalar esta versão do PERFIS num
+# cliente v0.14.0 conserta a prévia do rascunho e mais nada.
+#
+# ## O laboratório
+#
+# `ferramentas/preview.cjs` passou a extrair o laço de paginação **real** do
+# `base.js` do produto, em vez de um remendo próprio que devolvia só a primeira
+# página — uma bancada que testava menos do que o produto faz. Continua em
+# `ferramentas/`, que é publicado no pacote e não é executado pelo tempo de
+# execução do MOD.
+#
+# 41 testes, mais a bancada de interface com o renderer real em Chromium, que
+# confere `naturalWidth` de foto, faixa e substituição.
+#
+# E o teto de sempre: isto é um filtro, não uma prova.
+
+[[versoes]]
+versao = "3.1.1"
+commit = "c555a6dd8ab3c7c6bfa55c35e3fa4f1701d4237c"
+nivel = "oficial"
+notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
+avaliado_em = 1790017069
