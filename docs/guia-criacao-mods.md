@@ -1160,6 +1160,12 @@ caixa([
 
 `pilha` é uma coluna com a régua da superfície e `grade` são colunas iguais. Use-as quando for isso que você quer; `caixa` com `direcao` é para quando a proporção é sua.
 
+### Resumir texto sem cortar linhas
+
+`estilo: { linhasMaximas: 2 }` mostra até duas linhas com reticências, sem alterar o texto guardado. Aceita um inteiro de 1 a 20 e pode ser removido numa atualização. Use numa caixa contendo somente texto, nunca para esconder controles. Ofereça um caminho para o conteúdo completo, como abrir o perfil ao selecionar seu cartão. O resumo acompanha a largura disponível; a prévia deve usar a largura do destino. Se precisar de margem interna, coloque o texto resumido numa caixa externa com `preenchimento`; aplicar o preenchimento no próprio texto pode expor parte de outra linha no WebKit.
+
+Abrir uma página seleciona um único destino central, inclusive entre MODs diferentes. A página anterior é ocultada, preservando seus campos; escolher um canal ou chamada mostra o destino nativo. `mostrar` retorna à página, enquanto `descartar` libera seus recursos. A saída do servidor descarta todas as páginas da sessão.
+
 ### O que o produto já desenha por você
 
 Você não precisa reconstruir a aparência do SEELE. A casca de uma superfície — cabeçalho com o título em cartela, a origem, a saída, o rodapé de ações fixas, a rolagem, o foco — é do produto, e os controles saem com a tipografia, a altura e os estados desta casa:
