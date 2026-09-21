@@ -1,7 +1,11 @@
 {
   "esquema": 1,
-  "api_oferecida": 3,
-  "gerado_em": 1789872992,
+  "api_oferecida": 4,
+  "apis_aceitas": [
+    4,
+    3
+  ],
+  "gerado_em": 1789960314,
   "mods": [
     {
       "id": "seele/estilo",
