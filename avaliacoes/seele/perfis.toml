@@ -423,3 +423,73 @@ commit = "c555a6dd8ab3c7c6bfa55c35e3fa4f1701d4237c"
 nivel = "oficial"
 notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
 avaliado_em = 1790017069
+
+# ---------------------------------------------------------------------------
+# PERFIS 3.2.0 — avaliação de 2026-09-21, por delta contra a 3.1.1.
+#
+# **Leitura por delta**, e é o delta mais substantivo que este MOD já teve: o
+# transporte das imagens mudou de caminho. Não é conserto, é outra rota.
+#
+# ## O que mudou, e a direção surpreende
+#
+# `cliente/main.js` **encolheu 158 linhas**, e o gêmeo `ferramentas/perfis.js`
+# outras 158. A máquina de fragmentar em base64, contar pedaços, remontar e
+# conferir ordem saiu inteira. O que entrou no lugar são três chamadas.
+#
+# Isso é redução de superfície, não acréscimo: os bytes de uma imagem deixam de
+# passar pelo QuickJS. O seletor do sistema devolve um handle, o aplicativo
+# transmite, e o MOD nunca vê o conteúdo — só autoriza e depois confirma.
+#
+# ## O que exige escrutínio: a autorização
+#
+# O MOD passa a decidir **antes** o que vai ser aceito, e o delta o faz em três
+# travas que precisam existir juntas:
+#
+#   - `volume.esperar(token, path, ['png','jpeg','webp','gif'], 600)` prende o
+#     envio a um token, a um caminho e a uma lista fechada de formatos, com
+#     prazo. Um envio sem autorização não tem onde cair.
+#   - `upload-finish` confere `volume.tamanho(path) === up.bytes`: o tamanho
+#     anunciado tem de bater com o que de fato chegou. Anunciar pouco e mandar
+#     muito não passa.
+#   - o tamanho anunciado é conferido contra `LIMITS[slot]` — 10 MiB — **antes**
+#     de qualquer byte sair, e o `token` do `upload-finish` tem de ser o mesmo
+#     da autorização.
+#
+# `volume.servir` e `volume.apagar` só resolvem dentro do volume deste MOD nesta
+# instância; a conferência é do SEELE, não daqui.
+#
+# **O teto por imagem continua 10 MiB**, o mesmo da 3.1.1, então esta versão não
+# muda o apetite de disco. Dois campos por pessoa e `MAX_PROFILES` de 128.
+#
+# ## O que ele faz quando o outro lado é velho, e é a parte que salva
+#
+# Se quem hospeda estiver num SEELE sem `volume`, o MOD recusa **com frase**:
+# «Atualize o SEELE de quem hospeda para enviar imagens por fluxo.» Não é uma
+# falha silenciosa, que é a forma de defeito que este produto mais paga.
+#
+# E as imagens já gravadas no formato de fragmentos **continuam legíveis** — o
+# caminho antigo de leitura ficou. Não há migração a fazer, e quem já tinha foto
+# não a perde.
+#
+# ## A dependência, dita por extenso
+#
+# Este pacote declara `api: 5` e **não roda em cliente anterior à v0.14.2**. O
+# README dele diz isso, e diz também a ordem: publicar o aplicativo e atualizar
+# quem hospeda antes de disponibilizar o pacote.
+#
+# Até a v0.14.1 a tela de MODs oferecia sempre a última versão publicada sem
+# olhar `api`, então quem não tivesse atualizado veria esta e falharia ao
+# instalar, sem volta para a 3.1.1. A v0.14.2 conserta a escolha — mas o
+# conserto vive no aplicativo instalado, e é por isso que esta versão só entra
+# no catálogo depois que ela estiver no ar.
+#
+# 42 testes, mais a bancada de interface com o renderer real em Chromium.
+#
+# E o teto de sempre: isto é um filtro, não uma prova.
+
+[[versoes]]
+versao = "3.2.0"
+commit = "05b059773e02a555bd7a8774813ff1f17da7bf56"
+nivel = "oficial"
+notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
+avaliado_em = 1790027146

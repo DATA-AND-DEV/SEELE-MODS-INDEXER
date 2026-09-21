@@ -17,7 +17,7 @@ from ferramentas.recusa import Recusado
 ESQUEMA_DO_MANIFESTO = 1
 
 # Espelho de `seele_proto::mods::MOD_API_VERSION`.
-VERSAO_DA_API = 4
+VERSAO_DA_API = 5
 
 # Espelho de `seele_proto::mods::APIS_ACEITAS`, da mais nova para a mais velha.
 #
@@ -40,7 +40,7 @@ VERSAO_DA_API = 4
 # Aceitar a 3 não dá à 3 o que a 4 tem: as capacidades são por versão e quem as
 # aplica é o prelúdio do executor, do lado do cliente. A 2 não volta — ela
 # executava na janela.
-APIS_ACEITAS = (4, 3)
+APIS_ACEITAS = (5, 4, 3)
 
 # Toda chave que o esquema 1 conhece. Uma chave fora daqui é recusada em vez
 # de ignorada, pelo motivo que o Rust escreve em `deny_unknown_fields`: uma
