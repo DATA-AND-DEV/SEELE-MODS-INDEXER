@@ -209,3 +209,35 @@ commit = "f206ef82fdd534508a20afe105af0f8580443aad"
 nivel = "oficial"
 notas = ["roda-no-servidor"]
 avaliado_em = 1789960855
+
+# ---------------------------------------------------------------------------
+# ESTILO 3.1.0 — avaliação de 2026-09-21, por delta contra a 3.0.0.
+#
+# **Leitura por delta**, e vale o que a avaliação da 3.0.0 vale mais o que mudou
+# de `f206ef82` até `7fe80011`: 20 linhas em `cliente/main.js`,
+# `ferramentas/estilo.js` e um teste.
+#
+# O que mudou: a entrada de aparência na barra de navegação passa a declarar
+# `listarNaBarra: false` quando o servidor responde `canEdit` falso.
+#
+# **Esconder não é autorizar, e o delta não confunde os dois.** A entrada some
+# da barra de quem não edita; quem decide se a troca de tema acontece continua
+# sendo o servidor, que já exigia `ctx.admin` na 3.0.0 e continua exigindo. Um
+# cliente adulterado que chamasse a operação assim mesmo é recusado do lado de
+# lá, como era antes — a mudança é de tela, não de porta.
+#
+# `listarNaBarra` só existe no cliente a partir da v0.14.0. Num anterior a
+# opção é ignorada e a entrada volta a aparecer: degrada para o comportamento
+# da 3.0.0, não quebra.
+#
+# Continua sem `innerHTML`, sem rede, sem execução dinâmica e sem
+# armazenamento do navegador. 23 testes e o `quickjs-check` passam.
+#
+# E o teto de sempre: isto é um filtro, não uma prova.
+
+[[versoes]]
+versao = "3.1.0"
+commit = "7fe80011c5abb8350bb6d66c5b5c89cf1ad0739a"
+nivel = "oficial"
+notas = ["roda-no-servidor"]
+avaliado_em = 1790014621

@@ -340,3 +340,35 @@ commit = "f6d5b1a23fcf0e6bdca68efb7b8a4f1e8a8c63c2"
 nivel = "oficial"
 notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
 avaliado_em = 1789960855
+
+# ---------------------------------------------------------------------------
+# PERFIS 3.1.0 — avaliação de 2026-09-21, por delta contra a 3.0.0.
+#
+# **Leitura por delta**, de `f6d5b1a2` até `3d24757e`: 18 linhas em
+# `cliente/main.js` e `ferramentas/perfis.js`.
+#
+# O que mudou é o controle do envio de foto e banner: a tela passa a mostrar o
+# estado enquanto sobe, a impedir dois envios simultâneos do mesmo campo, e a
+# liberar o arquivo escolhido mesmo quando o `upload-start` falha.
+#
+# **Nada disso é mudança de superfície de ataque.** O transporte continua o
+# mesmo — fragmentos base64 por `ModRequest`, pelo controle —, os mesmos
+# limites do lado do servidor, e a mesma conferência de quem pode gravar o quê.
+# O que mudou é o que a tela diz enquanto espera, e um cadeado de concorrência
+# do lado de cá.
+#
+# O defeito que isto conserta não era do MOD: era a ponte do SEELE mandando um
+# fragmento assim que a resposta anterior chegava, estourando o balde de quadros
+# do servidor. O conserto principal está na v0.14.0; este delta é a metade que
+# cabia ao MOD.
+#
+# 40 testes e o `quickjs-check` passam.
+#
+# E o teto de sempre: isto é um filtro, não uma prova.
+
+[[versoes]]
+versao = "3.1.0"
+commit = "3d24757e491d8c2220fbdb999793362c4353e359"
+nivel = "oficial"
+notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
+avaliado_em = 1790014621

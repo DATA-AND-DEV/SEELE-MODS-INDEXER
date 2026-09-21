@@ -208,3 +208,64 @@ commit = "a128b8a6ac31e813dd23fd1751b2b467291993a7"
 nivel = "oficial"
 notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
 avaliado_em = 1789960855
+
+# ---------------------------------------------------------------------------
+# MESA 3.1.0 — avaliação de 2026-09-21, por delta contra a 3.0.0.
+#
+# **Leitura por delta**, de `a128b8a6` até `dff2fbe9`: 90 linhas, e 74 delas em
+# `servidor/main.js` — o código que roda na máquina de quem hospeda. É o delta
+# mais pesado dos três, e o único que pede um parágrafo sobre disco.
+#
+# ## O que exige escrutínio: o teto por imagem foi de 256 KiB para 10 MiB
+#
+# `LIMIT.image` era 262 144 e passa a 10 485 760. **Quarenta vezes.**
+#
+# O SEELE limita **4 MiB por arquivo** (`mods::arquivos::TETO_DE_ARQUIVO`) e
+# **não tem cota total**: o doc de lá diz, com todas as letras, que o teto
+# impede encher o disco «numa só chamada». Muitas chamadas não são impedidas
+# por nada.
+#
+# A conta deste MOD, então, com os tetos que ele mesmo declara: `imagePart` tem
+# dois pontos de chamada — retrato de ficha e cena —, e são 16 fichas mais 16
+# cenas por canal. São 32 imagens, e a 10 MiB dão **320 MiB por canal**, contra
+# 8 MiB antes. O número de canais não é limitado por este MOD.
+#
+# Quem hospeda precisa saber disso, e é por isso que está escrito aqui em vez
+# de num comentário de código.
+#
+# ## O que melhorou, e é honesto dizer
+#
+# A validação do upload ficou **mais** estrita, não menos:
+#
+#   - o cabeçalho `data:image/(png|jpeg|webp|gif);base64,` é conferido no
+#     primeiro fragmento, e não só no fim;
+#   - cada fragmento é conferido contra o alfabeto base64, com o `=` aceito só
+#     no último;
+#   - o tamanho **decodificado** é calculado no fim e conferido contra o teto,
+#     em vez de só o comprimento da string;
+#   - a ordem dos fragmentos, o dono e o identificador do envio continuam
+#     presos, e um fragmento fora de ordem é recusado com `upload-order`.
+#
+# A gravação em partes (`.parts` com índice e uma peça por fragmento) existe
+# porque uma imagem de 10 MiB não cabe num arquivo de 4 MiB. A leitura devolve
+# em fatias de 64 KiB com continuação, e `assetReply` recusa continuar quando o
+# asset mudou no meio — `image-changed`.
+#
+# O `gif` entrou na lista de formatos aceitos. Os bytes continuam sendo
+# conferidos pelo SEELE antes de virarem imagem na tela.
+#
+# ## O resto
+#
+# `imersiva: true` só existe no cliente a partir da v0.14.0; num anterior a
+# opção é ignorada e a página abre sem ocupar a sessão. Degrada, não quebra.
+#
+# 50 testes e o `quickjs-check` passam.
+#
+# E o teto de sempre: isto é um filtro, não uma prova.
+
+[[versoes]]
+versao = "3.1.0"
+commit = "dff2fbe95cf3eeb3614b3873006781ec1323adee"
+nivel = "oficial"
+notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
+avaliado_em = 1790014621
