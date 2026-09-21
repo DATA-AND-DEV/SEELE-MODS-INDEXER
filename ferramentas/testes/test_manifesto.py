@@ -255,3 +255,63 @@ def test_api_retirada_e_recusada_antes_de_executar(api):
         ler(json.dumps(manifesto))
     assert erro.value.codigo == "api-too-old"
     assert ler(json.dumps(manifesto), historico=True).api == api
+
+
+# --------------------------------------------------------------- `arquivos`
+#
+# **O campo existia num lado só.** O produto declara `arquivos` desde a trilha
+# sonora da MESA — campo real em `seele_proto::mods::Manifest`, com teto de
+# dezesseis e caminho conferido. Aqui ele não estava em `CHAVES`, e um
+# manifesto que o trouxesse era recusado como `malformed: chave desconhecida`.
+#
+# O modo como isso apareceu é o que vale registrar: não numa suíte, mas no
+# `gerar.py` parando em cima do MESA 3.0.0, com a release do produto já
+# publicada. O vetor cruzado entre os dois repositórios compara `api_oferecida`
+# e `apis_aceitas` — números —, e nada compara o conjunto de chaves que cada
+# lado aceita. Enquanto isso não existir, esta divergência volta.
+
+def _com_arquivos(arquivos: str) -> str:
+    return (
+        '{"schema":1,"id":"a/b","version":"1","api":4,'
+        '"repo":"https://example.invalid/x","client":"c.js","arquivos":' + arquivos + "}"
+    )
+
+
+def test_arquivos_declarados_sao_lidos():
+    m = ler(_com_arquivos('["som/combate.wav", "capa.png"]'))
+    assert m.arquivos == ["som/combate.wav", "capa.png"]
+
+
+def test_arquivos_ausente_e_lista_vazia():
+    # `#[serde(default)]` lá: ausente não é recusa, é `[]`.
+    assert ler('{"schema":1,"id":"a/b","version":"1","api":4,'
+               '"repo":"https://example.invalid/x","client":"c.js"}').arquivos == []
+
+
+@pytest.mark.parametrize("fora", ['["../fora.wav"]', '["/etc/senha"]', '[""]', '["."]',
+                                  '["a/./b"]', '["C:/x"]'])
+def test_um_arquivo_que_sai_da_pasta_e_malformed(fora):
+    # Espelho de `um_arquivo_que_sobe_de_pasta_e_recusado_no_manifesto`.
+    with pytest.raises(Recusado) as erro:
+        ler(_com_arquivos(fora))
+    assert erro.value.codigo == "malformed"
+    # E diz **qual**: com dezesseis na lista, «um deles» não ajuda quem conserta.
+    assert "arquivos[0]" in erro.value.detalhe
+
+
+def test_arquivos_acima_do_teto_e_malformed():
+    with pytest.raises(Recusado) as erro:
+        ler(_com_arquivos(str(["f%d.png" % n for n in range(17)]).replace("'", '"')))
+    assert erro.value.codigo == "malformed"
+
+
+def test_arquivos_com_item_nao_texto_e_malformed():
+    with pytest.raises(Recusado) as erro:
+        ler(_com_arquivos("[123]"))
+    assert erro.value.codigo == "malformed"
+
+
+def test_arquivos_como_texto_em_vez_de_lista_e_malformed():
+    with pytest.raises(Recusado) as erro:
+        ler(_com_arquivos('"som/combate.wav"'))
+    assert erro.value.codigo == "malformed"

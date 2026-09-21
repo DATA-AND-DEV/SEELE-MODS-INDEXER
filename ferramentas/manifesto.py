@@ -46,7 +46,8 @@ APIS_ACEITAS = (4, 3)
 # de ignorada, pelo motivo que o Rust escreve em `deny_unknown_fields`: uma
 # chave com erro de digitação instala um MOD sem a coisa que o autor achou
 # que estava lá, e o autor nunca descobre.
-CHAVES = {"schema", "id", "version", "api", "repo", "reach", "state", "client", "server"}
+CHAVES = {"schema", "id", "version", "api", "repo", "reach", "state", "client", "server",
+          "arquivos"}
 OBRIGATORIAS = {"schema", "id", "version", "api", "repo"}
 
 # O tipo de cada chave, porque o `serde` do Rust valida isso na
@@ -55,7 +56,7 @@ OBRIGATORIAS = {"schema", "id", "version", "api", "repo"}
 # `mod.json` torto derruba a indexação inteira em vez de recusar aquele MOD.
 TIPOS = {
     "schema": int, "id": str, "version": str, "api": int, "repo": str,
-    "reach": list, "state": int, "client": str, "server": str,
+    "reach": list, "state": int, "client": str, "server": str, "arquivos": list,
 }
 
 # Os únicos campos que o Rust declara `Option<T>`. Para os demais, um `null`
@@ -63,6 +64,11 @@ TIPOS = {
 OPCIONAIS = {"state", "client", "server"}
 
 U32_MAX = 2**32 - 1
+
+# Espelho de `seele_proto::mods::TETO_DE_ARQUIVOS`. Dezesseis, e o motivo está
+# escrito lá: a mídia de um MOD é ilustração e efeito, e uma lista maior é um
+# acervo — outra coisa, com outro custo.
+TETO_DE_ARQUIVOS = 16
 
 
 @dataclass(frozen=True)
@@ -73,6 +79,7 @@ class Manifesto:
     api: int
     repo: str
     reach: list[str] = field(default_factory=list)
+    arquivos: list[str] = field(default_factory=list)
     state: int | None = None
     client: str | None = None
     server: str | None = None
@@ -95,6 +102,29 @@ def _bem_formado(identificador: str) -> bool:
         and all(("a" <= c <= "z") or ("0" <= c <= "9") or c == "-" for c in metade)
         for metade in metades
     )
+
+
+def _dentro_da_pasta(caminho: str) -> bool:
+    """Espelho de `inner_path` (`mods.rs:483`), aplicado como `read_manifest` o aplica.
+
+    Lá o caminho é quebrado em `/` e **cada pedaço** tem de ser um único
+    `Component::Normal`. É o que recusa `../fora.wav`, `/etc/senha`, `.` e a
+    string vazia — um pacote instalado que pede um arquivo de fora a cada
+    sessão é um pacote que não devia ter entrado.
+
+    Duas recusas a mais do que o POSIX exige, e de propósito. O `Path` do Rust
+    é do sistema onde ele roda: em Windows `C:` é um `Prefix` e a contrabarra
+    separa componentes, então um caminho aceito aqui num Mac seria recusado lá
+    na máquina de quem instalou. Um MOD que entra no catálogo e só funciona em
+    metade dos sistemas é o defeito que este módulo existe para impedir, e o
+    lugar barato de pegá-lo é aqui.
+    """
+    if not caminho:
+        return False
+    for pedaco in caminho.split("/"):
+        if pedaco in ("", ".", "..") or "\\" in pedaco or pedaco.endswith(":"):
+            return False
+    return True
 
 
 def ler(texto: str, *, historico: bool = False) -> Manifesto:
@@ -140,6 +170,16 @@ def ler(texto: str, *, historico: bool = False) -> Manifesto:
             raise Recusado("malformed", f"{chave} fora da faixa de u32")
     if any(not isinstance(item, str) for item in cru.get("reach", []) or []):
         raise Recusado("malformed", "reach deveria ser uma lista de textos")
+    arquivos = cru.get("arquivos", []) or []
+    if any(not isinstance(item, str) for item in arquivos):
+        raise Recusado("malformed", "arquivos deveria ser uma lista de textos")
+    if len(arquivos) > TETO_DE_ARQUIVOS:
+        raise Recusado("malformed", f"declara {len(arquivos)} arquivos, o teto é {TETO_DE_ARQUIVOS}")
+    for posicao, arquivo in enumerate(arquivos):
+        # **Qual**, e não «um deles»: com dezesseis na lista, quem conserta o
+        # pacote precisa saber onde olhar. O Rust diz a posição pelo mesmo motivo.
+        if not _dentro_da_pasta(arquivo):
+            raise Recusado("malformed", f"arquivos[{posicao}] sai da pasta do MOD: {arquivo!r}")
 
     if cru["schema"] > ESQUEMA_DO_MANIFESTO:
         raise Recusado("schema-too-new", f'esquema {cru["schema"]}, esta versão lê {ESQUEMA_DO_MANIFESTO}')
@@ -163,6 +203,7 @@ def ler(texto: str, *, historico: bool = False) -> Manifesto:
         api=cru["api"],
         repo=cru["repo"],
         reach=cru.get("reach", []),
+        arquivos=cru.get("arquivos", []),
         state=cru.get("state"),
         client=cru.get("client"),
         server=cru.get("server"),
