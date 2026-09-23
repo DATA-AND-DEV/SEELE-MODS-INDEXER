@@ -493,3 +493,50 @@ commit = "05b059773e02a555bd7a8774813ff1f17da7bf56"
 nivel = "oficial"
 notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
 avaliado_em = 1790027146
+
+# ---------------------------------------------------------------------------
+# PERFIS 3.3.0 — avaliação de 2026-09-23, por delta contra a 3.2.0.
+#
+# **Leitura por delta**, e o delta é só do cliente: `cliente/main.js` e o gêmeo
+# `ferramentas/perfis.js` ganham 33 linhas cada, o README ganha uma seção e o
+# `mod.json` muda só a versão. **`servidor/main.js` não mudou**, nem o `reach`,
+# nem a `api` — continua 5.
+#
+# ## O que entrou
+#
+# O MOD publica `pessoa.avatar` para cada pessoa que tem foto, e o SEELE aplica
+# essa foto à chamada, às mensagens e à barra do operador. O conteúdo é o mesmo
+# `doServidor` que os cartões já usavam: `imagemDoServidor(id, 'avatar')`, um
+# pedido `asset` ao servidor deste próprio MOD, com o caminho que está **no
+# perfil guardado**. Não há URL externa, e o produto recusaria uma: o ponto só
+# aceita `substituir` com `doServidor`, e quem busca, valida e guarda em cache
+# (teto de 20 MiB por instância) é o SEELE.
+#
+# ## O que exige escrutínio: os handles
+#
+# Um MOD mantém até 128 contribuições de pé, e `MAX_PROFILES` também é 128 —
+# então o que importa é não vazar handle. O delta revoga antes de registrar
+# quando a origem muda, reaproveita quando é igual (a assinatura é o
+# `doServidor` serializado), revoga ao tirar a foto e revoga tudo ao sair. A
+# publicação passa por `agruparAtualizacoes`, a mesma fila dos cartões, para
+# que duas consultas seguidas não registrem o mesmo avatar duas vezes. O teste
+# novo cobre os quatro caminhos, e falha com o cliente da 3.2.0.
+#
+# ## Quando o outro lado é velho
+#
+# A v0.14.2 não conhece `pessoa.avatar` e recusa **com frase**. O PERFIS avisa no
+# console e segue publicando os cartões — medido com o ponto retirado do cliente
+# de mentira: só o teste do avatar falha, os outros 24 do cliente passam. Não há
+# espera obrigatória de propagação, como houve na 3.2.0: quem está na v0.14.2
+# recebe esta versão e fica exatamente como estava.
+#
+# 43 testes.
+#
+# E o teto de sempre: isto é um filtro, não uma prova.
+
+[[versoes]]
+versao = "3.3.0"
+commit = "98dbfaf4a48852331372cba1c4b947fe39b28e94"
+nivel = "oficial"
+notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
+avaliado_em = 1790133318
