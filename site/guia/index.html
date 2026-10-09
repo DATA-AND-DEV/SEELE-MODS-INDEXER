@@ -2,19 +2,21 @@
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="Aprenda a criar MODs para o SEELE: guia passo a passo, API 4, pedidos, eventos, arquivos, permissões, exemplos e publicação.">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
-<title>Como criar MODs — SEELE</title><link rel="stylesheet" href="../fontes.css"><link rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="guia.css?v=c0f9c2d6693a"><link rel="stylesheet" href="../estilo.css"></head>
+<meta name="theme-color" content="#050403">
+<title>SEELE MODS: como criar um MOD</title><link rel="icon" href="../favicon.ico" sizes="32x32"><link rel="icon" href="../favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="../apple-touch-icon.png"><link rel="stylesheet" href="../fontes.css"><link rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../casca.css"><link rel="stylesheet" href="guia.css?v=3547edd3a82d"><link rel="stylesheet" href="../estilo.css"></head>
 <body><div class="pagina"><a class="pular" href="#conteudo">Pular para a documentação</a>
-<header class="topo" id="topo">
-    <a class="marca" href="../">
+<header class="cabecalho" id="topo">
+    <a class="cabecalho__marca" href="../">
       <svg viewBox="0 0 96 96" width="26" height="26" role="img" aria-label="SEELE">
+        <title>SEELE</title>
         <path d="M34 34L62 62" stroke="#EAE3CF" stroke-width="6"></path>
         <rect x="12" y="12" width="24" height="24" fill="#F2521F"></rect>
         <rect x="62" y="62" width="20" height="20" fill="none" stroke="#F2521F" stroke-width="6"></rect>
       </svg>
-      <span><span class="marca-seele">SEELE</span> <span class="marca-mods">MODS</span></span>
+      <span><span class="cabecalho__nome">SEELE</span> <span class="cabecalho__sub">MODS</span></span>
     </a>
 
-    <label class="campo-busca">
+    <label class="cabecalho__busca">
       <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#908574" stroke-width="1.3" aria-hidden="true">
         <circle cx="7" cy="7" r="3.6"></circle><path d="M9.7 9.7L13 13"></path>
       </svg>
@@ -22,12 +24,13 @@
              spellcheck="false" autocomplete="off" aria-label="Buscar no guia">
     </label>
 
-    <nav class="abas" aria-label="Seções">
-      <a class="aba" href="./" aria-current="page">CRIAR UM MOD</a>
-      <a class="aba" href="../">CATÁLOGO</a>
-      <a class="aba" href="../#/revogacoes">REVOGAÇÕES</a>
-      <a class="aba" href="../#/publicar">PUBLICAR</a>
+    <nav class="cabecalho__nav" aria-label="Seções">
+      <a class="cabecalho__link" href="./" aria-current="page">CRIAR UM MOD</a>
+      <a class="cabecalho__link" href="../">CATÁLOGO</a>
+      <a class="cabecalho__link" href="../#/revogacoes">REVOGAÇÕES</a>
+      <a class="cabecalho__link" href="../#/publicar">PUBLICAR</a>
     </nav>
+    <a class="cabecalho__acao" href="https://seele.app.br/#baixar">BAIXAR</a>
   </header>
 <section class="painel guia-abertura" aria-labelledby="titulo-guia"><div class="guia-apresentacao"><h1 id="titulo-guia">Criar um MOD</h1><p class="cartao-resumo">Guia de criação e referência da API. Do primeiro pacote à publicação no catálogo.</p><p class="rotulo">API 4 · Schema 1 · Revisado em 20/09/2026</p></div><div class="guia-recursos"><a class="botao" href="guia-criacao-mods.md" download>BAIXAR GUIA .MD ↓</a><a class="botao" href="exemplos/contador.zip" download>MOD DE EXEMPLO ↓</a></div></section>
 <div class="barra-consulta"><div role="tablist" aria-label="Modo de leitura" class="modos"><button type="button" role="tab" class="botao botao-forte" id="modo-guia" aria-controls="painel-guia">Guia passo a passo</button><button type="button" role="tab" class="botao" id="modo-referencia" aria-controls="painel-referencia">Referência técnica</button></div></div>
@@ -620,10 +623,22 @@ node --check servidor/main.js</code></pre></div>
 <p>O indexador aceita novos pacotes somente na API 3. Versões antigas já publicadas permanecem no histórico append-only apenas quando ID, versão e hash correspondem ao catálogo anterior; isso não as torna executáveis no SEELE atual. O catálogo assinado precisa ser regenerado junto da publicação, anunciando <code>api_oferecida: 3</code>.</p>
 <p>O hash não é o SHA-256 do ZIP. O algoritmo de conteúdo ordena caminhos e inclui contagem de arquivos, comprimentos dos caminhos, bytes dos caminhos, comprimentos dos conteúdos e bytes dos conteúdos, usando comprimentos inteiros de 64 bits em big-endian. Use as ferramentas oficiais e os vetores do indexador para reproduzi-lo; não crie um cálculo simplificado em um script de release.</p><nav class="proximo" aria-label="Próximos capítulos"><a href="#referencia/exemplo">← Exemplo executável e receitas</a><a href="#guia/comecar">Voltar ao início →</a></nav></article></div></section></main>
 <p class="status-copia" id="status-copia" role="status" aria-live="polite"></p><footer class="rodape">
-    <span>mods.seele.app.br</span>
-    <span class="espaco"></span>
-    <a href="../chave.pub">CHAVE PÚBLICA</a>
-    <a href="../catalogo.json">CATALOGO.JSON</a>
-    <a href="../revogacoes.json">REVOGACOES.JSON</a>
+    <span class="rodape__marca">
+      <svg viewBox="0 0 96 96" width="22" height="22" role="img" aria-label="SEELE">
+        <title>SEELE</title>
+        <path d="M34 34L62 62" stroke="#EAE3CF" stroke-width="6"></path>
+        <rect x="12" y="12" width="24" height="24" fill="#F2521F"></rect>
+        <rect x="62" y="62" width="20" height="20" fill="none" stroke="#F2521F" stroke-width="6"></rect>
+      </svg>
+      <span><span class="rodape__nome">SEELE</span> <span class="rodape__sub">MODS</span></span>
+    </span>
+    <span class="rodape__dominio">mods.seele.app.br</span>
+    <span class="rodape__espaco"></span>
+    <nav class="rodape__atalhos" aria-label="Atalhos do rodapé">
+      <a class="rodape__link" href="https://seele.app.br">SEELE.APP.BR</a>
+      <a class="rodape__link" href="../chave.pub">CHAVE PÚBLICA</a>
+      <a class="rodape__link" href="../catalogo.json">CATALOGO.JSON</a>
+      <a class="rodape__link" href="../revogacoes.json">REVOGACOES.JSON</a>
+    </nav>
   </footer>
-<noscript><p>JavaScript está desativado. O conteúdo completo permanece disponível abaixo dos índices. Busca e abas requerem JavaScript; você também pode baixar o Markdown.</p></noscript></div><script type="module" src="guia.js?v=df0372c8d9a4"></script></body></html>
+<noscript><p>JavaScript está desativado. O conteúdo completo permanece disponível abaixo dos índices. Busca e abas requerem JavaScript; você também pode baixar o Markdown.</p></noscript></div><script type="module" src="guia.js?v=af4084d4069c"></script></body></html>

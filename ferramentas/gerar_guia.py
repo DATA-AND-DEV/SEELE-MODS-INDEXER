@@ -103,12 +103,16 @@ def shell():
     """Cabeçalho e rodapé vêm do catálogo; só destinos e busca são adaptados."""
     source = (ROOT / 'site/index.html').read_text()
     header = re.search(r'<header\b.*?</header>', source, re.S)[0]
-    header = re.sub(r'<button([^>]*data-ir="([^"]+)"[^>]*)>(.*?)</button>',
-                    lambda m: '<a class="' + ('marca' if 'class="marca"' in m[1] else 'aba') + '" href="../' + ('' if m[2]=='catalogo' else '#/'+m[2]) + '">' + m[3] + '</a>', header, flags=re.S)
+    header = re.sub(r'\s*<!--.*?-->', '', header, flags=re.S)
+    # As telas do catálogo moram no fragmento da página de cima, e `data-ir` é
+    # só a marca da tela atual para o app.js de lá, que aqui não roda.
+    header = re.sub(r'href="#/([^"]*)"', lambda m: 'href="../' + ('#/' + m[1] if m[1] else '') + '"', header)
+    header = re.sub(r' data-ir="[^"]+"', '', header)
     header = header.replace('href="guia/"', 'href="./" aria-current="page"')
     header = header.replace('id="busca"', 'id="buscar-guia"').replace('buscar mods, autores, repositórios', 'buscar no guia: pedidos, arquivos, erros').replace('Buscar no catálogo', 'Buscar no guia')
     footer = re.search(r'<footer\b.*?</footer>', source, re.S)[0]
-    footer = re.sub(r'href="([^"#]+)"', lambda m:'href="../'+m[1]+'"', footer)
+    # Só os caminhos locais sobem um nível; o link para seele.app.br fica.
+    footer = re.sub(r'href="(?!https?:)([^"#]+)"', lambda m:'href="../'+m[1]+'"', footer)
     return header, footer
 
 
@@ -131,7 +135,8 @@ def generate():
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="Aprenda a criar MODs para o SEELE: guia passo a passo, API 4, pedidos, eventos, arquivos, permissões, exemplos e publicação.">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
-<title>Como criar MODs — SEELE</title><link rel="stylesheet" href="../fontes.css"><link rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="guia.css"><link rel="stylesheet" href="../estilo.css"></head>
+<meta name="theme-color" content="#050403">
+<title>SEELE MODS: como criar um MOD</title><link rel="icon" href="../favicon.ico" sizes="32x32"><link rel="icon" href="../favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="../apple-touch-icon.png"><link rel="stylesheet" href="../fontes.css"><link rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../casca.css"><link rel="stylesheet" href="guia.css"><link rel="stylesheet" href="../estilo.css"></head>
 <body><div class="pagina"><a class="pular" href="#conteudo">Pular para a documentação</a>
 __CABECALHO__
 <section class="painel guia-abertura" aria-labelledby="titulo-guia"><div class="guia-apresentacao"><h1 id="titulo-guia">Criar um MOD</h1><p class="cartao-resumo">Guia de criação e referência da API. Do primeiro pacote à publicação no catálogo.</p><p class="rotulo">API 4 · Schema 1 · Revisado em 20/09/2026</p></div><div class="guia-recursos"><a class="botao" href="guia-criacao-mods.md" download>BAIXAR GUIA .MD ↓</a><a class="botao" href="exemplos/contador.zip" download>MOD DE EXEMPLO ↓</a></div></section>

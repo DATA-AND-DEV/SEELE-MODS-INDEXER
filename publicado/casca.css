@@ -1,0 +1,250 @@
+/* SEELE — a casca: cabeçalho e rodapé, os mesmos de seele.app.br.
+
+   seele.app.br e mods.seele.app.br são o mesmo produto, e as duas barras são
+   onde isso se vê primeiro. Até aqui cada um tinha a sua: altura, margem,
+   abas em caixa de um lado e trilha de texto do outro, rodapé com marca num
+   e sem marca no outro — e o índice parecia um site de terceiro.
+
+   Este arquivo é espelho de três arquivos do SEELE-SITE:
+     src/componentes/Cabecalho.css   →  .cabecalho*
+     src/componentes/Rodape.css      →  .rodape*
+     src/estilos/base.css            →  os quatro --site-*
+   Mesmos nomes de classe, mesmos valores. Mudou lá, muda aqui, e o contrário.
+
+   O que só o índice tem fica marcado como tal: a busca dentro da barra, a aba
+   da tela atual e a barra em três linhas quando a largura não comporta uma.
+
+   As cores literais abaixo são as do site, e não deste arquivo: tokens.css é
+   do app, e a régua do site é um passo mais clara (ver base.css de lá).
+   estilo.css continua sem cor literal nenhuma. */
+
+:root {
+  --site-linha: #2e2820;
+  --site-linha-forte: #4a4036;
+  --site-texto-suave: #9c907c;
+  --site-margem: clamp(20px, 5vw, 64px);
+}
+
+:focus-visible {
+  outline: 2px solid var(--seele-laranja-nerv);
+  outline-offset: 2px;
+}
+
+/* ---- cabeçalho ---- */
+
+.cabecalho {
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 56px;
+  padding: 0 var(--site-margem);
+  line-height: 24px;
+  background: var(--seele-negro-painel);
+  border-bottom: 1px solid var(--site-linha);
+}
+
+.cabecalho__marca {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+
+.cabecalho__nome,
+.cabecalho__sub {
+  font-family: var(--seele-display);
+  font-size: 17px;
+  letter-spacing: 0.08em;
+}
+
+.cabecalho__nome {
+  font-weight: 900;
+  color: var(--seele-laranja-nerv);
+}
+
+/* Só no índice: o nome da parte, em osso, ao lado do SEELE em laranja. */
+.cabecalho__sub {
+  font-weight: 700;
+  color: var(--seele-osso);
+}
+
+/* Só no índice. Entre a marca e a trilha, e cede largura antes delas. */
+.cabecalho__busca {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 0 1 320px;
+  min-width: 140px;
+  height: 36px;
+  margin-left: 8px;
+  padding: 0 12px;
+  background: var(--seele-negro-absoluto);
+  border: 1px solid var(--site-linha);
+}
+
+.cabecalho__busca:focus-within {
+  border-color: var(--seele-laranja-nerv);
+}
+
+.cabecalho__busca input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  font-size: 12px;
+  background: none;
+  border: 0;
+}
+
+.cabecalho__busca input:focus {
+  outline: none;
+}
+
+.cabecalho__nav {
+  display: flex;
+  gap: 20px;
+  margin-left: auto;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+}
+
+.cabecalho__link {
+  color: var(--site-texto-suave);
+  white-space: nowrap;
+}
+
+.cabecalho__link:hover {
+  color: var(--seele-osso);
+}
+
+/* Só no índice: a tela em que se está. */
+.cabecalho__link[aria-current="page"] {
+  color: var(--seele-laranja-nerv);
+}
+
+.cabecalho__acao {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  font-size: 12px;
+  letter-spacing: 0.14em;
+  color: var(--seele-negro-absoluto);
+  background: var(--seele-laranja-nerv);
+  border: 1px solid var(--seele-laranja-nerv);
+}
+
+.cabecalho__acao:hover {
+  color: var(--seele-negro-absoluto);
+  background: var(--seele-osso);
+  border-color: var(--seele-osso);
+}
+
+/* O site esconde a trilha abaixo de 640px porque cada item dela é uma âncora
+   da mesma página. Aqui cada item é uma tela, e esconder seria perder a tela —
+   então a barra quebra em três linhas: marca e BAIXAR em cima, iguais às do
+   site no telefone; a busca; e a trilha, que rola de lado.
+
+   E deixa de grudar no topo. Três linhas grudadas comiam um terço da tela de
+   um telefone, e com a lateral grudada embaixo delas sobrava uma fresta para
+   os cartões. Quem mede a barra (app.js, guia.js) mede zero quando ela não
+   gruda, e o que grudava embaixo dela sobe junto. */
+@media (max-width: 960px) {
+  .cabecalho {
+    position: static;
+    flex-wrap: wrap;
+    height: auto;
+    row-gap: 12px;
+    padding-top: 7px;
+  }
+
+  .cabecalho__acao {
+    order: 1;
+    margin-left: auto;
+  }
+
+  .cabecalho__busca {
+    order: 2;
+    flex: 1 1 100%;
+    margin-left: 0;
+  }
+
+  .cabecalho__nav {
+    order: 3;
+    /* De borda a borda: a régua de cima atravessa a margem, como a de baixo. */
+    flex: 0 0 calc(100% + 2 * var(--site-margem));
+    margin: 0 calc(-1 * var(--site-margem));
+    padding: 12px var(--site-margem);
+    overflow-x: auto;
+    border-top: 1px solid var(--site-linha);
+    /* O item cortado na borda já diz que a trilha rola; a barra de rolagem
+       só somaria uma faixa de 12px embaixo dela. */
+    scrollbar-width: none;
+  }
+
+  .cabecalho__nav::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ---- rodapé ---- */
+
+.rodape {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px;
+  padding: 32px var(--site-margem);
+  line-height: 24px;
+  border-top: 1px solid var(--site-linha-forte);
+  background: var(--seele-negro-painel);
+}
+
+.rodape__marca {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 0 0 auto;
+}
+
+.rodape__nome,
+.rodape__sub {
+  font-family: var(--seele-display);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+}
+
+.rodape__nome {
+  font-weight: 900;
+  color: var(--seele-laranja-nerv);
+}
+
+.rodape__sub {
+  font-weight: 700;
+  color: var(--seele-osso);
+}
+
+.rodape__dominio {
+  font-size: 13px;
+  color: var(--site-texto-suave);
+}
+
+.rodape__espaco {
+  flex: 1;
+}
+
+.rodape__atalhos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+}
+
+.rodape__link {
+  color: var(--site-texto-suave);
+}
+
+.rodape__link:hover {
+  color: var(--seele-osso);
+}

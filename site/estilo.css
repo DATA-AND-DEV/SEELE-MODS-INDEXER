@@ -41,49 +41,13 @@ button:focus-visible { outline: var(--seele-b-forte) solid var(--seele-osso); ou
 
 .pagina { min-height: 100vh; display: flex; flex-direction: column; }
 
-/* ---- cabeçalho ---- */
-.topo {
-  position: sticky; top: 0; z-index: 6;
-  display: flex; flex-wrap: wrap; align-items: center; gap: var(--seele-e2);
-  padding: 12px clamp(20px, 4vw, 56px);
-  background: var(--seele-negro-painel);
-  border-bottom: var(--seele-b) solid var(--seele-linha);
-}
-.marca {
-  display: flex; align-items: center; gap: 12px;
-  padding: 0; background: none; border: 0; font: inherit; cursor: pointer;
-}
-.marca-seele, .marca-mods {
-  font-family: var(--seele-display); font-size: 17px; letter-spacing: 0.08em;
-}
-.marca-seele { font-weight: 900; color: var(--seele-laranja-nerv); }
-.marca-mods { font-weight: var(--seele-cartela); color: var(--seele-osso); }
-
-.campo-busca {
-  display: flex; align-items: center; gap: 9px;
-  flex: 1 1 240px; min-width: 0; max-width: 420px;
-  padding: 0 12px; min-height: 38px;
-  border: var(--seele-b) solid var(--seele-linha-forte);
-  background: var(--seele-negro-absoluto);
-}
-.campo-busca input { flex: 1; min-width: 0; border: none; background: none; padding: var(--seele-e1) 0; }
-
-.abas {
-  display: flex; gap: 1px; margin-left: auto; flex: 0 0 auto;
-  background: var(--seele-linha-forte);
-  border: var(--seele-b) solid var(--seele-linha-forte);
-}
-.aba {
-  font: inherit; font-size: 11px; letter-spacing: 0.14em; padding: 9px 15px;
-  cursor: pointer; border: none;
-  color: var(--seele-osso-apagado); background: var(--seele-negro-painel);
-}
-.aba[aria-current="page"] { color: var(--seele-negro-absoluto); background: var(--seele-laranja-nerv); }
+/* ---- cabeçalho e rodapé ----
+   Moram em casca.css, e são os de seele.app.br. */
 
 /* ---- o aviso de integridade ----
    Nunca «autêntico»: verificador, chave e catálogo vêm da mesma origem. */
 .aviso {
-  padding: 12px clamp(20px, 4vw, 56px);
+  padding: 12px var(--site-margem);
   font-size: var(--seele-t-dado); line-height: 1.6;
   border-bottom: var(--seele-b) solid var(--seele-linha);
 }
@@ -96,7 +60,7 @@ button:focus-visible { outline: var(--seele-b-forte) solid var(--seele-osso); ou
 .aviso[data-estado="sem-conferir"] { color: var(--seele-sync-degradado); }
 .aviso p { margin: 0; max-width: 72ch; text-wrap: pretty; }
 /* Classe própria, e não `.rodape`: aquela é a classe do rodapé da página
-   (mais abaixo neste arquivo), com `display:flex`, fundo de painel e borda
+   (em casca.css), com `display:flex`, fundo de painel e borda
    — nada disso serve ao texto miúdo do aviso, que é só uma segunda linha
    de texto secundário. */
 .aviso-nota {
@@ -143,16 +107,31 @@ button:focus-visible { outline: var(--seele-b-forte) solid var(--seele-osso); ou
 
 /* ---- corpo ---- */
 .corpo { flex: 1 1 auto; min-width: 0; }
-.com-lateral { display: grid; grid-template-columns: 236px minmax(0, 1fr); align-items: start; }
-@media (max-width: 720px) { .com-lateral { grid-template-columns: minmax(0, 1fr); } }
+/* A lateral começa na mesma margem da marca, lá em cima, e o painel termina
+   na mesma margem do BAIXAR: a coluna cresce o que a margem cresce, e o
+   espaço útil dela continua o de antes. */
+.com-lateral {
+  display: grid; grid-template-columns: calc(216px + var(--site-margem)) minmax(0, 1fr);
+  align-items: start;
+}
 
 .lateral {
-  position: sticky; top: var(--mods-topo, 63px);
-  max-height: calc(100vh - var(--mods-topo, 63px)); overflow-y: auto;
+  position: sticky; top: var(--mods-topo, 56px);
+  max-height: calc(100vh - var(--mods-topo, 56px)); overflow-y: auto;
   display: flex; flex-direction: column; gap: var(--seele-e3);
-  padding: var(--seele-e3) 20px;
+  padding: var(--seele-e3) 20px var(--seele-e3) var(--site-margem);
   border-right: var(--seele-b) solid var(--seele-linha);
   background: var(--seele-negro-painel);
+}
+/* Numa coluna só, a lateral vem antes dos cartões e rola com eles. Grudada,
+   ela cobria a tela de um telefone inteira e os cartões passavam por baixo. */
+@media (max-width: 720px) {
+  .com-lateral { grid-template-columns: minmax(0, 1fr); }
+  .lateral {
+    position: static; max-height: none;
+    padding-right: var(--site-margem);
+    border-right: 0; border-bottom: var(--seele-b) solid var(--seele-linha);
+  }
 }
 .grupo { display: flex; flex-direction: column; gap: 10px; }
 .rotulo {
@@ -186,12 +165,16 @@ button:focus-visible { outline: var(--seele-b-forte) solid var(--seele-osso); ou
 
 .painel {
   display: flex; flex-direction: column; gap: 28px;
-  padding: 28px clamp(20px, 4vw, 44px) var(--seele-e6); min-width: 0;
+  padding: 28px var(--site-margem) var(--seele-e6); min-width: 0;
 }
+/* Ao lado da lateral, o respiro da esquerda é o do vão entre as colunas. */
+.com-lateral > .painel { padding-left: clamp(20px, 4vw, 44px); }
+@media (max-width: 720px) { .com-lateral > .painel { padding-left: var(--site-margem); } }
+/* O mesmo título de seção de seele.app.br (`.seele-titulo` de lá). */
 h1 {
   margin: 0; font-family: var(--seele-display); font-weight: var(--seele-cartela);
-  font-size: clamp(22px, 2.6vw, var(--seele-t-titulo));
-  line-height: 1.15; letter-spacing: 0.04em; color: var(--seele-osso);
+  font-size: clamp(24px, 3vw, 32px);
+  line-height: 1.2; color: var(--seele-osso);
   text-wrap: pretty;
 }
 .resumo-da-lista { font-size: 12px; color: var(--seele-osso-apagado); }
@@ -329,14 +312,6 @@ h1 {
   color: var(--seele-negro-absoluto);
   background: var(--seele-laranja-nerv);
   border-color: var(--seele-laranja-nerv);
-}
-
-.rodape {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 20px;
-  padding: var(--seele-e3) clamp(20px, 4vw, 56px);
-  border-top: var(--seele-b) solid var(--seele-linha-forte);
-  background: var(--seele-negro-painel); margin-top: auto;
-  font-size: 11px; color: var(--seele-osso-apagado);
 }
 
 /* specs/07: movimento é diagnóstico, nunca decorativo. Não há transição

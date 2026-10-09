@@ -58,9 +58,14 @@ function redesenhar() {
   desenhar(corpo, estado, acoes);
 }
 
-/** A altura do cabeçalho vira a âncora das colunas grudentas. */
+/**
+ * A altura do cabeçalho vira a âncora das colunas grudentas — e é zero quando
+ * ele não gruda (casca.css, na largura de telefone), senão a lateral pararia
+ * a um cabeçalho de distância do topo, com nada no vão.
+ */
 function medirTopo() {
-  document.documentElement.style.setProperty("--mods-topo", `${topo.offsetHeight}px`);
+  const gruda = getComputedStyle(topo).position === "sticky";
+  document.documentElement.style.setProperty("--mods-topo", `${gruda ? topo.offsetHeight : 0}px`);
 }
 
 async function baixar(nome) {
@@ -160,12 +165,6 @@ function aoTrocarRota() {
   estado.tela = rota.tela;
   estado.id = rota.id;
   redesenhar();
-}
-
-for (const botao of document.querySelectorAll("[data-ir]")) {
-  botao.addEventListener("click", () => {
-    location.hash = paraHash({ tela: botao.dataset.ir, id: null });
-  });
 }
 
 busca.addEventListener("input", () => {

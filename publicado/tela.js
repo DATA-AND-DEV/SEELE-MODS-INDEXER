@@ -574,7 +574,9 @@ const TELAS = {
 export function desenhar(raiz, estado, acoes) {
   raiz.replaceChildren((TELAS[estado.tela] ?? telaCatalogo)(estado, acoes));
 
-  for (const aba of document.querySelectorAll(".aba")) {
+  // Os itens da trilha são links com `href="#/…"`: quem navega é o próprio
+  // link, e aqui só se marca qual deles é a tela atual.
+  for (const aba of document.querySelectorAll(".cabecalho__link")) {
     const alvo = aba.dataset.ir;
     const ativa = alvo === estado.tela || (alvo === "catalogo" && estado.tela === "mod");
     if (ativa) aba.setAttribute("aria-current", "page");

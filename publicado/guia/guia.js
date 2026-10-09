@@ -18,7 +18,7 @@ function abrir() {
   document.querySelectorAll('.documentacao').forEach(p=>p.hidden=p.id!=='painel-'+modo);
   artigos.forEach(a=>a.hidden=a!==atual.el);
   document.querySelectorAll('.sumario [role=tab]').forEach(tab=>{const ativo=tab.hash==='#'+atual.rota;tab.setAttribute('aria-selected',String(ativo));tab.tabIndex=ativo?0:-1;});
-  document.title=atual.titulo+' — Criar MODs SEELE';
+  document.title=atual.titulo+' — SEELE MODS';
   const tab=document.querySelector('#painel-'+modo+' .sumario [aria-selected="true"]');
   if(tab){
     const nav=tab.parentElement,b=tab.getBoundingClientRect(),n=nav.getBoundingClientRect();
@@ -85,6 +85,8 @@ const medirBarra=()=>document.documentElement.style.setProperty("--altura-barra"
 new ResizeObserver(medirBarra).observe(document.querySelector(".barra-consulta"));
 medirBarra();
 
-const medirCabecalho=()=>document.documentElement.style.setProperty("--altura-cabecalho",document.querySelector("#topo").offsetHeight+"px");
+// Zero quando o cabeçalho não gruda (casca.css, abaixo de 960px): a barra de
+// consulta gruda então no topo, e não a um cabeçalho de distância dele.
+const medirCabecalho=()=>{const topo=document.querySelector("#topo");document.documentElement.style.setProperty("--altura-cabecalho",(getComputedStyle(topo).position==="sticky"?topo.offsetHeight:0)+"px");};
 new ResizeObserver(medirCabecalho).observe(document.querySelector("#topo"));
 medirCabecalho();
