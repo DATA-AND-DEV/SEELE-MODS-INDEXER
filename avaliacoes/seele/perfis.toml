@@ -540,3 +540,28 @@ commit = "98dbfaf4a48852331372cba1c4b947fe39b28e94"
 nivel = "oficial"
 notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
 avaliado_em = 1790133318
+
+# 3.3.1 — avaliação de 2026-10-18, por delta contra a 3.3.0 (`98dbfaf`).
+#
+# A linha legada, para o Servidor 0.15 (apps de v0.14.2 a 0.15.x): a API
+# continua 5. Consertos do cliente: a lista de pessoas não congela mais com
+# muita gente (o conjunto de cartões para antes do teto de 12 288 bytes e das 64
+# pessoas, com o próprio cartão primeiro), um erro nos cartões não derruba o MOD
+# onde o executor não tem `console`, DESCARTAR E FECHAR descarta, e trocar de
+# canal com o editor aberto não apaga o rascunho.
+#
+# **O que o delta não acrescenta:** nenhum `innerHTML`, nenhuma rede, nenhuma
+# execução dinâmica, nenhum armazenamento do navegador. O `mod.json` muda só o
+# número da versão, e o `reach` é o mesmo. A metade de servidor é a da 3.3.0,
+# byte a byte.
+#
+# Os testes do cliente e do servidor passam, com um teste por conserto.
+#
+# E o teto de sempre: isto é um filtro, não uma prova.
+
+[[versoes]]
+versao = "3.3.1"
+commit = "077477486af26e628021282bbc1a42e3f87ebca5"
+nivel = "oficial"
+notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
+avaliado_em = 1792342047

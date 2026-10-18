@@ -241,3 +241,28 @@ commit = "7fe80011c5abb8350bb6d66c5b5c89cf1ad0739a"
 nivel = "oficial"
 notas = ["roda-no-servidor"]
 avaliado_em = 1790014621
+
+# 3.1.1 — avaliação de 2026-10-18, por delta contra a 3.1.0 (`7fe8001`).
+#
+# A linha legada, para o Servidor 0.15: a API continua 4. Consertos do cliente:
+# DESCARTAR E FECHAR descarta, publicar não desfaz o que outra pessoa publicou
+# durante a edição, dois cliques em PUBLICAR publicam uma vez, e o diálogo só é
+# remontado quando muda.
+#
+# **O que o delta não acrescenta:** nenhum `innerHTML`, nenhuma rede, nenhuma
+# execução dinâmica, nenhum armazenamento do navegador. O `mod.json` muda só o
+# número da versão. A metade de servidor muda só os valores padrão (a borda
+# #241f19 e a densidade confortável, que são a aparência com que o SEELE abre);
+# a validação das cores, do raio, da densidade e da fonte, que barra um
+# `url(...)`, é a mesma da 3.1.0.
+#
+# 33 testes, o teste em Chromium e o `quickjs-check` passam.
+#
+# E o teto de sempre: isto é um filtro, não uma prova.
+
+[[versoes]]
+versao = "3.1.1"
+commit = "327ab9b16675f7312a8aaf7d885c39878c65cec9"
+nivel = "oficial"
+notas = ["roda-no-servidor"]
+avaliado_em = 1792342047

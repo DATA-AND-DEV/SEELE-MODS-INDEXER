@@ -269,3 +269,28 @@ commit = "dff2fbe95cf3eeb3614b3873006781ec1323adee"
 nivel = "oficial"
 notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
 avaliado_em = 1790014621
+
+# 3.1.1 — avaliação de 2026-10-18, por delta contra a 3.1.0 (`dff2fbe`).
+#
+# A linha legada, para o Servidor 0.15: a API continua 4 e os dados não mudam
+# de formato. Consertos do cliente: a página monta só a aba aberta e cabe no teto
+# de 12 KiB por montagem, a mesa é a do canal de texto aberto, o mestre dá a
+# ficha e a peça a quem joga, gravar a ficha grava só o que mudou, e trocar a
+# trilha da cena que está na mesa troca o que toca.
+#
+# **O que o delta não acrescenta:** nenhum `innerHTML`, nenhuma rede, nenhuma
+# execução dinâmica, nenhum armazenamento do navegador. O `mod.json` muda só o
+# número da versão, e o alcance é o mesmo. A metade de servidor muda numa linha:
+# trocar a trilha de uma cena publicada que está na mesa toca a trilha nova,
+# como o `scene-show` já fazia.
+#
+# 67 testes, o teste em Chromium e o `quickjs-check` passam.
+#
+# E o teto de sempre: isto é um filtro, não uma prova.
+
+[[versoes]]
+versao = "3.1.1"
+commit = "c656f0a321400d4e9e697280a9b3de14f08a439b"
+nivel = "oficial"
+notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
+avaliado_em = 1792342047
