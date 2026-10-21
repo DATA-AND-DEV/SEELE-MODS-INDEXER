@@ -1,4 +1,4 @@
-"""As cinco recusas de `read_manifest`, espelhadas.
+"""As recusas de `read_manifest`, espelhadas.
 
 Os nomes dos códigos são os de `seele_core::mods::refusal_name` e não podem
 divergir: eles atravessam para o `frases.js`, e um código sem frase mostra o
@@ -315,3 +315,89 @@ def test_arquivos_como_texto_em_vez_de_lista_e_malformed():
     with pytest.raises(Recusado) as erro:
         ler(_com_arquivos('"som/combate.wav"'))
     assert erro.value.codigo == "malformed"
+
+
+# ----------------------------------------------------- a API 6 e a porta do tema
+#
+# Espelho do corte da API 6 no produto (`seele_proto::mods`, ramo
+# `0.16/api-6-corte` do SEELE). Lá, `MOD_API_VERSION = 6` e `APIS_ACEITAS` é só
+# a `[6]` da linha 1; aqui o conjunto é **a união das linhas** que o launcher
+# roda (`APIS_POR_LINHA`: a 1 com a 6, a 0.15 com a 5, a 4 e a 3), porque o
+# catálogo serve as duas. E a chave `tema`: um `bool` com `#[serde(default)]`,
+# recusado sem metade de servidor (`Refused::TemaSemMetadeDeServidor`).
+
+def _api6(**extra) -> str:
+    import json
+    manifesto = {"schema": 1, "id": "seele/estilo", "version": "4.0.0", "api": 6,
+                 "repo": "https://example.invalid/x"}
+    manifesto.update(extra)
+    return json.dumps(manifesto)
+
+
+def test_o_indexador_oferece_a_6_e_aceita_a_uniao_das_linhas():
+    from ferramentas.manifesto import APIS_ACEITAS
+    assert VERSAO_DA_API == 6
+    assert APIS_ACEITAS == (6, 5, 4, 3)
+
+
+def test_um_manifesto_da_api_6_e_lido():
+    assert ler(_api6(client="c.js")).api == 6
+
+
+def test_tema_com_metade_de_servidor_e_lido():
+    assert ler(_api6(server="servidor/main.js", tema=True)).tema is True
+
+
+def test_sem_a_chave_tema_vale_false():
+    # `#[serde(default)]` lá: ausente é `false`, e não recusa.
+    assert ler(_api6(client="c.js")).tema is False
+
+
+def test_tema_false_sem_servidor_continua_valendo():
+    assert ler(_api6(client="c.js", tema=False)).tema is False
+
+
+@pytest.mark.parametrize("tema", [None, 1, 0, "true"])
+def test_tema_que_nao_e_booleano_e_malformed(tema):
+    # `null` também: o campo não é `Option<bool>`, e o `serde` não o desserializa.
+    with pytest.raises(Recusado) as erro:
+        ler(_api6(server="s.js", tema=tema))
+    assert erro.value.codigo == "malformed"
+
+
+@pytest.mark.parametrize("chave", ["schema", "api", "state"])
+def test_as_chaves_inteiras_continuam_recusando_booleano(chave):
+    # A conferência de tipo deixou de recusar **todo** booleano, para o `tema`
+    # passar. Nas chaves u32 ela continua: `true` não é um u32 no Rust.
+    with pytest.raises(Recusado) as erro:
+        ler(_api6(client="c.js", **{chave: True}))
+    assert erro.value.codigo == "malformed"
+
+
+def test_tema_sem_metade_de_servidor_e_recusado():
+    with pytest.raises(Recusado) as erro:
+        ler(_api6(client="c.js", tema=True))
+    assert erro.value.codigo == "tema-sem-metade-de-servidor"
+
+
+def test_tema_sem_metade_nenhuma_e_empty_antes():
+    # A ordem do Rust: `empty` vem antes da porta do tema.
+    with pytest.raises(Recusado) as erro:
+        ler(_api6(tema=True))
+    assert erro.value.codigo == "empty"
+
+
+@pytest.mark.parametrize("api", [3, 4, 5])
+def test_tema_numa_api_da_linha_0_15_e_malformed(api):
+    # A linha 0.15 não conhece a chave e a recusa (`deny_unknown_fields`), e a
+    # linha 1 não aceita a API dela: um pacote assim não instala em build
+    # nenhuma, e não entra no catálogo.
+    with pytest.raises(Recusado) as erro:
+        ler(_api6(api=api, server="s.js", tema=True))
+    assert erro.value.codigo == "malformed"
+    assert "tema" in erro.value.detalhe
+
+
+@pytest.mark.parametrize("api", [3, 4, 5])
+def test_a_linha_0_15_continua_publicavel(api):
+    assert ler(_api6(api=api, client="c.js")).api == api

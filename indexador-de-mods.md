@@ -436,18 +436,25 @@ para a submissão, alguém vai propor usá-la para a busca; a resposta é esta s
 e o motivo é o de sempre: com API o indexador aprende cada termo digitado, e com
 arquivo aprende que alguém buscou o arquivo.
 
-## API 3 e histórico publicado
+## As APIs aceitas e o histórico publicado
 
-A versão aceita para **novos pacotes** é 3, espelhada de `MOD_API_VERSION` do
-SEELE. O cliente do MOD executa em Worker e usa `SeeleUI.regiao` e `SeeleUI.tema`;
-DOM, CSS e eventos de unload não fazem parte dessa arquitetura. API anterior é
-recusada como `api-too-old`; API superior recebe `api-too-new`.
+O indexador oferece a **API 6** (`VERSAO_DA_API`, espelho de `MOD_API_VERSION`
+do SEELE) e aceita para **novos pacotes** a união das linhas que o launcher
+roda: `APIS_ACEITAS = (6, 5, 4, 3)`. A 6 é da linha 1 (o app 0.16, o Servidor
+1.0); a 5, a 4 e a 3 são da linha 0.15, e quem hospeda pelo Servidor 0.15
+instala do mesmo catálogo. Cada app escolhe a versão mais nova que ele executa.
+API abaixo da 3 é recusada como `api-too-old`; acima da 6, como `api-too-new`.
+
+A chave `tema` (a porta do tema da API 6) é um booleano. Ela é recusada abaixo
+da API 6, porque a linha 0.15 não a conhece e não instalaria o pacote, e
+`"tema": true` sem metade de servidor sai `tema-sem-metade-de-servidor`, como
+no produto.
 
 O catálogo continua append-only. O gerador conserva uma versão antiga apenas
 quando ID, versão e hash dos bytes materializados já constam no catálogo
 anterior. Essa exceção é de preservação histórica, não de compatibilidade com o
 runtime atual. Uma nova versão ou bytes substituídos não recebem a exceção.
-O catálogo gerado anuncia `api_oferecida: 3`.
+O catálogo gerado anuncia `api_oferecida: 6` e `apis_aceitas: [6, 5, 4, 3]`.
 
 O guia tem fonte em `docs/guia-criacao-mods.md`; gere HTML, Markdown de download e
 ZIP com `python3 -m ferramentas.gerar_guia`. A publicação deve regenerar e assinar

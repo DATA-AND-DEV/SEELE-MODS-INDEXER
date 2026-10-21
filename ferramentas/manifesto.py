@@ -17,9 +17,20 @@ from ferramentas.recusa import Recusado
 ESQUEMA_DO_MANIFESTO = 1
 
 # Espelho de `seele_proto::mods::MOD_API_VERSION`.
-VERSAO_DA_API = 5
+VERSAO_DA_API = 6
 
-# Espelho de `seele_proto::mods::APIS_ACEITAS`, da mais nova para a mais velha.
+# **A união das linhas**, da mais nova para a mais velha: o que
+# `seele_proto::mods::apis_de_toda_linha()` tira de `APIS_POR_LINHA`, e não
+# mais o espelho de `APIS_ACEITAS`.
+#
+# # Por que a união, e não o conjunto do app
+#
+# Desde o corte da API 6, o `APIS_ACEITAS` do produto é só o da linha dele: a
+# `[6]` da linha 1 (o app 0.16, o Servidor 1.0). As 5, 4 e 3 são da linha 0.15,
+# que o launcher roda ao lado, e quem hospeda pelo Servidor 0.15 instala do
+# mesmo catálogo. O indexador serve as duas linhas, então aceita o que alguma
+# delas executa. Uma API fora de toda linha (a 7, antes de existir) continua
+# recusada, e uma que saiu de toda linha também.
 #
 # # Por que um conjunto, e não um número
 #
@@ -40,14 +51,19 @@ VERSAO_DA_API = 5
 # Aceitar a 3 não dá à 3 o que a 4 tem: as capacidades são por versão e quem as
 # aplica é o prelúdio do executor, do lado do cliente. A 2 não volta — ela
 # executava na janela.
-APIS_ACEITAS = (5, 4, 3)
+APIS_ACEITAS = (6, 5, 4, 3)
+
+# A API em que a chave `tema` nasceu. A linha 0.15 não a conhece e a recusa
+# (`deny_unknown_fields`), e a linha 1 não executa as APIs da 0.15: um pacote
+# abaixo da 6 que declare a chave não instala em build nenhuma.
+API_DO_TEMA = 6
 
 # Toda chave que o esquema 1 conhece. Uma chave fora daqui é recusada em vez
 # de ignorada, pelo motivo que o Rust escreve em `deny_unknown_fields`: uma
 # chave com erro de digitação instala um MOD sem a coisa que o autor achou
 # que estava lá, e o autor nunca descobre.
 CHAVES = {"schema", "id", "version", "api", "repo", "reach", "state", "client", "server",
-          "arquivos"}
+          "arquivos", "tema"}
 OBRIGATORIAS = {"schema", "id", "version", "api", "repo"}
 
 # O tipo de cada chave, porque o `serde` do Rust valida isso na
@@ -57,10 +73,13 @@ OBRIGATORIAS = {"schema", "id", "version", "api", "repo"}
 TIPOS = {
     "schema": int, "id": str, "version": str, "api": int, "repo": str,
     "reach": list, "state": int, "client": str, "server": str, "arquivos": list,
+    "tema": bool,
 }
 
 # Os únicos campos que o Rust declara `Option<T>`. Para os demais, um `null`
-# explícito não é «ausente»: é um manifesto que o `serde` recusaria.
+# explícito não é «ausente»: é um manifesto que o `serde` recusaria. O `tema`
+# fica de fora de propósito: lá ele é `bool` com `#[serde(default)]`, então a
+# chave ausente vale `false`, mas `"tema": null` não desserializa.
 OPCIONAIS = {"state", "client", "server"}
 
 U32_MAX = 2**32 - 1
@@ -83,6 +102,7 @@ class Manifesto:
     state: int | None = None
     client: str | None = None
     server: str | None = None
+    tema: bool = False
 
 
 def _bem_formado(identificador: str) -> bool:
@@ -161,7 +181,9 @@ def ler(texto: str, *, historico: bool = False) -> Manifesto:
                 continue
             raise Recusado("malformed", f"{chave} não pode ser nulo")
         # `bool` é subclasse de `int` em Python, e `true` não é um u32 no Rust.
-        if isinstance(valor, bool) or not isinstance(valor, tipo):
+        # Só nas chaves que não são `bool`: o `tema` é, e a recusa de todo
+        # booleano o recusaria como «tema deveria ser bool».
+        if (tipo is not bool and isinstance(valor, bool)) or not isinstance(valor, tipo):
             raise Recusado("malformed", f"{chave} deveria ser {tipo.__name__}")
         # `schema`, `api` e `state` são u32 lá: negativo ou acima do teto não
         # desserializa, e publicar o que o cliente recusa é o defeito que este
@@ -191,10 +213,17 @@ def ler(texto: str, *, historico: bool = False) -> Manifesto:
     if cru["api"] not in APIS_ACEITAS and not historico:
         aceitas = ", ".join(str(n) for n in APIS_ACEITAS)
         raise Recusado("api-too-old", f'pede API {cru["api"]}, esta versão executa {aceitas}')
+    if "tema" in cru and cru["api"] < API_DO_TEMA:
+        raise Recusado("malformed", f'chave desconhecida para a API {cru["api"]}: tema')
     if not _bem_formado(cru["id"]):
         raise Recusado("malformed-id", cru["id"])
     if cru.get("client") is None and cru.get("server") is None:
         raise Recusado("empty", "não declara metade de cliente nem de servidor")
+    # A porta do tema sem quem a abra: quem pinta a aparência é a metade de
+    # servidor, por `mundo.tema`, e sem ela o tema nunca aparece. Logo depois
+    # de `empty`, na ordem do Rust (`Refused::TemaSemMetadeDeServidor`).
+    if cru.get("tema", False) and cru.get("server") is None:
+        raise Recusado("tema-sem-metade-de-servidor", "declara \"tema\": true sem metade de servidor")
 
     return Manifesto(
         schema=cru["schema"],
@@ -207,4 +236,5 @@ def ler(texto: str, *, historico: bool = False) -> Manifesto:
         state=cru.get("state"),
         client=cru.get("client"),
         server=cru.get("server"),
+        tema=cru.get("tema", False),
     )
