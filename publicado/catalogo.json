@@ -1,12 +1,13 @@
 {
   "esquema": 1,
-  "api_oferecida": 5,
+  "api_oferecida": 6,
   "apis_aceitas": [
+    6,
     5,
     4,
     3
   ],
-  "gerado_em": 1792342222,
+  "gerado_em": 1792609383,
   "mods": [
     {
       "id": "seele/estilo",
@@ -17,7 +18,7 @@
       "repo": "https://github.com/DATA-AND-DEV/ESTILO",
       "oficial": true,
       "nivel": "oficial",
-      "commit": "327ab9b16675f7312a8aaf7d885c39878c65cec9",
+      "commit": "73e36f78f105f43f936b718e4b5c09e8b8cd677e",
       "notas": [
         "roda-no-servidor"
       ],
@@ -323,6 +324,50 @@
             "roda-no-servidor"
           ],
           "commit": "327ab9b16675f7312a8aaf7d885c39878c65cec9"
+        },
+        {
+          "versao": "4.0.0",
+          "api": 6,
+          "publicado_em": 1792609079,
+          "hash": "37ca6e426972f1d0dccf144bc75073675b28b23f6a8adf98e807f509595a4249",
+          "alcanca": [
+            "tema do servidor",
+            "dialogo de aparencia",
+            "entrada de navegacao",
+            "aviso do servidor"
+          ],
+          "arquivos": [
+            "README.md",
+            "cliente/main.js",
+            "ferramentas/build.mjs",
+            "ferramentas/estilo.js",
+            "ferramentas/interface.js",
+            "ferramentas/package.mjs",
+            "ferramentas/preview.cjs",
+            "ferramentas/quickjs-check/Cargo.lock",
+            "ferramentas/quickjs-check/Cargo.toml",
+            "ferramentas/quickjs-check/smoke.js",
+            "ferramentas/quickjs-check/src/main.rs",
+            "ferramentas/retratos.cjs",
+            "ferramentas/test-ui.cjs",
+            "mod.json",
+            "package-lock.json",
+            "package.json",
+            "servidor/main.js",
+            "test/casca.test.cjs",
+            "test/cliente.test.cjs",
+            "test/contrato.test.cjs",
+            "test/contrato/chaves-do-tema.json",
+            "test/contrato/v6.json",
+            "test/mundo-da-api6.cjs",
+            "test/redesenho.test.cjs",
+            "test/servidor.test.cjs"
+          ],
+          "nivel": "oficial",
+          "notas": [
+            "roda-no-servidor"
+          ],
+          "commit": "73e36f78f105f43f936b718e4b5c09e8b8cd677e"
         }
       ]
     },
@@ -335,7 +380,7 @@
       "repo": "https://github.com/DATA-AND-DEV/MESA",
       "oficial": true,
       "nivel": "oficial",
-      "commit": "c656f0a321400d4e9e697280a9b3de14f08a439b",
+      "commit": "8e78e09165ca50ef465b0d1d6761d5590911518a",
       "notas": [
         "roda-no-servidor",
         "guarda-dados-na-maquina"
@@ -584,6 +629,58 @@
             "guarda-dados-na-maquina"
           ],
           "commit": "c656f0a321400d4e9e697280a9b3de14f08a439b"
+        },
+        {
+          "versao": "4.0.0",
+          "api": 6,
+          "publicado_em": 1792609079,
+          "hash": "2fe2efd5731a7036bc596758ab20191a684570d08a3a65f1dcbf5bf7ecdd9acc",
+          "alcanca": [
+            "estado da campanha no servidor",
+            "mapas e retratos de personagem, pelo volume",
+            "seletor de arquivos de quem usa",
+            "entrada na navegação do servidor",
+            "cabeçalho do canal",
+            "ações da sala de voz",
+            "palco da chamada",
+            "nomes de quem está no servidor",
+            "trilha sonora do pacote"
+          ],
+          "arquivos": [
+            "README.md",
+            "cliente/main.js",
+            "ferramentas/build.mjs",
+            "ferramentas/interface.js",
+            "ferramentas/mesa.js",
+            "ferramentas/package.mjs",
+            "ferramentas/preview.cjs",
+            "ferramentas/quickjs-check/Cargo.lock",
+            "ferramentas/quickjs-check/Cargo.toml",
+            "ferramentas/quickjs-check/smoke.js",
+            "ferramentas/quickjs-check/src/main.rs",
+            "ferramentas/retratos.cjs",
+            "ferramentas/servidor-de-desenvolvimento.rs.referencia",
+            "ferramentas/test-ui.cjs",
+            "mod.json",
+            "package-lock.json",
+            "package.json",
+            "servidor/main.js",
+            "som/combate.wav",
+            "som/exploracao.wav",
+            "som/misterio.wav",
+            "test/casca.test.cjs",
+            "test/cliente.test.cjs",
+            "test/contrato/api-v6.json",
+            "test/laboratorio.cjs",
+            "test/mesa.test.cjs",
+            "test/redesenho.test.cjs"
+          ],
+          "nivel": "oficial",
+          "notas": [
+            "roda-no-servidor",
+            "guarda-dados-na-maquina"
+          ],
+          "commit": "8e78e09165ca50ef465b0d1d6761d5590911518a"
         }
       ]
     },
@@ -596,7 +693,7 @@
       "repo": "https://github.com/DATA-AND-DEV/PERFIS",
       "oficial": true,
       "nivel": "oficial",
-      "commit": "077477486af26e628021282bbc1a42e3f87ebca5",
+      "commit": "90f3818770dac09810663d35c9c4c966c98951bd",
       "notas": [
         "roda-no-servidor",
         "guarda-dados-na-maquina"
@@ -1149,6 +1246,65 @@
             "guarda-dados-na-maquina"
           ],
           "commit": "077477486af26e628021282bbc1a42e3f87ebca5"
+        },
+        {
+          "versao": "4.0.0",
+          "api": 6,
+          "publicado_em": 1792609079,
+          "hash": "6c5ecf4ea2d1b9ae2c201de8fee24c1c4c3ee1f3ff39d9e0f10710f796f7a368",
+          "alcanca": [
+            "cartão das pessoas",
+            "foto e capa da pessoa",
+            "entrada na navegação",
+            "perfis no servidor",
+            "imagens públicas no servidor",
+            "envio de imagens"
+          ],
+          "arquivos": [
+            "README.md",
+            "cliente/main.js",
+            "ferramentas/build.mjs",
+            "ferramentas/interface.js",
+            "ferramentas/native/fontes.css",
+            "ferramentas/native/fontes/LICENCA-ibm-plex-mono.txt",
+            "ferramentas/native/fontes/LICENCA-noto-sans-jp.txt",
+            "ferramentas/native/fontes/LICENCA-saira-condensed.txt",
+            "ferramentas/native/fontes/PROCEDENCIA.md",
+            "ferramentas/native/fontes/ibm-plex-mono-400.woff2",
+            "ferramentas/native/fontes/ibm-plex-mono-500.woff2",
+            "ferramentas/native/fontes/ibm-plex-mono-600.woff2",
+            "ferramentas/native/fontes/noto-sans-jp-700.woff2",
+            "ferramentas/native/fontes/noto-sans-jp-900.woff2",
+            "ferramentas/native/fontes/saira-condensed-500.woff2",
+            "ferramentas/native/fontes/saira-condensed-700.woff2",
+            "ferramentas/native/fontes/saira-condensed-900.woff2",
+            "ferramentas/native/tokens.css",
+            "ferramentas/package.mjs",
+            "ferramentas/perfis.js",
+            "ferramentas/preview.cjs",
+            "ferramentas/quickjs-check/Cargo.lock",
+            "ferramentas/quickjs-check/Cargo.toml",
+            "ferramentas/quickjs-check/smoke.js",
+            "ferramentas/quickjs-check/src/main.rs",
+            "ferramentas/retratos.cjs",
+            "ferramentas/test-ui.cjs",
+            "mod.json",
+            "package-lock.json",
+            "package.json",
+            "servidor/main.js",
+            "test/casca.test.cjs",
+            "test/cliente.test.cjs",
+            "test/contrato.test.cjs",
+            "test/laboratorio.cjs",
+            "test/servidor.test.cjs",
+            "test/volume.test.cjs"
+          ],
+          "nivel": "oficial",
+          "notas": [
+            "roda-no-servidor",
+            "guarda-dados-na-maquina"
+          ],
+          "commit": "90f3818770dac09810663d35c9c4c966c98951bd"
         }
       ]
     }

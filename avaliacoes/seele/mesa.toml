@@ -294,3 +294,34 @@ commit = "c656f0a321400d4e9e697280a9b3de14f08a439b"
 nivel = "oficial"
 notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
 avaliado_em = 1792342047
+
+# ---------------------------------------------------------------------------
+# MESA 4.0.0 — avaliação de 2026-10-21, por delta contra a 3.1.1 (`c656f0a`).
+#
+# A API 6, para o app 0.16 e o Servidor 1.0; a linha 0.15 continua na 3.1.1.
+# O cliente foi reescrito para a 6: a página, a folha da ficha, os diálogos com
+# formulário, o palco da chamada para quem está na sala amarrada à mesa, e a
+# entrada na navegação, no cabeçalho do canal e nas ações da sala. A metade de
+# servidor avisa cada revisão (`mundo.avisar`) em vez de a janela perguntar de
+# tempos em tempos, confere quem pede em toda operação nova (apagar ficha, cena
+# e verbete só o mestre), e mapas e retratos vão inteiros pelo volume, até
+# 10 MiB. O espaço é contado em bytes contra `dados.teto`.
+#
+# **O que o delta não acrescenta:** nas linhas novas do cliente e do servidor,
+# nenhum `fetch`, `XMLHttpRequest`, `WebSocket`, `eval`, `new Function`,
+# `import()`, `innerHTML`, `localStorage`, `indexedDB` ou endereço. O alcance
+# perde «regiao», que a 6 não tem, e diz o volume, o seletor de arquivos, as
+# entradas, o palco e os nomes de quem está no servidor.
+#
+# 142 testes, 54 consertos revertidos que reprovam o teste deles, o teste em
+# Chromium e o `quickjs-check` passam, contra a v6 da quarta emenda
+# (`8dcf4aaf…`). Não rodou no app nativo nem no celular.
+#
+# E o teto de sempre: isto é um filtro, não uma prova.
+
+[[versoes]]
+versao = "4.0.0"
+commit = "8e78e09165ca50ef465b0d1d6761d5590911518a"
+nivel = "oficial"
+notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
+avaliado_em = 1792609079

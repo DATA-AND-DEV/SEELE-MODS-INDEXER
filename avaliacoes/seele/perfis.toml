@@ -565,3 +565,30 @@ commit = "077477486af26e628021282bbc1a42e3f87ebca5"
 nivel = "oficial"
 notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
 avaliado_em = 1792342047
+
+# ---------------------------------------------------------------------------
+# PERFIS 4.0.0 — avaliação de 2026-10-21, por delta contra a 3.3.1 (`0774774`).
+#
+# A API 6, para o app 0.16 e o Servidor 1.0; a linha 0.15 continua na 3.3.1.
+# O cartão, a foto e a capa de cada pessoa (`pessoa.cartao`, `pessoa.avatar` e
+# `pessoa.capa`), a entrada «Perfis» na navegação, e nenhuma outra
+# contribuição. A folha do perfil mostra a capa e a foto por citação
+# (`daPessoa`, com a pessoa), sem pedir os bytes de novo. As imagens vão pelo
+# volume, e o envio em fragmentos é recusado.
+#
+# **O que o delta não acrescenta:** o cliente só lê da sessão o retrato e pede ao
+# próprio servidor; nenhuma rede, armazenamento local ou permissão nova. Na
+# metade de servidor, só `ctx.person` grava, o aviso sai depois do dado gravado,
+# e o texto é conferido sem controles nem marcas de direção.
+#
+# 83 testes, o laboratório em Chromium e o `quickjs-check` passam, contra a v6
+# da quarta emenda (`8dcf4aaf…`). Não rodou no app nativo nem no celular.
+#
+# E o teto de sempre: isto é um filtro, não uma prova.
+
+[[versoes]]
+versao = "4.0.0"
+commit = "90f3818770dac09810663d35c9c4c966c98951bd"
+nivel = "oficial"
+notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
+avaliado_em = 1792609079

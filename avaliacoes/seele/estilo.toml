@@ -266,3 +266,29 @@ commit = "327ab9b16675f7312a8aaf7d885c39878c65cec9"
 nivel = "oficial"
 notas = ["roda-no-servidor"]
 avaliado_em = 1792342047
+
+# ---------------------------------------------------------------------------
+# ESTILO 4.0.0 — avaliação de 2026-10-21, por delta contra a 3.1.1 (`327ab9b`).
+#
+# A API 6, para o app 0.16 e o Servidor 1.0; a linha 0.15 continua na 3.1.1.
+# O primeiro MOD a declarar `"tema": true`: a metade de servidor pinta a
+# aparência do servidor inteiro por `mundo.tema`, que a tela de aceite mostra
+# numa linha própria. Quem escolhe é quem administra, num diálogo de aparência
+# aberto pela entrada na navegação, e a mudança chega como aviso do servidor.
+#
+# **O que o delta não acrescenta:** nenhuma rede, nenhuma execução dinâmica,
+# nenhum armazenamento do navegador. A validação das cores, do raio, da
+# densidade e da fonte, que barra um `url(...)`, continua no servidor.
+#
+# 50 testes, o teste em Chromium nas duas larguras e o `quickjs-check` passam,
+# contra a v6 da quarta emenda (`8dcf4aaf…`), e os 27 guardas reprovam quando
+# revertidos. Não rodou no app nativo nem no celular.
+#
+# E o teto de sempre: isto é um filtro, não uma prova.
+
+[[versoes]]
+versao = "4.0.0"
+commit = "73e36f78f105f43f936b718e4b5c09e8b8cd677e"
+nivel = "oficial"
+notas = ["roda-no-servidor"]
+avaliado_em = 1792609079
