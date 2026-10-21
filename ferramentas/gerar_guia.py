@@ -28,7 +28,9 @@ def inline(text):
                 raise ValueError('Link não permitido: ' + href)
             result.append('<a href="' + html.escape(href, quote=True) + '">' + html.escape(m[2]) + '</a>')
         else:
-            result.append('<strong>' + html.escape(m[4]) + '</strong>')
+            # O negrito leva o que a linha leva: código e link dentro dele
+            # saíam com as crases e os colchetes à vista.
+            result.append('<strong>' + inline(m[4]) + '</strong>')
         last = m.end()
     result.append(html.escape(text[last:]))
     return ''.join(result)
@@ -99,6 +101,17 @@ def chapters():
     return capitulos
 
 
+def para_download(fonte):
+    """O Markdown de download, com os títulos de capítulo convencionais.
+
+    **O slug com dígito também.** A classe era `[a-z-]+`, sem os dígitos que
+    `chapters()` reconhece desde a API 4: o `## [referencia:api4]` saía no
+    download com a etiqueta, e o leitor de Markdown de quem baixou mostrava o
+    colchete como título.
+    """
+    return re.sub(r'^## \[(?:guia|referencia):[a-z0-9-]+\] ', '## ', fonte, flags=re.M)
+
+
 def shell():
     """Cabeçalho e rodapé vêm do catálogo; só destinos e busca são adaptados."""
     source = (ROOT / 'site/index.html').read_text()
@@ -133,13 +146,13 @@ def generate():
         panels.append(f'<section id="painel-{mode}" role="tabpanel" aria-labelledby="modo-{mode}" class="documentacao"><aside class="sumario"><p class="coordenada">{label}</p><nav role="tablist" aria-orientation="vertical" aria-label="Capítulos de {label}">{tabs}</nav></aside><div class="artigos">'+''.join(articles)+'</div></section>')
     page = '''<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="description" content="Aprenda a criar MODs para o SEELE: guia passo a passo, API 4, pedidos, eventos, arquivos, permissões, exemplos e publicação.">
+<meta name="description" content="Aprenda a criar MODs para o SEELE: guia passo a passo, API 6, superfícies, contribuições, pedidos, eventos, arquivos, permissões, exemplos e publicação.">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data:; style-src 'self'; script-src 'self'; connect-src 'self'; base-uri 'none'; form-action 'none'">
 <meta name="theme-color" content="#050403">
 <title>SEELE MODS: como criar um MOD</title><link rel="icon" href="../favicon.ico" sizes="32x32"><link rel="icon" href="../favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="../apple-touch-icon.png"><link rel="stylesheet" href="../fontes.css"><link rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../casca.css"><link rel="stylesheet" href="guia.css"><link rel="stylesheet" href="../estilo.css"></head>
 <body><div class="pagina"><a class="pular" href="#conteudo">Pular para a documentação</a>
 __CABECALHO__
-<section class="painel guia-abertura" aria-labelledby="titulo-guia"><div class="guia-apresentacao"><h1 id="titulo-guia">Criar um MOD</h1><p class="cartao-resumo">Guia de criação e referência da API. Do primeiro pacote à publicação no catálogo.</p><p class="rotulo">API 4 · Schema 1 · Revisado em 20/09/2026</p></div><div class="guia-recursos"><a class="botao" href="guia-criacao-mods.md" download>BAIXAR GUIA .MD ↓</a><a class="botao" href="exemplos/contador.zip" download>MOD DE EXEMPLO ↓</a></div></section>
+<section class="painel guia-abertura" aria-labelledby="titulo-guia"><div class="guia-apresentacao"><h1 id="titulo-guia">Criar um MOD</h1><p class="cartao-resumo">Guia de criação e referência da API. Do primeiro pacote à publicação no catálogo.</p><p class="rotulo">API 6 · Schema 1 · Revisado em 21/10/2026</p></div><div class="guia-recursos"><a class="botao" href="guia-criacao-mods.md" download>BAIXAR GUIA .MD ↓</a><a class="botao" href="exemplos/contador.zip" download>MOD DE EXEMPLO ↓</a></div></section>
 <div class="barra-consulta"><div role="tablist" aria-label="Modo de leitura" class="modos"><button type="button" role="tab" class="botao botao-forte" id="modo-guia" aria-controls="painel-guia">Guia passo a passo</button><button type="button" role="tab" class="botao" id="modo-referencia" aria-controls="painel-referencia">Referência técnica</button></div></div>
 <main class="corpo" id="conteudo" tabindex="-1"><section id="resultados" aria-label="Resultados da busca" hidden><h2>Resultados</h2><p id="contagem" role="status"></p><div id="lista-resultados"></div><button type="button" id="limpar-busca" class="botao">Limpar busca</button></section>'''+''.join(panels)+'''</main>
 <p class="status-copia" id="status-copia" role="status" aria-live="polite"></p>__RODAPE__
@@ -151,7 +164,7 @@ __CABECALHO__
         page = page.replace(f'"{asset}"', f'"{asset}?v={version}"')
     (DEST/'index.html').write_text(page)
     # A versão para download usa títulos Markdown convencionais.
-    (DEST/'guia-criacao-mods.md').write_text(re.sub(r'^## \[(?:guia|referencia):[a-z-]+\] ', '## ', SOURCE.read_text(),flags=re.M))
+    (DEST/'guia-criacao-mods.md').write_text(para_download(SOURCE.read_text()))
     with zipfile.ZipFile(DEST/'exemplos/contador.zip','w',zipfile.ZIP_DEFLATED) as z:
         for rel in ['mod.json','cliente/main.js','servidor/main.js']:
             info=zipfile.ZipInfo(rel,date_time=(2026,9,18,0,0,0)); info.compress_type=zipfile.ZIP_DEFLATED

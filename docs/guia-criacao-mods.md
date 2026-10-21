@@ -1,23 +1,26 @@
 # Como criar MODs para o SEELE
 
-Guia prático e referência técnica. Revisão de 18/09/2026. Manifesto schema 1, API de MOD 3. A documentação distingue funcionalidades executáveis, convenções de autoria e contratos declarados que ainda não têm uma ligação completa no runtime.
+Guia prático e referência técnica. Revisão de 21/10/2026. Manifesto schema 1, API de MOD 6: a do app 0.16 e do Servidor 1.0. A documentação distingue o que o produto executa, as convenções de autoria e o que não existe — e diz qual é qual.
 
 ## [guia:comecar] Comece por aqui
 
-Um MOD é um pacote de JavaScript que acrescenta comportamento ao SEELE. Ele declara uma região com texto, campos, escolhas, botões, desenho e mídia; recebe o que a pessoa faz; pede cores para a sessão; e guarda informações próprias no servidor. Não é necessário alterar o Rust para apresentar um contador, editar uma ficha, arrastar uma peça num tabuleiro ou tocar um som do próprio pacote.
+Um MOD é um pacote de JavaScript que acrescenta comportamento ao SEELE. Na API 6 ele desenha em **superfícies** — uma página, um diálogo, uma folha, um aviso —, entra na interface do SEELE por **contribuições** num ponto com nome, como a navegação do servidor ou o cartão de uma pessoa, recebe o que a pessoa faz, publica o tema do servidor e guarda informações próprias no servidor. Não é preciso alterar o Rust para mostrar um contador, editar uma ficha, arrastar uma peça num tabuleiro ou tocar um som do próprio pacote.
 
-Você entrega uma pasta com um manifesto e pelo menos um script. O manifesto apresenta o pacote; o script faz o trabalho. Quando o MOD tem interface e dados compartilhados, a metade de cliente declara a região e recebe o que a pessoa faz; a metade de servidor decide o que pode ser lido ou alterado.
+Você entrega uma pasta com um manifesto e pelo menos um script. O manifesto apresenta o pacote; o script faz o trabalho. Quando o MOD tem interface e dados compartilhados, a metade de cliente declara o que aparece e recebe o que a pessoa faz; a metade de servidor decide o que pode ser lido ou alterado.
+
+**Não há SDK, build nem passo de compilação.** O que você escreve é o que roda, e é também o que passa pela avaliação: os três são o mesmo arquivo, de propósito.
 
 ### Escolha seu caminho
 
 - Nunca criou um MOD? Siga os capítulos do guia, em ordem. Você terminará com um contador compartilhado instalável.
-- Já conhece JavaScript? Abra Referência técnica para consultar assinaturas, tipos, limites, autorização e ciclo de vida.
-- Quer publicar? Primeiro teste a pasta exata que será distribuída; depois consulte Publicação e atualizações.
-- Está corrigindo um problema? Consulte Diagnóstico. Uma instalação bem-sucedida não prova que o MOD está ativo ou executando.
+- Já conhece JavaScript? Abra a Referência técnica para consultar assinaturas, tipos, limites, autorização e ciclo de vida.
+- Quer publicar? Primeiro teste a pasta exata que será distribuída; depois consulte Publique e mantenha.
+- Está corrigindo um problema? Consulte Recusas e diagnóstico. Uma instalação bem-sucedida não prova que o MOD está ligado nem executando.
+- Mantém um MOD das APIs 3, 4 ou 5? Ele roda no Servidor 0.15, e não no app 0.16: veja A linha do Servidor 0.15.
 
 ### O que você precisa
 
-Um editor de texto e conhecimentos básicos de JavaScript, JSON, funções, objetos e tratamento de erros. Para a interface, use árvores de objetos com `forma` e `dentro`; HTML e CSS não fazem parte da API. Node.js é útil para verificar sintaxe e rodar testes, mas não é uma dependência exigida pelo runtime do MOD. Git é recomendado para versionar e publicar. Rust e Cargo só são necessários se você for compilar o SEELE ou usar os testes nativos de runtime.
+Um editor de texto e conhecimentos básicos de JavaScript, JSON, funções, objetos, promessas e tratamento de erros. Para a interface, use árvores de objetos com `forma` e `dentro`; HTML e CSS não fazem parte da API. Node.js é útil para verificar sintaxe e rodar testes, mas não é uma dependência do runtime do MOD. Git é recomendado para versionar e publicar. Rust e Cargo só são necessários se você for compilar o SEELE ou subir um servidor local com o seu MOD pelo repositório do SEELE.
 
 Você não precisa contratar um backend para guardar o estado de um MOD: o servidor SEELE fornece armazenamento próprio. Integrações externas podem precisar de infraestrutura adicional, mas isso é uma escolha do seu produto.
 
@@ -25,11 +28,11 @@ Você não precisa contratar um backend para guardar o estado de um MOD: o servi
 
 1. O código de cliente roda num executor próprio de cada participante — um motor QuickJS do lado do aplicativo, fora da janela. Uma variável nele não é compartilhada com outras pessoas, e o que ele guardar morre com a sessão.
 2. O código de servidor roda no computador de quem hospeda. É ali que ficam as regras de autorização e o estado comum.
-3. A comunicação tem pedido e resposta. O resultado chega somente à pessoa que fez o pedido; os outros clientes precisam consultar novamente para enxergar alterações.
+3. A comunicação tem pedido e resposta, e a resposta chega só a quem perguntou. Para as outras janelas saberem de uma mudança, a metade de servidor as avisa com `mundo.avisar`, e cada uma recebe o evento `servidor` — sem consultar de tempos em tempos.
 
 ### Exemplo completo
 
-O [contador de exemplo](exemplos/contador.zip) tem três arquivos, usa a API 3 e inclui uma região com um botão que grava no servidor. O servidor mantém revisão e autorização administrativa, exercitados pelos testes. Extraia o ZIP antes de instalar. O código é didático e não depende de Estilo, Perfis ou Mesa.
+O [contador de exemplo](exemplos/contador.zip) tem três arquivos e usa a API 6: uma entrada na navegação do servidor abre uma página com dois botões, que gravam no servidor. O servidor mantém revisão e autorização administrativa, e avisa as outras janelas quando o valor muda. Extraia o ZIP antes de instalar. O código é didático e não depende de ESTILO, PERFIS ou MESA.
 
 ## [guia:planejar] Planeje seu MOD
 
@@ -37,25 +40,27 @@ Escreva uma frase dizendo o que a pessoa conseguirá fazer. Depois escolha onde 
 
 | Objetivo | Cliente | Servidor |
 | --- | --- | --- |
-| Cor local ou painel sem estado comum | Sim | Pode ser dispensado |
-| Tema escolhido pelo host para todos | Sim | Sim: persistência e autorização |
-| Perfil específico de uma comunidade | Sim | Sim: identidade e dados |
-| Registrar uma ocorrência de evento | Opcional | Sim |
-| Consultar um serviço HTTP externo | Interface opcional | Sim, por mundo.buscar |
+| Uma página ou um diálogo sem estado comum | Sim | Pode ser dispensado |
+| Tema do servidor, o mesmo para todos | Opcional: uma prévia | Sim: `"tema": true` e `mundo.tema` |
+| Perfil numa comunidade | Sim: o cartão, a foto e a capa da pessoa | Sim: identidade e dados |
+| Reagir a uma mensagem do chat | Opcional | Sim, por `aoAcontecer` |
+| Consultar um serviço HTTP externo | Interface opcional | Sim, por `mundo.buscar` |
 
-Um MOD somente de cliente ainda participa do mecanismo de MODs exigidos/aceitos pelo servidor. “Somente cliente” descreve o lugar onde o script executa; não é uma promessa de um sistema separado de extensões locais.
+Um MOD somente de cliente ainda participa do mecanismo de MODs exigidos e aceitos pelo servidor. «Somente cliente» descreve o lugar onde o script executa; não é uma promessa de um sistema separado de extensões locais. E o tema que todos veem é sempre da metade de servidor: um MOD sem `server` só faz prévia.
 
 ### Decisões que evitam retrabalho
 
-Defina quem pode ler, quem pode editar, se os dados pertencem ao servidor inteiro ou a um canal, o volume esperado e o que acontece quando o MOD é desligado. Por exemplo: “Qualquer participante autorizado lê o contador; quem pode escrever no canal soma; somente administrador zera”. Essa regra poderá ser testada no servidor.
+Defina quem pode ler, quem pode editar, se os dados pertencem ao servidor inteiro ou a um canal, o volume esperado e o que acontece quando o MOD é desligado. Por exemplo: «Qualquer participante lê o contador; quem pode escrever soma; somente quem administra zera». Essa regra poderá ser testada no servidor.
 
-Se o recurso for privado, diga privado para quem. Uma resposta privada da ponte não torna todos os dados de um MOD privados. O handler precisa decidir quais campos devolver. O computador que hospeda continua armazenando esses dados.
+Se o recurso for privado, diga privado para quem. Uma resposta que chega só a quem perguntou não torna privados todos os dados de um MOD. O handler precisa decidir quais campos devolver, e o computador que hospeda continua armazenando esses dados.
 
 Para imagens e fichas, defina limites antes de desenhar a tela. Quantos perfis? Quantos arquivos? Qual tamanho de imagem? O limite da plataforma não substitui um orçamento de produto. Um servidor pequeno não deve perder fluidez por causa de um catálogo ilimitado de banners.
 
+Decida também **onde** o MOD aparece. Uma página que só abre quando alguém pede, por uma entrada na navegação, é diferente de algo que está sempre na tela. Na API 6 não existe a faixa fixa das versões anteriores: o que fica de pé ao lado da conversa é uma contribuição num ponto, e o que interrompe — editar, criar, confirmar — é uma superfície.
+
 ### Nome e identidade
 
-Escolha um ID durável, como `seu-autor/meu-mod`. O nome do repositório pode ser diferente, mas o ID do manifesto, o ID usado em `SeeleMods.request` e o diretório instalado precisam concordar. Mudar o ID depois da publicação cria outra identidade de pacote e pode deixar dados antigos sem um caminho de migração.
+Escolha um ID durável, como `seu-autor/meu-mod`. O nome do repositório pode ser diferente, mas o ID do manifesto e o ID usado em `SeeleMods.request` precisam concordar. Mudar o ID depois da publicação cria outra identidade de pacote e pode deixar dados antigos sem um caminho de migração.
 
 ## [guia:estrutura] Prepare a pasta
 
@@ -65,12 +70,14 @@ Crie um projeto separado, como `SEELE-MOD-MEU-MOD`, seguindo o modelo usado por 
 meu-mod/
 ├── mod.json
 ├── cliente/
-│   └── main.js
-└── servidor/
-    └── main.js
+│   └── main.js     roda na máquina de quem entra, num contexto só dele
+├── servidor/
+│   └── main.js     roda na máquina de quem hospeda
+└── som/
+    └── toque.wav   a mídia que o MOD traz, quando traz
 ```
 
-`mod.json` fica na raiz da pasta que você seleciona para instalar. Não coloque o manifesto dentro de uma segunda pasta por engano. `client` e `server` são caminhos relativos a essa raiz. Declare ao menos uma das duas metades.
+`mod.json` fica na raiz da pasta que você seleciona para instalar. Não coloque o manifesto dentro de uma segunda pasta por engano. `client` e `server` são caminhos relativos a essa raiz. Declare ao menos uma das duas metades: sem nenhuma, o manifesto é recusado como `empty`.
 
 ### Manifesto do exemplo
 
@@ -78,141 +85,174 @@ meu-mod/
 {
   "schema": 1,
   "id": "exemplo/contador",
-  "version": "1.0.0",
-  "api": 3,
+  "version": "3.0.0",
+  "api": 6,
   "repo": "https://github.com/DATA-AND-DEV/SEELE-MODS-INDEXER",
-  "reach": ["regiao", "contador compartilhado"],
+  "reach": ["pagina", "navegacao do servidor", "contador no servidor"],
   "client": "cliente/main.js",
   "server": "servidor/main.js"
 }
 ```
 
-Ao criar seu próprio pacote, troque `exemplo/contador` no manifesto e no cliente, e informe seu repositório público. O endereço acima é o repositório que contém este exemplo.
+Ao criar seu próprio pacote, troque `exemplo/contador` no manifesto e no cliente, e informe seu repositório público. O endereço acima é o repositório que contém este exemplo. Um MOD que publica o tema do servidor declara também `"tema": true`; um que traz som ou imagem lista os arquivos em `arquivos`.
 
 ### Desenvolvimento e distribuição
 
 Seu projeto pode conter `test/`, `ferramentas/`, documentação e scripts de build. O JavaScript final continua sendo o que o SEELE executa. Um build é opcional: pode reunir fontes, mas deve ser reproduzível e deixar os arquivos finais acessíveis para avaliação.
 
-Prepare uma pasta de distribuição limpa. Ela deve conter o manifesto, scripts e recursos de runtime que o pacote realmente usa. Não distribua `.git`, `node_modules`, caches de compilação, backups, bancos de teste ou credenciais. O conteúdo completo considerado pelo empacotamento influencia o hash; “mesma versão” não garante “mesmos bytes”.
-
-O diretório `dados/` tem finalidade de runtime e é excluído do cálculo de conteúdo nas rotinas que o tratam como estado. Não o use para esconder scripts ou recursos da distribuição. Não presuma que toda outra pasta será ignorada automaticamente.
+Prepare uma pasta de distribuição limpa. Ela deve conter o manifesto, os scripts e os recursos de runtime que o pacote realmente usa. Não distribua `.git`, `node_modules`, caches de compilação, backups, bancos de teste ou credenciais. **Todo arquivo da pasta entra no hash do conteúdo**: «mesma versão» não garante «mesmos bytes». Os dados do MOD não moram no pacote — eles ficam no servidor que o hospeda —, e por isso não há pasta de dados a separar da distribuição.
 
 ## [guia:primeiro] Faça seu primeiro MOD
 
-O contador tem uma região com dois botões e uma metade de servidor que explica autorização, revisão e concorrência. Apertar `SOMAR 1` escreve no servidor; `ZERAR` só funciona para quem administra, e a recusa aparece na região em vez de sumir.
+O contador tem uma entrada na navegação do servidor, uma página com dois botões e uma metade de servidor que mostra autorização, revisão e aviso. Apertar `SOMAR 1` escreve no servidor; `ZERAR` pergunta antes e só funciona para quem administra, e a recusa aparece na página em vez de sumir. Quando outra pessoa grava, a sua página acompanha sem consultar de novo.
 
 ### Passo 1 — baixe e examine
 
-Baixe o [contador](exemplos/contador.zip) e leia os três arquivos. O manifesto usa `api: 3`. O cliente consulta `snapshot()` para descobrir um canal, faz `request()` e declara o resultado com `SeeleUI.regiao()`.
+Baixe o [contador](exemplos/contador.zip) e leia os três arquivos. O manifesto usa `api: 6`. O cliente registra uma entrada na navegação, abre a página quando alguém aperta a entrada, lê o valor com `request()` e declara o desenho com `montar()`. O servidor responde, grava e avisa.
 
-### Passo 2 — entenda a leitura
+### Passo 2 — entre na navegação do servidor
 
 ```js
-const s = await SeeleMods.snapshot();
-const canal = s.open_channel ?? s.channels?.[0]?.id;
-if (canal == null) throw new Error('Entre em um canal.');
-const r = await SeeleMods.request('exemplo/contador', canal, {op:'ler'});
-if (!r.ok) throw new Error(r.error);
-await SeeleUI.regiao([
-  {forma:'titulo', dentro:'Contador'},
-  {forma:'texto', dentro:`Valor: ${r.valor} · revisão ${r.revisao}`},
-]);
+SeeleUI.contribuicoes.registrar({
+  ponto: 'servidor.navegacao',
+  modo: 'adicionar',
+  rotulo: 'Contador',
+  acaoPrincipal: 'abrir-contador',
+}).catch((falha) => console.warn('a entrada não entrou:', falha.erro));
 ```
 
-O fragmento deve ficar dentro de uma função async no script de cliente. `op`, `ler`, `valor`, `revisao` e `ok` são convenções deste exemplo, não métodos da plataforma.
+O MOD não escolhe onde a entrada fica, nem a desenha: ele declara o ponto, e o produto a põe na lista do servidor, com o nome do MOD. Quando a pessoa aperta, chega o evento `acao`, com o nome que você deu em `acaoPrincipal`. Uma recusa chega pelo nome — `ponto-desconhecido`, `modo-recusado`, `teto-de-contribuicoes` — em `falha.erro`.
 
-### Passo 3 — entenda a alteração no servidor
+### Passo 3 — abra a página e leia
+
+```js
+SeeleUI.aoEvento((evento) => {
+  if (evento.nome === 'acao' && evento.acao === 'abrir-contador') void abrir();
+});
+
+async function abrir() {
+  pagina = await SeeleUI.superficies.criar({ id: 'contador', tipo: 'pagina', titulo: 'Contador' });
+  const r = await SeeleMods.request('exemplo/contador', 0, { op: 'ler' });
+  await pagina.montar([
+    { forma: 'titulo', chave: 'titulo', dentro: 'Contador' },
+    { forma: 'texto', chave: 'valor', dentro: `Valor: ${r.valor} · revisão ${r.revisao}` },
+  ]);
+}
+```
+
+O fragmento é uma versão curta do que está no exemplo, que trata as recusas. **O canal `0` quer dizer «nenhum»**: o contador é do servidor inteiro, e o servidor recebe `channel: null`. `criar` com um `id` que já está de pé reabre a mesma página, sem recriar. `op`, `ler`, `valor`, `revisao` e `ok` são convenções deste exemplo, e não métodos da plataforma.
+
+### Passo 4 — entenda a alteração no servidor
 
 ```json
 {"op":"incrementar","revisao":0}
 ```
 
-O handler confere a permissão e a revisão antes de gravar. Os testes chamam `incrementar` e `zerar` diretamente para verificar persistência, concorrência e autorização. O cliente distribuído só envia `ler`; não há um controle de incremento na região. Não substitua a falta de um botão por uma escrita automática ao carregar.
+O handler confere a permissão no **contexto**, e nunca no pedido, e confere a revisão antes de gravar. Se outra pessoa gravou antes, a revisão não bate e a resposta é `conflito`: a página relê e pede para apertar de novo, em vez de gravar por cima. Depois de gravar, `mundo.avisar` manda o estado novo a todas as janelas deste MOD, que o recebem pelo evento `servidor`.
 
-### Passo 4 — experimente
+### Passo 5 — experimente
 
-Instale num servidor de teste e observe a região Contador. Conecte outra pessoa, saia e reconecte. Confira que a região desaparece ao sair e reaparece uma vez. O ciclo de leitura aguarda a resposta antes de agendar outra consulta.
+Instale num servidor de teste, hospede e ligue o MOD. Aperte `Contador` na navegação do servidor e some. Conecte outra pessoa, abra a página nas duas janelas e some numa delas: a outra acompanha sem recarregar. Aperte `ZERAR` sem ser administrador: o produto pergunta antes, e a página diz que não há permissão. Saia e entre de novo: o valor continua, e a entrada não se duplica.
 
-### Passo 5 — transforme a ideia
+### Passo 6 — transforme a ideia
 
-Troque o contador por dados autorizados de seu MOD. Se sua ideia exige entrada da pessoa, imagem, som ou personalização dos painéis nativos, ela depende de uma extensão escrita e versionada da API. Não prometa essas capacidades com a gramática atual.
+Troque o contador pelos dados autorizados do seu MOD. Uma ficha com campos é um `formulario` numa superfície; um perfil é o cartão, a foto e a capa da pessoa; um tema é a metade de servidor com `"tema": true`. Os capítulos seguintes dizem o que cada um exige.
 
 ## [guia:instalar] Instale e teste no SEELE
 
 Instalar copia o pacote para a máquina. Ligar determina que o servidor passe a exigir aquele MOD. Aceitar autoriza um conjunto de MODs para uma conexão. São etapas diferentes.
 
 1. Use um servidor de teste separado das conversas e dados que você quer preservar.
-2. Abra Configurações → MODs → Instalar MOD de uma pasta e selecione a raiz com `mod.json`.
-3. Hospede o servidor de teste e ligue o pacote.
-4. Reconecte se o conjunto exigido mudar. Leia os alcances mostrados na tela.
-5. Aguarde o carregamento e teste a interface. Confira o log do host se nada aparecer.
+2. Abra Configurações › MODs › Instalados › Instalar MOD de uma pasta e selecione a raiz com `mod.json`.
+3. Hospede o servidor de teste e ligue o pacote. Instalar não liga.
+4. Reconecte se o conjunto exigido mudar. Leia os alcances mostrados na tela de aceite.
+5. Aguarde o carregamento e teste a interface. Confira o `seele.log` se nada aparecer.
 6. Instale o mesmo conteúdo em uma segunda máquina ou instância de teste e entre como participante.
 
-A localização habitual no ambiente desktop usado durante o desenvolvimento é `~/.config/seele/mods/autor/nome/`. Prefira o instalador do aplicativo em vez de depender desse caminho em todos os sistemas. O diretório de configuração pode variar conforme a plataforma e a execução.
+O `mod.json` é lido antes de qualquer byte ser copiado, e o que não serve é recusado pelo nome — `api-too-old`, `malformed-id`, `empty`, `tema-sem-metade-de-servidor` e o resto. O pacote instalado mora numa pasta com o hash do conteúdo (`mod-packages/<hash>/`, na pasta de configuração), e por isso **editar os arquivos lá dentro não funciona**: um pacote mexido depois de instalado é recusado, e nomeado. Mudou o MOD, instale de novo.
+
+### A metade de servidor sem hospedar pelo app
+
+Com o repositório do SEELE e o Rust instalados, um servidor local sobe com o seu MOD já ligado:
+
+```sh
+cargo run -p seele-server --example servidor-com-mod -- /caminho/absoluto/do/mod /caminho/absoluto/de/um/mundo-novo
+```
+
+O exemplo instala o pacote pelo hash, liga o MOD antes de subir e escuta em `127.0.0.1`, na porta 8390. Ele imprime o endereço e a impressão digital, e o app entra por eles: é assim que a metade de cliente aparece. O que o MOD não conseguiu carregar sai no terminal. Ele não acompanha as suas edições: mudou o MOD, rode de novo num mundo novo — a pasta do mundo não pode existir, para um mundo nunca ser reaberto com outro código.
 
 ### Roteiro mínimo de teste manual
 
 | Situação | Resultado que você precisa observar |
 | --- | --- |
-| Primeira entrada | Interface aparece uma vez, sem erro |
+| Primeira entrada | A entrada aparece uma vez, sem erro no `seele.log` |
 | Leitura | Estado correto do servidor |
-| Escrita no handler, em teste | Confirmação depois da resposta |
-| Segundo participante | Alteração aparece após a consulta |
-| Sem permissão | Servidor recusa; estado não muda |
-| Duas escritas concorrentes, em teste | Conflito explicado, sem sobrescrita silenciosa |
-| Saída/desligamento | Timers, estilos e interface retirados |
-| Reconexão | Estado salvo continua; interface não duplica |
+| Escrita | A página muda depois da resposta |
+| Segundo participante | A alteração chega pelo aviso, sem recarregar |
+| Sem permissão | O servidor recusa, a página diz, e o estado não muda |
+| Duas escritas concorrentes | Conflito explicado, sem sobrescrita silenciosa |
+| Superfície com alterações | Fechar pergunta antes, e descartar avisa o MOD |
+| Saída ou desligamento | Superfícies, contribuições, som e temporizadores retirados |
+| Reconexão | Estado salvo continua; nada se duplica |
 | Troca de servidor | Dados e tema do anterior não vazam |
-| Pacote alterado | Divergência de conteúdo tratada explicitamente |
+| Pacote alterado | Divergência de conteúdo recusada pelo nome |
 
-Um simulador de API no navegador ajuda a testar a interface. Ele não prova autenticação real, consentimento, restrições do WebView, hash de conteúdo ou comportamento do servidor nativo. Registre separadamente os testes simulados e os testes no SEELE.
+Um simulador de API no navegador ajuda a testar a interface. Ele não prova autenticação real, consentimento, as conferências do anfitrião, hash de conteúdo ou o comportamento do servidor nativo. Registre separadamente os testes simulados e os testes no SEELE.
 
 ## [guia:design] Desenhe como parte do SEELE
 
-O MOD declara conteúdo; o SEELE monta a região, escolhe tipografia, espaçamento e a apresentação acessível. Não há acesso aos seletores ou estilos da página.
+**Você declara, e quem desenha é o produto**, com `createElement` e `textContent`. Não há forma que aceite HTML: o conteúdo vem de código de terceiro, e interpretá-lo como marcação devolveria a página ao MOD por outro caminho. O SEELE escolhe tipografia, espaçamento e a apresentação acessível; não há acesso aos seletores ou estilos da página.
+
+### Superfícies
+
+Uma superfície é uma janela do produto que o MOD declara e o produto monta. **A casca é do produto**: o cabeçalho diz de qual MOD ela é, a saída é do produto, com as palavras dele, e o foco entra na abertura, fica contido e volta a quem abriu.
+
+| tipo | O que é |
+| --- | --- |
+| pagina | Uma vista inteira da sessão; `imersiva: true` esconde o resto |
+| dialogo | Uma janela por cima, `modal` (o padrão) ou não; um modal torna o resto inerte, e não só escuro |
+| folha | Uma folha ao lado (`lado: 'direita'` ou `'esquerda'`); até 3 à vista, empilhadas |
+| aviso | Uma linha de vida curta; use `SeeleUI.superficies.avisar(texto, tom)` |
+
+Sem `tipo`, `dialogo`. Um tipo que a 6 não tem é recusado como `tipo-desconhecido`; o `painel` das versões anteriores saiu, e o lugar dele é a `folha`.
 
 ### Formas disponíveis
 
-| forma | Finalidade | Campos |
-| --- | --- | --- |
-| titulo | Cabeçalho do bloco | `dentro` |
-| texto | Parágrafo | `dentro` |
-| linha | Agrupamento | `dentro` |
-| lista | Lista | `dentro` |
-| item | Item da lista | `dentro` |
-| campo | Caixa de texto editável | `chave`, `rotulo`, `valor` |
-| escolha | Seleção entre opções declaradas | `chave`, `rotulo`, `valor`, `opcoes` |
-| botao | Botão | `chave`, `dentro`, `desligado` |
-| arquivo | Botão que abre o seletor do sistema | `chave`, `dentro`, `papel` |
-| tela | Desenho e arraste | `chave`, `largura`, `altura`, `figuras`, `tracos` |
-| midia | Som ou imagem | `chave`, `fonte` ou `doServidor`, `descricao`, `tocando` |
+São trinta formas, e cada uma vira um elemento do produto. As de composição levam os filhos em `dentro`; as de texto levam o texto em `dentro`, e um texto solto dentro de `dentro` também vale.
 
-`dentro` aceita texto, outra forma ou uma lista. Números precisam ser convertidos para string. Uma forma desconhecida não produz conteúdo. A árvore tem teto de profundidade e de número de nós: prefira listas rasas. Texto nunca é interpretado como HTML.
+| Grupo | Formas |
+| --- | --- |
+| Texto | `titulo`, `texto`, `item`, `distintivo`, `link` |
+| Composição | `caixa`, `pilha`, `grade`, `linha`, `rolagem`, `lista`, `acoes`, `separador`, `espaco` |
+| Formulário | `formulario`, `campo`, `textoLongo`, `escolha`, `numero`, `deslizante`, `marca`, `interruptor`, `cor`, `botao`, `arquivo` |
+| Navegação | `abas`, `aba` |
+| Imagem, som e desenho | `midia`, `retrato`, `tela` |
 
-A `chave` é o que liga uma declaração à seguinte. O SEELE reaproveita o nó que já está na tela quando a chave e a forma são as mesmas — e é isso que faz uma caixa em edição **não perder o foco** quando o MOD redesenha. Declare a região inteira a cada vez; não tente mandar só a diferença.
+Em toda forma valem `chave`, `estilo`, `classe` e `nomeAcessivel`. Números precisam ser convertidos para texto. Uma forma que a API não tem é recusada pelo nome (`forma-desconhecida`), e a tela fica como estava. Texto nunca é interpretado como HTML.
 
-O SEELE **não escreve** o `valor` de um campo ou de uma escolha enquanto ele está em foco. Guarde um rascunho do que está sendo editado e declare o rascunho: se você declarar o que o servidor devolveu, a sua própria consulta periódica apaga o que a pessoa estava digitando.
+A `chave` é o que liga uma declaração à seguinte. `montar` declara o conteúdo inteiro, e o produto reconcilia por `chave`: o que não mudou não é tocado, e **quem está digitando não perde o foco**. Declare a árvore inteira a cada vez, ou troque um nó só com `atualizar(chave, arvore)`.
 
 ### Interação
 
 O que a pessoa faz chega por evento, e um evento **não tem resposta**: quem digita não espera o MOD confirmar que recebeu a tecla.
 
 ```js
-SeeleUI.aoEvento(evento => {
-  if (evento.nome === 'campo')   { /* evento.chave, evento.valor */ }
-  if (evento.nome === 'escolha') { /* evento.chave, evento.valor */ }
-  if (evento.nome === 'botao')   { /* evento.chave */ }
-  if (evento.nome === 'arquivo') { /* evento.chave, evento.arquivo ou null + porque */ }
-  if (evento.nome === 'traco')   { /* evento.chave, fase, x, y, alvo */ }
-  if (evento.nome === 'midia')   { /* evento.chave, estado */ }
+SeeleUI.aoEvento((evento) => {
+  if (evento.nome === 'campo')    { /* evento.chave, evento.valor */ }
+  if (evento.nome === 'botao')    { /* evento.chave; com confirmar, só depois do sim */ }
+  if (evento.nome === 'submeter') { /* evento.chave, evento.valores */ }
+  if (evento.nome === 'acao')     { /* evento.acao, da sua contribuição */ }
+  if (evento.nome === 'servidor') { /* evento.carga, o aviso da sua metade de servidor */ }
 });
 ```
 
-Um ouvinte só, e o último registrado vence. Um erro dentro dele fica com o seu MOD e não impede o próximo evento de chegar.
+Um ouvinte só, e o último registrado vence. Um erro dentro dele fica com o seu MOD, vai ao `seele.log`, e não impede o próximo evento de chegar. A lista inteira dos eventos está em Executor, superfícies e ciclo de vida.
+
+Um `botao` pode declarar `confirmar` com a frase da consequência: o produto pergunta com as palavras dele, e o evento só chega depois do sim. Use `variante` (`primaria`, `secundaria`, `perigo`, `discreta`) para dizer o peso de cada ação.
 
 ### Desenho e arraste
 
-Uma `tela` aceita **figuras declaradas** e traços. Uma figura com `chave` pode ser pega: o evento `traco` traz `alvo` com a chave da figura mais em cima sob o dedo, ou `null` quando o toque caiu no vazio.
+Uma `tela` aceita **figuras declaradas**. Uma figura com `chave` pode ser pega: o evento `traco` traz `alvo` com a chave da figura de cima onde o gesto começou, ou `null` quando o toque caiu no vazio.
 
 | tipo | Campos |
 | --- | --- |
@@ -223,54 +263,38 @@ Uma `tela` aceita **figuras declaradas** e traços. Uma figura com `chave` pode 
 
 A **última figura declarada fica por cima**, e é a primeira que o toque encontra. Uma `linha` nunca é pega: ela é grade, parede e régua, e dar-lhe área de acerto roubaria o toque de toda figura em cima dela — declare uma peça como círculo ou retângulo.
 
-O `alvo` é fixado quando o dedo desce e viaja nas três fases (`comecou`, `moveu`, `terminou`). As coordenadas são as da sua tela declarada, não as da janela. O movimento é agregado por quadro: um arraste não manda um evento por pixel.
+O `alvo` é fixado quando o dedo desce e viaja nas fases `comecou`, `moveu` e `terminou`, ou `cancelou` quando o gesto não termina. As coordenadas são as da sua tela declarada, e não as da janela. O movimento é agregado por quadro: um arraste não manda um evento por pixel.
 
 ### Mídia
 
 Som e imagem vêm de **duas origens, e só duas**:
 
 ```js
-{forma:'midia', chave:'toque', fonte:'som/toque.wav'}                       // do seu pacote
-{forma:'midia', chave:'mapa', doServidor:{canal, pedido:{op:'asset'}, campo:'image'}}  // do seu servidor
+{ forma: 'midia', chave: 'toque', fonte: 'som/toque.wav' }                                  // do seu pacote
+{ forma: 'midia', chave: 'mapa', doServidor: { canal, pedido: { op: 'mapa' }, campo: 'imagem' } } // do seu servidor
 ```
 
-Do pacote: o arquivo precisa estar em `arquivos` no manifesto. Do servidor: o SEELE faz o pedido com o `id` do seu MOD e lê o base64 no campo que você nomear. Uma resposta grande pode devolver `proximo`, um objeto que o SEELE junta ao pedido seguinte **sem interpretar** — a forma da paginação é sua.
+Do pacote: o arquivo precisa estar em `arquivos` no manifesto. Do servidor: o SEELE faz o pedido com o `id` do seu MOD e lê o conteúdo no campo que você nomear; uma imagem grande vem pelo volume (ver Imagens grandes e uploads). Não existe uma terceira origem: um endereço qualquer faria a janela de quem conversa buscar bytes na rede de um estranho.
 
-Não existe uma terceira origem. Um endereço qualquer faria a janela de quem conversa buscar bytes na rede de um estranho, e é por isso que a API não o aceita.
+O **tipo do arquivo vem dos bytes**, nunca do nome nem do manifesto. Declare `tocando: true` para tocar e `repetir: true` para tocar em laço; o botão TOCAR/PAUSAR é do produto, e o estado real volta pelo evento `midia`.
 
-O **tipo do arquivo vem dos bytes**, nunca do nome nem do manifesto: o SEELE reconhece PNG, JPEG, GIF, WebP, WAV, Ogg e MP3, e monta `<img>` ou `<audio>` conforme o que os bytes provaram ser. Declare `tocando: true` para tocar; o estado real volta pelo evento `midia`, porque o navegador pode recusar tocar sem gesto.
+### Tema
 
-### Tema da sessão
-
-```js
-await SeeleUI.tema({
-  acento:'#6BFFB6', fundo:'#050403', painel:'#0A0806',
-  texto:'#EAE3CF', apagado:'#908574', borda:'#241F19',
-  densidade:'compacta', fonte:'mono', arredondamento:8, brilho:false,
-});
-```
-
-As seis cores aceitam somente `#rrggbb`. `densidade` aceita `compacta` ou `confortavel` e `fonte` aceita `mono` ou `sans` — são escolhas e não números, porque uma cor o produto confere e um espaçamento não: `0px` deixaria a sessão ilegível sem violar regra nenhuma. `fonte` é escolha entre as duas pilhas que o produto declara, e não família livre: a escala de tipo daqui é medida, e uma família qualquer moveria tamanho, entrelinha e contraste de uma vez.
-
-`arredondamento` é inteiro de 0 a 24 e `brilho` é `true` ou `false`. O produto escreve o `px` e monta a sombra a partir de um token dele: um raio livre aceitaria `9999`, e uma sombra livre aceitaria qualquer `box-shadow`. O produto abre em canto reto e sem sombra, e o tema de servidor é a exceção nomeada em `specs/07-estetica.md` — vale só naquela sessão.
-
-O produto recusa nomes e cores inválidos, disputa de token com outro MOD e contraste texto/fundo abaixo de 4,5:1. Capture o Error e apresente sua mensagem. O tema é aplicado somente à sessão e sai com ela.
+A aparência que todos veem é da **metade de servidor**, com `"tema": true` no manifesto e `mundo.tema` (ver O tema do servidor). A metade de cliente só faz a **prévia**: `SeeleUI.tema(valores, { previa: true, superficie: id })` pinta só nesta máquina, com o selo «prévia não publicada», e sai quando a superfície fecha. Sem `previa: true`, a chamada é recusada como `sem-previa`.
 
 ### Escolher um arquivo
 
-O MOD **não abre o seletor**: ele declara a forma `arquivo`, a pessoa aperta, e o seletor é do produto. O evento traz um identificador, e daí o MOD lê os bytes em pedaços com `SeeleUI.pedaco` e os manda para o servidor dele pelo protocolo que ele já tem.
-
-Com acesso ao disco, um MOD teria o caminho errado — nenhum cliente do SEELE abre arquivo por conta de terceiro. Solte o identificador com `SeeleUI.soltar` quando terminar; ficam até quatro de pé por vez.
+O MOD **não abre o seletor**: ele declara a forma `arquivo`, a pessoa aperta, e o seletor é do sistema. O evento `arquivo` traz `{ id, papel, bytes }` — nunca o caminho —, ou `resultado: 'cancelado'`. Uma imagem vai ao seu servidor por `SeeleUI.enviar(arquivo, token)`; o resto se lê em pedaços com `SeeleUI.pedaco(arquivo, inicio)`. Solte o identificador com `SeeleUI.soltar(arquivo)` quando terminar: ficam até quatro de pé por vez.
 
 Os pedaços são base64 de janelas **múltiplas de três**. Duas janelas seguidas precisam concatenar no arquivo, e um tamanho que não é múltiplo de três deixa `=` no meio do fluxo: a imagem chega corrompida sem erro nenhum.
 
 ### O que não existe, e por quê
 
-**CSS próprio e decoração de canais.** A região é o lugar onde um MOD desenha. A única coisa que um MOD entrega fora dela é um **cartão** na lista de pessoas — e ali ele declara, não desenha: quem monta é o mesmo renderer, com uma gramática menor.
+**CSS livre, HTML e seletores.** O estilo de um nó é declarado por propriedades, validadas uma a uma, e as classes são presas à superfície que as declara (ver Estilos, classes e composição).
 
-**Nada.** As duas ausências que esta seção listava — arredondamento e brilho no tema, e o cartão na lista de pessoas — foram implementadas. O que continua fora é só o que está acima: CSS próprio e decoração de canais.
+**A faixa fixa das versões anteriores.** A 6 tirou `SeeleUI.regiao`, `SeeleUI.cartoes` e `SeeleMods.snapshot`: o desenho mora numa superfície, o que fica de pé na interface é uma contribuição num ponto, e a leitura é `SeeleUI.retrato()`.
 
-Não transforme uma interação indisponível em uma alteração automática de dados, e não escreva na tela que algo «aguarda suporte»: se a sua ideia depende de uma dessas, proponha a extensão.
+Não transforme uma interação indisponível em uma alteração automática de dados, e não escreva na tela que algo «aguarda suporte»: se a sua ideia depende do que a API não tem, proponha a extensão.
 
 ## [guia:publicar] Publique e mantenha
 
@@ -285,143 +309,126 @@ O caminho recomendado é um repositório público por MOD, com manifesto na raiz
 - Fixe o commit que será avaliado e informe uma versão nova quando o conteúdo mudar.
 - Explique limitações conhecidas, permissões necessárias e como desligar o recurso.
 
-Use a seção [Publicar do catálogo](../#/publicar) para abrir a solicitação de inclusão. A avaliação do indexador é vinculada a um commit e ao conteúdo publicado. Um `git push` no repositório do autor não atualiza automaticamente o catálogo nem as instalações.
+Use a seção [Publicar do catálogo](../#/publicar) para abrir a solicitação de inclusão. A avaliação do indexador é vinculada a um commit e ao conteúdo publicado. Um `git push` no repositório do autor não atualiza o catálogo nem as instalações.
 
 ### Vereditos e confiança
 
-Um MOD pode ser verificado, publicado com notas ou negado. Notas de integração e risco devem acompanhar o que as pessoas instalam. Publicar o código no GitHub não é o mesmo que obter verificação no catálogo.
+| Veredito | O que significa |
+| --- | --- |
+| verificado | Passou. Entra no catálogo com a assinatura de verificado |
+| publicado com notas | Não passou limpo, mas o que ele faz é legítimo — uma integração com um terceiro conhecido, por exemplo. Entra sem verificação, e as notas aparecem na tela de quem instala |
+| negado | O que ele faz lesa quem instala. Não entra |
 
-O aplicativo confere o catálogo com uma chave de confiança distribuída com o SEELE e compara o conteúdo dos pacotes. O site humano não deve ser descrito como uma âncora independente de autenticidade quando chave, catálogo e verificador vêm da mesma origem. Consulte a documentação do indexador para as garantias de assinatura e revogação.
+Publicar o código no GitHub não é o mesmo que obter verificação no catálogo. O aplicativo confere o catálogo com uma chave de confiança distribuída com o SEELE e compara o conteúdo dos pacotes. O site humano não deve ser descrito como uma âncora independente de autenticidade quando chave, catálogo e verificador vêm da mesma origem. Consulte a documentação do indexador para as garantias de assinatura e revogação.
 
 ### Atualizações
 
 Crie uma versão nova para conteúdo novo. Não reescreva uma versão já publicada. Atualizar o arquivo no host, atualizar o que o servidor exige e atualizar o que o participante instalou precisam resultar no mesmo hash. Uma etiqueta `1.0.0` igual nos dois lados não basta.
 
+**A API que você declara é uma versão só.** Um pacote da 6 roda no app 0.16 e no Servidor 1.0; um das APIs 3 a 5 continua rodando no Servidor 0.15. Quem quer as duas linhas publica dois pacotes, como os três MODs oficiais — a 4.x na API 6, a 3.x na linha legada —, e cada um passa pela avaliação.
+
 Planeje migrações de dados e faça backup antes de testar uma atualização sobre um mundo existente. A propriedade `state` do manifesto não executa uma migração automaticamente. Sua lógica deve reconhecer versões antigas do estado e transformá-las de maneira explícita.
 
 Teste entrar com pacote antigo, entrar com pacote novo, atualizar durante uma sessão, reiniciar e retornar à versão anterior quando isso for suportado. Não prometa downgrade se o formato novo não puder ser lido pelo código antigo.
 
-## [referencia:visao] Superfície implementada e compatibilidade
+## [referencia:visao] Superfície e compatibilidade
 
-O indexador declara `MOD_API_VERSION = 4` e `MANIFEST_SCHEMA = 1`. A ponte de pedidos entrou com o protocolo 6. São três números diferentes: versão do manifesto, versão da API do MOD e versão do protocolo de rede. A versão do seu pacote, por exemplo `2.0.0`, é um quarto identificador.
+O indexador oferece a API 6 (`VERSAO_DA_API`, o espelho de `MOD_API_VERSION`) e lê o manifesto de esquema 1. A ponte de pedidos entrou com o protocolo 6, e o Servidor 1.0 é o protocolo 1.0 mais a API 6. São números diferentes: versão do manifesto, versão da API do MOD e versão do protocolo de rede. A versão do seu pacote, por exemplo `3.0.0`, é outro identificador.
 
-**Esta página descreve a API 4, que é candidata em validação e ainda não publicada.** O que está no catálogo assinado hoje é o que o comando abaixo responde, e é a única resposta que vale sobre o que já chegou na máquina de alguém:
+O que está no catálogo assinado hoje, e o que já chegou na máquina de alguém, é o que as releases publicadas dizem:
 
 ```sh
 curl -sS "https://api.github.com/repos/DATA-AND-DEV/SEELE-RELEASES/releases" | head -40
 ```
 
-### A conferência é um conjunto, e não uma igualdade
+### Duas linhas de servidor
 
-Uma versão anterior deste guia dizia que um manifesto precisa declarar **exatamente** a API que o aplicativo oferece, «não uma mais velha nem uma mais nova». **Isso deixou de ser verdade na API 4**, e a mudança é deliberada.
-
-A API 4 não tirou nada da 3: ela acrescenta superfícies, contribuições e estilos sobre o mesmo executor, o mesmo renderer e o mesmo manifesto. Então o cliente passou a executar um **conjunto** — `APIS_ACEITAS = [4, 3]` — e o catálogo publica o conjunto ao lado do teto:
+**A 6 é uma ruptura.** Ela tirou `SeeleUI.regiao` (a faixa de 240 px), `SeeleUI.cartoes` (trocado pelo ponto `pessoa.cartao`) e `SeeleMods.snapshot` (trocado por `SeeleUI.retrato()`), e por isso o app 0.16 executa só ela. As APIs 3, 4 e 5 continuam rodando no Servidor 0.15, que o launcher oferece, e o indexador aceita as duas linhas: o conjunto dele é a união, e não o de um aplicativo só.
 
 | O que o número diz | Onde ele está | Valor nesta revisão |
 | --- | --- | --- |
-| O teto que o cliente entende | `MOD_API_VERSION` | 4 |
-| O conjunto que o cliente executa | `APIS_ACEITAS` | 4, 3 |
-| O teto que o indexador publica | `api_oferecida` no catálogo | acompanha o cliente publicado |
-| O conjunto que o indexador aceita | `apis_aceitas` no catálogo | o mesmo do cliente |
-| O que o seu pacote declara | `api` no manifesto | 4 para a superfície nova, 3 para continuar como está |
+| O teto que o cliente entende | `MOD_API_VERSION` | 6 no app 0.16; 5 no Servidor 0.15 |
+| O conjunto que o cliente executa | `APIS_ACEITAS` | 6 no app 0.16; 5, 4, 3 no Servidor 0.15 |
+| O teto que o indexador publica | `api_oferecida` no catálogo | 6 |
+| O conjunto que o indexador aceita | `apis_aceitas` no catálogo | 6, 5, 4, 3: a união das duas linhas |
+| O que o seu pacote declara | `api` no manifesto | 6 para o app 0.16 e o Servidor 1.0; 3, 4 ou 5 para o Servidor 0.15 |
 
-Com a igualdade, subir a versão recusaria no mesmo instante todo pacote já publicado — inclusive os que estão instalados agora. Com o conjunto, o aplicativo compatível pode sair **antes** dos pacotes novos, que é a única ordem em que ninguém fica sem MOD.
+Um pacote que pede mais do que o teto é recusado como `api-too-new`; um fora do conjunto, como `api-too-old` — no app 0.16, toda API abaixo da 6, e a tela aponta o Servidor 0.15 no launcher. As duas recusas acontecem antes de executar qualquer código. Numa ruptura, a ordem de publicação é a dos pacotes da 6 entrarem no catálogo **antes** do aplicativo que os executa, e foi assim que os três MODs oficiais saíram na 4.0.0.
 
-Um pacote que pede mais do que o conjunto é recusado como `api-too-new`; um que pede menos do que o menor item do conjunto, como `api-too-old`. As duas recusas acontecem antes de executar qualquer código.
+### O que a plataforma não tem não existe
 
-### Aceitar a API 3 não dá à API 3 o que a 4 tem
-
-Esta é a parte que custa tempo se você descobrir sozinho. O aplicativo monta `SeeleUI` **a partir do que o seu manifesto declara**, e não a partir do que ele sabe fazer:
+O aplicativo monta `SeeleUI` **a partir do que a sua API e a plataforma oferecem**, e não a partir de uma lista fixa. O que não está lá não existe, em vez de existir e falhar:
 
 ```js
-// Num pacote com `"api": 3`
-SeeleUI.superficies          // undefined
-SeeleUI.superficies.criar()  // TypeError: Cannot read properties of undefined
+// No navegador, a plataforma não tem o volume
+SeeleUI.enviar          // undefined
+SeeleUI.enviar(id, t)   // TypeError: not a function
 ```
 
-O método **não existe**, em vez de existir e falhar com um código. É deliberado: um `superficies` que sempre recusasse faria você descobrir o problema dentro de um `catch`, em produção. Um método ausente é um `TypeError` com pilha, na primeira linha que o chama, enquanto você escreve.
-
-E a conferência não é só do prelúdio. O prelúdio roda **dentro** do contexto do seu MOD, e `seele.postar` continua lá: emitir a mensagem `contribuir` na mão, de um pacote que declara 3, é recusado pelo anfitrião com a razão escrita — «não existe na API 3, que é a que este pacote declara». A versão conferida é a do manifesto cujo hash o aplicativo verificou, nunca um campo que a mensagem carregue.
-
-### Degradar em vez de falhar
-
-Se o seu pacote precisa rodar nas duas, pergunte antes de chamar:
+É deliberado: um método que sempre recusasse faria você descobrir o problema dentro de um `catch`, em produção. Um método ausente é um `TypeError` com pilha, na primeira linha que o chama, enquanto você escreve. Pergunte antes de chamar:
 
 ```js
 const tem = new Set(SeeleUI.capacidades());
-if (tem.has('superficies')) {
-  const janela = await SeeleUI.superficies.criar({ id: 'perfil', tipo: 'dialogo', titulo: 'Perfil' });
-  await janela.montar(arvore);
-} else {
-  await SeeleUI.regiao(arvore);   // o caminho da API 3, que continua existindo
-}
+if (tem.has('volume')) await SeeleUI.enviar(arquivo.id, token);
+else dizer('envie a imagem pelo app do computador');
 ```
 
-`SeeleUI.capacidades()` devolve a lista da **sua** API: `['regiao','tema','cartoes','arquivo']` na 3, e mais `'superficies'`, `'contribuicoes'`, `'estilos'` e `'classes'` na 4.
+`SeeleUI.capacidades()` devolve, na 6: `superficies`, `contribuicoes`, `estilos`, `classes`, `volume`, `arquivo`, `tema`, `retrato`, `eventos-da-tela` e `aviso-do-servidor` — menos o que a plataforma não tem. `estilos` e `classes` estão na lista como rótulos: nada pergunta por eles, e o estilo de um nó vale onde a forma dele monta. A conferência não é só do prelúdio: uma mensagem emitida na mão, que a API do pacote não tem, é recusada pelo anfitrião como `tipo-desconhecido`. A versão conferida é a do manifesto cujo hash o aplicativo verificou, nunca um campo que a mensagem carregue.
 
 ### Funções que você pode usar
 
-| Ambiente | API | Superfície executável |
-| --- | --- | --- |
-| Cliente | 3 e 4 | globalThis.SeeleMods.snapshot() |
-| Cliente | 3 e 4 | globalThis.SeeleMods.request(id, canal, objeto) |
-| Cliente | 3 e 4 | globalThis.SeeleUI.regiao(conteudo) |
-| Cliente | 3 e 4 | globalThis.SeeleUI.tema(valores) |
-| Cliente | 3 e 4 | globalThis.SeeleUI.cartoes(cartoes) |
-| Cliente | 3 e 4 | globalThis.SeeleUI.aoEvento(funcao) |
-| Cliente | 3 e 4 | globalThis.SeeleUI.pedaco(arquivo, inicio) — base64, janelas múltiplas de 3 |
-| Cliente | 3 e 4 | globalThis.SeeleUI.soltar(arquivo) |
-| Cliente | 3 e 4 | globalThis.SeeleUI.capacidades() |
-| Cliente | 4 | globalThis.SeeleUI.superficies.criar(descricao) → punho |
-| Cliente | 4 | globalThis.SeeleUI.superficies.avisar(texto, tom) |
-| Cliente | 4 | punho.montar, classes, mostrar, ocultar, suja, titulo, fechar, descartar |
-| Cliente | 4 | globalThis.SeeleUI.contribuicoes.registrar(pedido) → handle |
-| Cliente | 4 | globalThis.SeeleUI.contribuicoes.revogar(handle) |
-| Servidor | 3 e 4 | globalThis.aoPedir(contextoJSON, pedidoJSON) |
-| Servidor | 3 e 4 | globalThis.aoAcontecer(momento, cargaJSON) |
-| Servidor | 3 e 4 | dados: objeto de string para string |
-| Servidor | 3 e 4 | arquivos.ler, escrever, listar, apagar |
-| Servidor | 3 e 4 | mundo.buscar, agora, registrar |
-
-### Contrato declarado não é uma função global
-
-`api/v1.json` contém nomes como `mandarMensagem`, `criarSala`, `expulsarPessoa` e leituras como `servidor.pessoas`. Esses nomes mapeiam símbolos do domínio para conferência do contrato. No runtime inspecionado, eles não são instalados como métodos JavaScript chamáveis do MOD. Não escreva `mundo.mandarMensagem()` ou `servidor.criarSala()` supondo que existam.
-
-Também há mais eventos declarados no arquivo de API do que eventos efetivamente encaminhados pelo adaptador atual. A seção Eventos lista os cinco nomes e cargas que o adaptador verificado entrega ao **servidor** de um MOD; os eventos que chegam ao **cliente**, quando alguém digita ou arrasta, são outros seis e estão na seção Executor. Para outras ações, confirme uma implementação concreta ou proponha uma extensão da API; não transforme um comando interno do aplicativo em uma API pública por conveniência.
+| Ambiente | Superfície executável |
+| --- | --- |
+| Cliente | `SeeleMods.request(id, canal, valor)` |
+| Cliente | `SeeleUI.retrato()` |
+| Cliente | `SeeleUI.superficies.criar(descricao)` → punho, e `SeeleUI.superficies.avisar(texto, tom)` |
+| Cliente | punho: `montar`, `atualizar`, `formulario.erros`, `classes`, `titulo`, `mostrar`, `ocultar`, `suja`, `fechar`, `descartar` |
+| Cliente | `SeeleUI.contribuicoes.registrar(pedido)` → `{ handle }`, `atualizar(handle, conteudo)`, `revogar(handle)` |
+| Cliente | `SeeleUI.tema(valores, { previa: true, superficie })` |
+| Cliente | `SeeleUI.aoEvento(funcao)` e `SeeleUI.capacidades()` |
+| Cliente | `SeeleUI.pedaco(arquivo, inicio)`, `SeeleUI.soltar(arquivo)` e `SeeleUI.enviar(arquivo, token)`, onde a plataforma os tem |
+| Cliente | `console`, `setTimeout`, `setInterval` e os dois `clear` |
+| Servidor | `aoPedir(contextoJSON, pedidoJSON)` e `aoAcontecer(momento, cargaJSON)` |
+| Servidor | `dados`, `dados.uso()`, `dados.teto` |
+| Servidor | `arquivos.ler`, `escrever`, `listar`, `apagar` |
+| Servidor | `volume.esperar`, `tamanho`, `servir`, `apagar` |
+| Servidor | `mundo.buscar`, `agora`, `registrar`, `avisar`, `tema` |
 
 ### APIs do navegador e do servidor
 
-O servidor executa JavaScript em QuickJS, não Node.js nem uma página web. Não conte com `document`, `window`, `fetch`, `require`, módulos npm, timers ou uma fila assíncrona de browser. O arquivo do servidor é avaliado como script e o handler de pedido devolve uma string de forma síncrona.
+O servidor executa JavaScript em QuickJS, não Node.js nem uma página web. Não conte com `document`, `window`, `fetch`, `require`, módulos npm ou timers. O arquivo do servidor é avaliado como script, e o handler de pedido devolve uma string de forma síncrona. A metade de servidor também não tem `console`: lá, `console.log(…)` lança `ReferenceError`. O registro dela é `mundo.registrar`.
 
-O cliente é um script autocontido executado num **motor QuickJS do lado do aplicativo**, fora da janela, com o prelúdio da API. Não use imports de módulo no arquivo de entrada.
+O cliente é um script autocontido executado num **motor QuickJS do lado do aplicativo**, fora da janela, com o prelúdio da API. Não use imports de módulo no arquivo de entrada. `document`, `window`, `fetch`, `XMLHttpRequest`, `WebSocket`, `Worker`, `localStorage`, `sessionStorage`, `indexedDB` e o global do Tauri **não existem** nesse ambiente — e não existem porque um contexto de QuickJS não os tem, e não porque alguém os apagou no começo do arquivo: o segundo caso se contorna. Promise, JSON, `setTimeout`, `setInterval` e `console` continuam disponíveis. No navegador, o motor é o mesmo, num Worker isolado: o contrato e os limites são os mesmos nos dois.
 
-`document`, `window`, CSSOM, `fetch`, `XMLHttpRequest`, `WebSocket`, `Worker`, `localStorage`, `sessionStorage`, `indexedDB`, `caches`, `BroadcastChannel` e o global Tauri **não existem** nesse ambiente — e não existem porque um contexto de QuickJS não os tem, e não porque alguém os apagou no começo do arquivo. Promise, JSON, TextEncoder, `setTimeout`, `setInterval` e `console` continuam disponíveis.
+O produto encerra o executor ao descarregar o MOD, e com ele os temporizadores, as superfícies, as contribuições, a mídia montada e os arquivos que alguém escolheu.
 
-O primeiro desenho da API 3 usava um `Worker` de `blob:`, e ele foi **reprovado por medição**: um worker de `blob:` herda a origem de quem o criou, e o que um MOD gravou em `indexedDB` sobreviveu ao encerramento do aplicativo e reapareceu na entrada seguinte. `terminate()` mata o contexto e não toca no armazenamento da origem. Se você leu isso numa versão anterior deste guia, era verdade e deixou de ser: hoje há um executor só.
-
-O produto encerra o executor ao descarregar o MOD, e com ele os temporizadores, a região, a mídia montada e os arquivos que alguém escolheu.
-
-Fontes desta seção: [Contrato histórico da ponte API 2](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/api/v2.json), [runtime](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-server/src/mods/mod.rs) e [ponte da janela](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/apps/seele-app/ui/base.js).
+Fontes: [o contrato da API 6](https://github.com/DATA-AND-DEV/SEELE/blob/v0.16.0/api/v6.json), [o que muda nesta versão](https://github.com/DATA-AND-DEV/SEELE/blob/v0.16.0/api/README.md).
 
 ## [referencia:manifesto] Manifesto e limites de anúncio
 
-O manifesto é JSON estrito. Chaves desconhecidas são recusadas. Comentários, vírgula final e aspas simples não são JSON válido. Declare números como números, caminhos como strings e `reach` como uma lista de strings.
+O manifesto é JSON estrito. **Chaves desconhecidas são recusadas, e é de propósito**: `vesion` com um `s` a menos instalaria calado um MOD sem versão, e você nunca ficaria sabendo. Comentários, vírgula final e aspas simples não são JSON válido. Declare números como números, caminhos como strings e `reach` como uma lista de strings.
 
 | Campo | Tipo | Regra |
 | --- | --- | --- |
 | schema | número inteiro | Use 1 nesta revisão |
 | id | string | autor/nome; minúsculas ASCII, dígitos e hífen; uma barra |
 | version | string | Versão do autor; o core não a interpreta como SemVer |
-| api | número inteiro | 4 para a superfície nova, 3 para continuar como está — inclusive em MODs somente de servidor |
+| api | número inteiro | 6 para o app 0.16 e o Servidor 1.0; 3, 4 ou 5 para o Servidor 0.15 — inclusive em MODs somente de servidor |
 | repo | string | Repositório público do pacote |
 | reach | string[] | Opcional no parser; declare alcances úteis para quem aceita |
 | state | inteiro ou ausente | Versão declarativa dos seus dados; sem migração automática |
 | client | string ou ausente | Script de cliente relativo à raiz |
 | server | string ou ausente | Script de servidor relativo à raiz |
+| arquivos | string[] ou ausente | Mídia que o pacote traz, relativa à raiz; até 16, e nenhum caminho sai da pasta |
+| tema | booleano ou ausente | Só na API 6: `true` abre a porta do tema do servidor (`mundo.tema`); exige `server`. `null` não vale como ausente |
 
-Ao menos `client` ou `server` precisa existir. Uma API fora do conjunto aceito é recusada antes de executar código: acima do teto, como `api-too-new`; abaixo do menor item, como `api-too-old`. Nesta revisão o conjunto é `4, 3`, e não existe compatibilidade com cliente de API 2.
+Ao menos `client` ou `server` precisa existir (sem nenhum, `empty`). Uma API fora do conjunto aceito é recusada antes de executar código: acima do teto, como `api-too-new`; fora do conjunto, como `api-too-old`. O indexador aceita `6, 5, 4, 3`, a união das duas linhas de servidor; cada aplicativo executa só a da linha dele — o app 0.16 só a 6, e o Servidor 0.15 a 5, a 4 e a 3. Não existe compatibilidade com cliente de API 2.
 
-**Um MOD só de servidor não ganha nada declarando 4.** O número escolhe o `SeeleUI` do cliente, e um pacote sem `client` não tem cliente. Declare 4 quando você usar superfícies, contribuições ou classes de estilo; nos outros casos, 3 continua sendo executado e alcança mais gente. O ID da pasta instalada deve concordar com o manifesto. A pasta de desenvolvimento selecionada pode ter um nome amigável; a identidade instalada é `autor/nome`.
+**A chave `tema` é da API 6.** Num pacote de API 3, 4 ou 5 ela é recusada como `malformed`: a linha 0.15 não conhece a chave, e a linha 1 não executa essas APIs, então o pacote não instalaria em build nenhuma. E `"tema": true` sem `server` é recusado como `tema-sem-metade-de-servidor`: quem pinta a aparência é a metade de servidor, e sem ela a porta nunca pintaria nada.
+
+**A API escolhe a linha, inclusive num MOD só de servidor.** O app 0.16 recusa um pacote de API 3, 4 ou 5 inteiro, com ou sem `client`, e a tela aponta o Servidor 0.15 no launcher; o Servidor 0.15 não executa a 6. Quem quer as duas linhas publica dois pacotes, como os três MODs oficiais: a 4.x na API 6, a 3.x na linha legada. A pasta de desenvolvimento selecionada pode ter um nome amigável; a identidade instalada é `autor/nome`.
+
+`arquivos` lista a mídia que o MOD traz para mostrar ou tocar. Só o que está nesta lista é servido, e o tipo vem dos bytes, nunca da extensão. Um caminho que sai da pasta — `../fora.wav`, um caminho absoluto, uma contrabarra, um `C:` — é recusado com a posição dele na lista.
 
 ### Limites no anúncio do protocolo
 
@@ -434,41 +441,37 @@ Ao menos `client` ou `server` precisa existir. Uma API fora do conjunto aceito �
 | reach: quantidade | 16 itens |
 | reach: cada item | 32 bytes UTF-8 |
 
-Esses limites são do anúncio, não apenas do parser de JSON. Um manifesto pode passar por uma etapa de leitura e falhar ao ser anunciado. Os alcances de ESTILO/PERFIS já expuseram essa diferença durante testes: uma descrição longa impediu a entrada no servidor até ser corrigida.
+Esses limites são do anúncio, não apenas do parser de JSON. Um manifesto pode passar por uma etapa de leitura e falhar ao ser anunciado. Os alcances de ESTILO e PERFIS já expuseram essa diferença durante testes: uma descrição longa impediu a entrada no servidor até ser corrigida.
 
 ```js
-const bytes = texto => new TextEncoder().encode(texto).length;
+const bytes = (texto) => Buffer.byteLength(texto, 'utf8');
 for (const alcance of manifesto.reach ?? []) {
   if (bytes(alcance) > 32) throw new Error('Alcance acima de 32 bytes');
 }
 ```
 
-Caracteres acentuados e emoji podem ocupar mais de um byte. Não use `texto.length` como medida de UTF-8. No Node, `Buffer.byteLength(texto, 'utf8')` serve para a mesma validação.
+Caracteres acentuados e emoji podem ocupar mais de um byte. Não use `texto.length` como medida de UTF-8. O fragmento acima é para os seus testes, no Node: o executor do MOD não tem `Buffer` nem `TextEncoder`.
 
-`reach` informa o que o pacote declara alcançar; não é uma lista de permissões que transforma código inseguro em sandbox. Declare a realidade, incluindo integrações externas. Não acrescente campos inventados como `permissions`, `author` ou `description` sem uma mudança oficial do schema.
+`reach` informa o que o pacote declara alcançar; **é declaração, e nada a confere**. O que o MOD alcança de fato é o que a API 6 oferece. Declare a realidade, incluindo integrações externas. Não acrescente campos inventados como `permissions`, `author` ou `description` sem uma mudança oficial do schema.
 
-Fontes: [manifesto](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-proto/src/mods.rs), [limites do controle](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-proto/src/control.rs).
+Fontes: [manifesto](https://github.com/DATA-AND-DEV/SEELE/blob/v0.16.0/crates/seele-proto/src/mods.rs), [o leitor do indexador](https://github.com/DATA-AND-DEV/SEELE-MODS-INDEXER/blob/main/ferramentas/manifesto.py).
 
 ## [referencia:pedidos] Pedidos e respostas
 
 ### Assinatura no cliente
 
 ```js
-const resposta = await globalThis.SeeleMods.request(
-  'exemplo/contador',
-  canal,
-  {op: 'ler'}
-);
+const resposta = await SeeleMods.request('exemplo/contador', 0, { op: 'ler' });
 ```
 
 | Argumento | Tipo | Origem |
 | --- | --- | --- |
 | id | string | ID do MOD ativo no servidor |
-| canal | número | ID de um canal existente, obtido do snapshot |
-| objeto | valor serializável em JSON | Protocolo definido pelo MOD |
-| retorno | Promise de valor JSON | Resposta remontada e desserializada pela janela |
+| canal | número | O canal da pergunta, ou `0` para «nenhum» — o número `0`, e não `null` |
+| valor | valor serializável em JSON | Protocolo definido pelo MOD |
+| retorno | Promise | O JSON que o seu `aoPedir` devolveu, já lido |
 
-Use IDs reais do snapshot. Não fixe `1` supondo que todo servidor tenha o mesmo canal. `undefined`, funções, referências circulares e BigInt não são uma forma adequada de transportar dados JSON.
+Use IDs reais de canal, do `retrato` ou de um evento. Não fixe `1` supondo que todo servidor tenha o mesmo canal. Um pedido num canal que a pessoa não lê nem chega ao `aoPedir`. `undefined`, funções, referências circulares e BigInt não são uma forma adequada de transportar dados JSON.
 
 ### Assinatura no servidor
 
@@ -476,69 +479,86 @@ Use IDs reais do snapshot. Não fixe `1` supondo que todo servidor tenha o mesmo
 globalThis.aoPedir = (contextoJSON, pedidoJSON) => {
   const contexto = JSON.parse(contextoJSON);
   const pedido = JSON.parse(pedidoJSON);
-  return JSON.stringify({ok: true, pessoa: contexto.person});
+  return JSON.stringify({ ok: true, pessoa: contexto.person });
 };
 ```
 
-Retorne uma string contendo JSON válido. Não retorne um objeto cru, `undefined` ou uma Promise. Declarar `async` muda o retorno para Promise e não atende a assinatura síncrona esperada. O runtime limita o tamanho da string; a janela tenta desserializá-la.
+Retorne uma string contendo JSON válido. Não retorne um objeto cru, `undefined` ou uma Promise. Declarar `async` muda o retorno para Promise e não atende a assinatura síncrona esperada. Uma resposta acima de 1 MiB é recusada.
 
-### O envelope é uma convenção
+### Duas formas de falhar, e as duas têm nome
 
-`{ok:true,...}` e `{ok:false,error:'codigo'}` são convenções recomendadas e usadas nos exemplos. A ponte também devolve `bridge-refused` nesse formato para recusas internas. Seus códigos como `sem-permissao`, `conflito` ou `formato-invalido` pertencem ao seu MOD e precisam de mensagens adequadas na interface.
+**A promessa rejeita** com um nome da lista fechada da ponte, num `Error` cujo `message` e `erro` são o nome e que leva os outros campos como propriedades: `too-many-requests` (o nono pedido em voo; leva `teto`), `mensagem-grande` (acima de 12 KiB; leva `tipoPedido`, `tamanho` e `teto`), `fila-cheia`, `tipo-desconhecido`, `sessao-encerrada` (a sessão acabou antes da resposta) e `falhou`, o genérico — inclusive a resposta que não chegou em 15 segundos. O motivo de um `falhou` vai ao `seele.log`.
+
+**A promessa resolve com o envelope do anfitrião** quando a chamada não chegou a responder: o seu código lançou, passou de um teto, ou o quintal não cabia. É `{ ok: false, error: "bridge-refused" }`, ou `{ ok: false, error: "quintal-cheio" }` quando a gravação do `dados` passaria do teto.
 
 ```js
 try {
-  const r = await SeeleMods.request(id, canal, {op:'ler'});
+  const r = await SeeleMods.request(id, 0, { op: 'ler' });
   if (!r.ok) {
     mostrarErro(traduzirCodigo(r.error));
     return;
   }
-  renderizar(r);
-} catch (erro) {
-  mostrarErro('Não foi possível concluir o pedido.');
+  desenhar(r);
+} catch (falha) {
+  mostrarErro('Não foi possível concluir o pedido: ' + falha.erro);
 }
 ```
 
-`mostrarErro`, `traduzirCodigo` e `renderizar` são funções do seu cliente, não funções da API SEELE.
+`mostrarErro`, `traduzirCodigo` e `desenhar` são funções do seu cliente, e não da API. **O seu protocolo não deve se confundir com o envelope**: `{ ok: true, … }` e `{ ok: false, error: 'codigo' }` são convenções recomendadas e usadas nos exemplos, e códigos como `sem-permissao`, `conflito` ou `formato-invalido` são do seu MOD e precisam de mensagens na interface. Se você usa `error` nos seus, `bridge-refused` e `quintal-cheio` são dois nomes que você não pode dar a outra coisa.
 
 ### Percurso de uma chamada
 
-A janela serializa o corpo, atribui um identificador ao pedido e envia pela conexão de controle autenticada. O host confere acesso de leitura, MOD ativo, canal e conteúdo do pacote. Ele cria o contexto, executa o handler limitado, grava `dados` quando houver mudança e devolve a resposta à conexão que perguntou. A janela remonta os fragmentos e resolve a Promise.
+A janela serializa o corpo, atribui um número ao pedido e envia pela conexão de controle autenticada. O host confere o acesso de leitura, o MOD ativo, o canal e o conteúdo do pacote. Ele monta o contexto, executa o handler limitado, grava `dados` quando a chamada termina bem e devolve a resposta à conexão que perguntou. A janela remonta os fragmentos e resolve a promessa.
 
-O pedido especial com ID vazio é usado pelo carregador para consultar o conjunto ativo. Considere-o infraestrutura do produto, não o namespace do seu MOD. Não utilize um ID vazio para guardar dados ou contornar a exigência de pacote ativo.
+A resposta não aparece no chat, no histórico nem para os outros participantes. Para dizer às outras janelas que algo mudou, a metade de servidor usa `mundo.avisar` dentro da mesma chamada, e cada janela deste MOD recebe o evento `servidor` (ver Rede, relógio, registro, aviso e tema).
 
-A resposta não aparece no chat, no histórico ou como transmissão. Ela não é enviada aos demais participantes. Não existe `broadcast()` público nesta ponte. Use consultas periódicas ou proponha uma extensão de API quando seu produto precisar de outro modelo.
+## [referencia:leitura] Leitura: o retrato e os eventos da tela
 
-Fonte: [execução autenticada e fragmentação](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-server/src/mods/pedidos.rs).
+### retrato()
 
-## [referencia:leitura] Leitura, snapshot e sincronização
+`SeeleUI.retrato()` resolve com o que a janela sabe agora, copiado campo a campo por lista branca:
 
-### snapshot()
-
-`await SeeleMods.snapshot()` consulta o estado que o aplicativo expõe. É útil para descobrir a pessoa atual, os canais e as pessoas presentes. Trate a estrutura como a superfície do build que você suporta, não como uma promessa de que toda propriedade interna estará congelada para sempre.
+| Campo | O que é |
+| --- | --- |
+| eu | O seu id de pessoa, um número |
+| servidor.nome | O nome do servidor |
+| pessoas | Quem está: `{ id, apelido, falando, mudo }` |
+| salas | As salas de voz: `{ id, nome, limite, pessoas, minha }` |
+| canais | Os canais: `{ id, nome, aberto }` |
+| onde | `computador` ou `celular` |
+| regioes | As regiões e camadas que existem nesta casca agora |
 
 ```js
-const s = await SeeleMods.snapshot();
-const eu = s.me == null ? null : String(s.me);
-const canal = s.open_channel ?? s.channels?.[0]?.id;
-const presentes = s.presentes ?? [];
-if (eu === null || canal == null) {
-  // Ainda não há contexto suficiente para pedir ao MOD.
-}
+const r = await SeeleUI.retrato();
+const canal = r.canais.find((c) => c.aberto)?.id ?? 0;
+const eu = String(r.eu);
 ```
 
-| Campo usado pelos exemplos | Uso |
+**O que fica de fora fica de fora de propósito**: o veredito de conexão segura, a topologia da rede, os aparelhos da máquina, a telemetria, as permissões, e nunca o toque, a chamada, o código e a agenda da sala pessoal. Um campo novo do estado do produto nasce fora do retrato até alguém o escrever na lista.
+
+O contexto autenticado de `aoPedir` continua sendo a autoridade para uma alteração. Não envie `r.eu` no corpo e aceite esse valor como prova de autoria no host: o host já sabe quem é a conexão.
+
+### O que muda chega por evento
+
+O retrato é uma leitura, e não uma assinatura. **O que muda chega por evento**, e um MOD relê o retrato quando um evento diz que vale a pena:
+
+| nome | O que traz |
 | --- | --- |
-| me | Identidade atual, quando conhecida |
-| channels | Canais; cada item tem id e name |
-| open_channel | Canal aberto, quando exposto; use fallback para channels |
-| presentes | Pessoas conectadas; id e nickname |
+| canal | `canal`: o canal aberto mudou |
+| sala | `sala`, ou `null`: você entrou numa sala de voz ou saiu |
+| pessoas | `entrou` ou `saiu`, com o id, um número |
+| fala | `falando: [id]`, no máximo quatro vezes por segundo |
+| lugar | `onde`, `regioes`, `largura`, `altura`, e `regiao` quando é o tamanho do lugar do MOD numa região ou camada |
+| servidor | `canal` e `carga`, já lida: o aviso da sua metade de servidor |
+| tema | `estado` (`aplicado`, `recusado` ou `nativo`), `previa`, e, recusado, `pares` e `regiao` |
 
-O contexto autenticado de `aoPedir` continua sendo a autoridade para uma alteração. Não envie `s.me` no corpo e aceite esse valor como prova de autoria no host. O host já sabe quem é a conexão.
+**Nenhum evento carrega toque, chamada, código ou agenda.** O primeiro retrato de uma sessão não é mudança: o MOD lê o retrato quando sobe. O `lugar` sem `regiao` só é dito quando a casca muda de forma, e não ao chegar nem quando a janela muda de tamanho.
 
-### Consulta periódica
+### Sem consulta periódica
 
-Use um único ciclo de consulta, sem sobrepor requests se o servidor estiver lento. Quatro segundos é uma escolha dos exemplos Estilo/Perfis, não um limite nem uma garantia do protocolo. Intervalos menores aumentam tráfego, execução de JavaScript e contenção do banco.
+Até a API 5, uma janela que quisesse ver o que os outros gravaram perguntava ao servidor de tempos em tempos. Na 6, a metade de servidor avisa: `SeeleUI.capacidades()` traz `aviso-do-servidor`, e o evento `servidor` chega a cada janela deste MOD que pode ler o canal do aviso. **O aviso de um pedido pode chegar antes da resposta dele**, à própria janela que pediu: compare a revisão e fique com a mais nova, como o exemplo faz.
+
+Se você ainda precisar de um ciclo — um serviço externo que muda sozinho, por exemplo —, use um só, sem sobrepor pedidos, e capture as rejeições:
 
 ```js
 let emConsulta = false;
@@ -546,74 +566,74 @@ async function consultar() {
   if (emConsulta) return;
   emConsulta = true;
   try {
-    const r = await SeeleMods.request(id, canal, {op:'ler'});
-    if (r.ok && r.revisao !== revisaoExibida) await desenhar(r);
+    const r = await SeeleMods.request(id, 0, { op: 'ler' });
+    if (r.ok && r.revisao > revisaoExibida) await desenhar(r);
+  } catch (falha) {
+    console.warn('a consulta falhou:', falha.erro);
   } finally {
     emConsulta = false;
   }
 }
 ```
 
-Adapte o tratamento de erro antes de usar esse fragmento. Uma chamada disparada por timer precisa capturar rejeições. O desenho atual é de leitura. Declare o resultado autorizado e evite apresentar uma resposta de canal antigo após a navegação.
-
 ### Paginação e visibilidade
 
-Não devolva todas as imagens de todos os membros em cada consulta. Separe metadados de recursos, consulte listas em lotes, carregue mídia necessária e use revisão como chave de cache. O limite de 32 pessoas por lote em Perfis é uma regra daquele MOD, não da ponte SEELE.
+Não devolva todas as imagens de todos os membros em cada consulta. Separe metadados de recursos, consulte listas em lotes, carregue a mídia necessária e use a revisão como chave de cache. O limite de 32 pessoas por lote em PERFIS é uma regra daquele MOD, e não da ponte.
 
-Se um painel não estiver visível, reduza trabalho desnecessário. Ao trocar de servidor, invalide caches ou inclua o servidor/escopo na chave. Um perfil salvo no servidor A não deve aparecer como se fosse do servidor B.
+Ao trocar de servidor, invalide caches ou inclua o servidor no escopo da chave. Um perfil salvo no servidor A não deve aparecer como se fosse do servidor B.
 
 ## [referencia:escrita] Escrita, autorização e concorrência
 
-O contexto chega como JSON escrito pelo servidor. `person` é serializado como string; `channel` é número; `admin` e `write` são booleanos calculados das permissões atuais.
+O contexto chega como JSON escrito pelo servidor:
 
 ```json
-{"person":"42","channel":7,"admin":false,"write":true}
+{"person":"42","channel":7,"sala":null,"admin":false,"write":true}
 ```
 
 | Campo | Significado |
 | --- | --- |
-| person | Identidade autenticada da conexão |
-| channel | Canal do pedido, conferido como existente |
-| admin | Permissão AdministerServer no momento do pedido |
-| write | Permissão WriteChannel no momento do pedido |
+| person | Quem pediu, **em texto**; o id das pessoas no retrato é um número, então compare com `String(id)` |
+| channel | O canal do pedido, ou `null` quando a janela mandou `0` |
+| sala | A sala de voz em que a pessoa está, segundo a presença que o servidor mantém, ou `null` |
+| admin | Se a pessoa administra o servidor, no momento do pedido |
+| write | Se ela pode escrever **naquele canal** — a permissão e o papel mínimo do canal, a mesma pergunta que o produto faz para publicar ali; no pedido sem canal, se ela pode escrever nos canais em geral |
 
-Antes da execução, a ponte exige ReadChannel. Ela informa `write` e `admin`; isso não substitui a política do MOD. Um handler que modifica dados sem checar as permissões apropriadas poderá permitir a alteração. Não há um campo `host` neste contexto. Se a sua política diz “somente host”, `admin` autoriza administradores e precisa ser descrito assim.
+Antes da execução, a ponte exige a leitura do canal. Ela informa `write` e `admin`; isso não substitui a política do MOD. Um handler que modifica dados sem checar as permissões apropriadas permitirá a alteração. **A autorização sai daqui, e nunca do pedido**: um MOD que confiasse num campo do pedido deixaria quem escreve a chamada escolher a própria permissão. Não há um campo `host` neste contexto; se a sua política diz «somente host», `admin` autoriza administradores, e precisa ser descrito assim.
 
 ### Padrão de alteração segura
 
 1. Faça parse e valide a forma do pedido.
 2. Reconheça uma operação conhecida.
 3. Confira permissões com o contexto, nunca com campos do corpo.
-4. Confira propriedade do recurso usando `contexto.person`.
+4. Confira a propriedade do recurso usando `contexto.person`.
 5. Valide tamanho, tipo, faixa e revisão.
 6. Calcule o próximo estado sem efeitos externos.
-7. Grave em `dados` e retorne a revisão resultante.
+7. Grave em `dados`, avise as janelas e retorne a revisão resultante.
 
 ```js
-if (!ctx.write) return JSON.stringify({ok:false,error:'sem-permissao'});
-const dono = ctx.person;
-const chave = 'perfil:' + dono;
+if (!ctx.write) return JSON.stringify({ ok: false, error: 'sem-permissao' });
+const chave = 'perfil:' + ctx.person;
 const atual = JSON.parse(dados[chave] || '{"revisao":0}');
 if (pedido.revisao !== atual.revisao) {
-  return JSON.stringify({ok:false,error:'conflito',revisao:atual.revisao});
+  return JSON.stringify({ ok: false, error: 'conflito', revisao: atual.revisao });
 }
 ```
 
-Este fragmento demonstra autorização e revisão, mas ainda precisa validar os campos específicos do perfil. Uma propriedade `person` no corpo deve ser ignorada para autoria ou conferida contra o contexto quando fizer parte de uma seleção explícita.
+Este fragmento demonstra autorização e revisão, mas ainda precisa validar os campos específicos do perfil. Uma propriedade `person` no corpo deve ser ignorada para autoria, ou conferida contra o contexto quando fizer parte de uma seleção explícita.
 
 ### Revisão otimista
 
 Devolva `revisao` nas leituras. O editor envia a revisão sobre a qual trabalhou. O servidor recusa se ela mudou e incrementa ao salvar. Assim, dois editores não apagam silenciosamente o trabalho um do outro. Uma serialização no banco ordena as chamadas, mas sozinha não detecta que uma interface estava editando um estado antigo.
 
-### Timeout e idempotência
+### Prazo e idempotência
 
-Timeout significa que a janela não obteve a conclusão a tempo. Não significa que a alteração foi desfeita. Para ações que não podem se repetir, envie uma chave de operação e grave um recibo junto ao estado; uma repetição da mesma chave devolve o recibo. Delimite a retenção desses recibos para caber no KV e documente a janela de deduplicação.
+Um pedido sem resposta em 15 segundos rejeita com `falhou` na janela. Isso não significa que a alteração foi desfeita. Para ações que não podem se repetir, envie uma chave de operação e grave um recibo junto ao estado; uma repetição da mesma chave devolve o recibo. Delimite a retenção desses recibos para caber no quintal e documente a janela de deduplicação.
 
-Uma resposta `{ok:false}` é uma resposta normal, não uma exceção. Se você já modificou `dados` antes de devolvê-la, essas mudanças podem ser gravadas. Valide antes de alterar. Lançar uma exceção evita a coleta de `dados`, mas não reverte rede ou arquivos que já foram escritos.
+Uma resposta `{ ok: false }` é uma resposta normal, e não uma exceção. Se você já modificou `dados` antes de devolvê-la, essas mudanças são gravadas. Valide antes de alterar. Lançar uma exceção evita a gravação de `dados`, mas não reverte rede ou arquivos que já foram escritos.
 
 ## [referencia:dados] Persistência e migrações
 
-`dados` é um objeto de chaves e valores textuais fornecido ao handler. O estado pertence ao MOD no banco do servidor. O runtime carrega esse estado para uma nova execução de pedido e o grava depois de uma conclusão bem-sucedida, quando há mudança.
+`dados` é um objeto de texto para texto. O que estiver nele ao fim da chamada é gravado; o que estava lá chega preenchido.
 
 ```js
 const config = JSON.parse(dados.config || '{"schema":1,"revisao":0}');
@@ -623,683 +643,522 @@ dados.config = JSON.stringify(config);
 
 ### Regras de armazenamento
 
-- Use strings nos valores. Para objetos e arrays, use `JSON.stringify` e `JSON.parse`.
+- **Uma chamada é transacional.** Se o seu código lançar no meio, nada é gravado: meia escrita é pior que nenhuma, porque você não teria como saber qual metade entrou.
+- **Só texto.** Números viram texto; objetos e listas, `JSON.stringify` e `JSON.parse`.
+- **Teto de 256 KiB**, somando chaves e valores em UTF-8, e ele **recusa** em vez de aparar: acima dele, o pedido volta com `{ ok: false, error: "quintal-cheio" }`, e nada é gravado.
+- `dados.uso()` diz quantos bytes o quintal ocupa, na conta da gravação, e `dados.teto` diz o teto.
 - Leia `dados` dentro dos handlers. A inicialização do script acontece antes de o quintal da chamada ser injetado.
-- Não dependa de variáveis globais como memória persistente de pedidos. O runtime de `aoPedir` nasce a cada requisição.
-- O teto é 256 KiB somando chaves e valores. Ele não é um limite separado por campo.
-- Uma falha de execução ou coleta não deve produzir meia atualização do KV. A gravação no banco só ocorre depois do retorno bem-sucedido.
-- Não confunda atomicidade de `dados` com transação de arquivos ou rede.
+- Não dependa de variáveis globais como memória persistente: o que precisa durar vai para `dados`.
+- Não confunda a atomicidade de `dados` com transação de arquivos ou rede.
 
 ### Servidor inteiro ou canal
 
-O armazenamento é por MOD e servidor. Se você quer uma ficha por canal, precisa codificar esse escopo nas chaves ou em seu objeto. Uma chave como `config` será compartilhada entre pedidos do mesmo MOD em canais diferentes naquele servidor.
+O armazenamento é por MOD e por servidor. Se você quer uma ficha por canal, codifique esse escopo nas chaves. Uma chave como `config` é compartilhada entre pedidos do mesmo MOD em canais diferentes daquele servidor.
 
 ```js
 const chave = 'canal:' + ctx.channel;
 const ficha = JSON.parse(dados[chave] || '{"schema":1,"revisao":0}');
 ```
 
-A chave de uma pessoa pode usar `ctx.person`, ou uma combinação com `ctx.channel` se o recurso tiver escopo de canal. Valide qualquer parte de chave que venha do usuário e limite a quantidade total de registros para evitar crescimento ilimitado.
+A chave de uma pessoa pode usar `ctx.person`, ou uma combinação com `ctx.channel` se o recurso tiver escopo de canal. Valide qualquer parte de chave que venha da pessoa e limite a quantidade total de registros para evitar crescimento ilimitado.
 
 ### Migração explícita
 
-Guarde uma versão no próprio estado. A propriedade `state` do manifesto é declarativa nesta implementação: não há uma função de migração chamada automaticamente pelo SEELE.
+Guarde uma versão no próprio estado. A propriedade `state` do manifesto é declarativa: não há uma função de migração chamada automaticamente pelo SEELE.
 
 ```js
 function migrar(estado) {
   if (estado.schema === 1) {
-    return {...estado, schema:2, titulo:estado.titulo ?? 'Sem título'};
+    return { ...estado, schema: 2, titulo: estado.titulo ?? 'Sem título' };
   }
   if (estado.schema === 2) return estado;
   throw new Error('Versão de dados não suportada');
 }
 ```
 
-Esse exemplo só transforma memória. Antes de persistir, valide invariantes, orçamento do KV e compatibilidade com o restante do handler. Teste duas execuções consecutivas da migração: a segunda não deve acrescentar dados outra vez. Não converta um formato desconhecido em estado vazio, pois isso pode apagar silenciosamente conteúdo de uma versão futura.
+Esse exemplo só transforma memória. Antes de persistir, valide invariantes, orçamento do quintal e compatibilidade com o restante do handler. Teste duas execuções consecutivas da migração: a segunda não deve acrescentar dados outra vez. Não converta um formato desconhecido em estado vazio, pois isso pode apagar silenciosamente o conteúdo de uma versão futura.
 
 ### Eventos e pedidos no mesmo MOD
 
-Pedidos usam um runtime novo. O caminho de eventos mantém o hospedeiro carregado e entrega o quintal a cada chamada. Há coordenação de persistência no produto, mas evite que os dois caminhos regravem objetos grandes com base em cópias antigas. Prefira uma responsabilidade clara para cada tipo de alteração e teste concorrência entre um evento e um pedido.
-
-Fonte: [runtime e coleta](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-server/src/mods/mod.rs), [persistência dos pedidos](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-server/src/mods/pedidos.rs).
+O caminho de eventos e o de pedidos entregam o mesmo quintal, cada um na sua chamada. Evite que os dois regravem objetos grandes com base em cópias antigas. Prefira uma responsabilidade clara para cada tipo de alteração e teste a concorrência entre um evento e um pedido.
 
 ## [referencia:arquivos] Arquivos: ler, escrever, listar e apagar
 
-As operações de arquivo existem somente no runtime do servidor e trabalham com texto. Os caminhos são relativos à pasta de dados do MOD. Não há um objeto File de navegador nesse ambiente.
+As operações de arquivo existem somente no runtime do servidor e trabalham com texto.
 
 | Operação | Assinatura | Retorno |
 | --- | --- | --- |
-| Ler | arquivos.ler(caminho) | string ou null |
-| Escrever | arquivos.escrever(caminho, conteudo) | boolean |
-| Listar | arquivos.listar() | lista de caminhos |
-| Apagar | arquivos.apagar(caminho) | boolean |
+| Ler | `arquivos.ler(caminho)` | string ou null |
+| Escrever | `arquivos.escrever(caminho, conteudo)` | boolean |
+| Listar | `arquivos.listar()` | lista de caminhos |
+| Apagar | `arquivos.apagar(caminho)` | boolean |
 
 ```js
 const caminho = 'fichas/pessoa-' + ctx.person + '.json';
-const conteudo = JSON.stringify({titulo:'Explorador',nivel:1});
+const conteudo = JSON.stringify({ titulo: 'Explorador', nivel: 1 });
 if (!arquivos.escrever(caminho, conteudo)) {
-  return JSON.stringify({ok:false,error:'arquivo-nao-gravado'});
+  return JSON.stringify({ ok: false, error: 'arquivo-nao-gravado' });
 }
 const salvo = arquivos.ler(caminho);
 ```
 
-Não trate `false` como sucesso. `null` na leitura pode indicar ausência ou recusa; apresente uma falha útil e não invente uma causa detalhada que a API não forneceu. `listar()` não recebe um diretório como argumento na assinatura atual.
+Não trate `false` como sucesso. `null` na leitura pode indicar ausência ou recusa; apresente uma falha útil e não invente uma causa que a API não forneceu. `listar()` não recebe um diretório como argumento.
 
 ### Escopo e caminhos
 
-A raiz é a pasta `dados/` do MOD instalado, normalmente dentro de `mods/autor/nome/dados/`. Caminhos absolutos e componentes de travessia como `..` são recusados. Não construa um nome de arquivo a partir de uma URL ou nome de exibição sem validação. Um identificador interno gerado pelo servidor é uma escolha melhor.
+Tudo fica dentro da pasta de dados do MOD **naquele servidor** — `servidores/<servidor>/mod-data/<autor>/<nome>/`, na pasta de configuração de quem hospeda —, e nada fora. Uma por servidor hospedado, e não uma por máquina: o mesmo MOD em dois servidores não lê o que o outro escreveu. Caminhos absolutos e `..` são recusados, e a recusa é a mesma resposta para todos os casos. Não construa um nome de arquivo a partir de uma URL ou nome de exibição sem validação; um identificador gerado pelo servidor é uma escolha melhor.
+
+**Por que só a sua pasta**, num sistema em que o resto é liberdade: ao lado dela ficam a chave de identidade, os pins e o banco com todas as conversas. Disco inteiro entregaria a chave privada de identidade de quem te hospeda, e aí o que cai não é uma regra de produto — é a garantia de que aquela pessoa é ela mesma.
 
 O teto é 4 MiB por arquivo. Isso não implica um teto agregado de disco para todo o MOD. Defina cotas, quantidade máxima de arquivos e política de retenção no seu código.
 
-O armazenamento de arquivos usa a pasta instalada. Se várias instâncias de servidor compartilham a mesma instalação, não presuma isolamento de arquivos idêntico ao isolamento de `dados` no banco. Use nomes únicos e referências guardadas no estado de cada servidor, ou diretórios de instalação separados para ambientes independentes.
-
-### Arquivos não participam do rollback do KV
+### Arquivos não participam da transação do quintal
 
 `arquivos.escrever` e `arquivos.apagar` são efeitos imediatos no disco. Se o handler lançar depois, a gravação de `dados` não ocorrerá, mas o arquivo pode já ter sido escrito ou removido. A rede também não é revertida.
 
-Para substituir um recurso, uma estratégia é escrever em um caminho novo, verificar sucesso, atualizar a referência no KV e guardar o caminho antigo numa fila de limpeza. Remova o antigo numa chamada posterior à confirmação dos metadados. Se houver falha entre etapas, prefira um arquivo órfão recuperável a uma referência apontando para um arquivo apagado.
+Para substituir um recurso, escreva num caminho novo, verifique o sucesso, atualize a referência no quintal e guarde o caminho antigo numa fila de limpeza. Remova o antigo numa chamada posterior à confirmação dos metadados. Se houver falha entre etapas, prefira um arquivo órfão recuperável a uma referência apontando para um arquivo apagado.
 
-O par “arquivo novo + referência no banco” não é uma transação distribuída automática. Documente seu procedimento de recuperação e teste falha de disco, falha de KV e repetição de um fragmento.
+## [referencia:uploads] Imagens grandes, uploads e respostas grandes
 
-Fonte: [operações de arquivos](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-server/src/mods/arquivos.rs).
+### O volume, para imagens
 
-## [referencia:uploads] Uploads, imagens e respostas grandes
+Para a imagem que não cabe numa mensagem existe o **volume**: até 10 MiB, sem passar pelo QuickJS. Os bytes vão por um fluxo próprio, direto ao disco de quem hospeda.
 
-A ponte recebe JSON, não multipart nem fluxo binário. Um MOD pode definir seu próprio protocolo de upload em fragmentos, mas esse protocolo precisa ser implementado e autorizado no handler. Nomes como `upload-start` e `upload-part` são convenções de Perfis, não comandos nativos SEELE.
+```js
+// no servidor, dentro do aoPedir: autoriza um envio de quem pediu, por 30 segundos
+volume.esperar(token, 'retratos/coelho.png', ['png', 'jpeg'], 30);  // → true/false
+volume.tamanho('retratos/coelho.png');                              // → bytes ou null
+volume.servir('retratos/coelho.png');                               // → o caminho servido, ou null
+volume.apagar('retratos/coelho.png');                               // → true/false
+```
 
-### Por que fragmentar
+- `volume.esperar` só vale dentro do `aoPedir`: a pessoa que pode enviar é a que está sendo atendida, e quem diz isso é o servidor, e não um argumento.
+- Os tipos são `png`, `jpeg`, `webp` e `gif`, conferidos pelos bytes, e não pelo nome. Um HEIC rejeita a janela com `tipo-recusado` e `detectado: 'heic'`.
+- Do outro lado, a janela manda com `SeeleUI.enviar(arquivo, token)`, e a promessa resolve depois da gravação. No navegador, `SeeleUI.enviar` não existe.
+- As recusas do volume: `sem-espera`, `tipo-recusado`, `formato-desconhecido`, `arquivo-grande-demais`, `nao-gravei`, `incompleto` e `sessao-encerrada`.
 
-O pedido tem teto de 12 KiB. Base64 ocupa aproximadamente quatro bytes para cada três bytes binários, além do prefixo e do envelope JSON. Uma imagem que parece pequena no Finder pode não caber num pedido.
+**Ler de volta**: toda mídia de servidor aceita `doServidor: { canal, pedido: { …, transporte: 'volume' }, campo }` — a `midia`, o `fundoDeMidia`, o `retrato`, a `pessoa.capa` e o fundo de uma `tela` —, e o seu `aoPedir` responde `{ ok: true, volume: volume.servir(caminho) }`. O `servir` devolve o caminho quando o arquivo existe na sua pasta de volume, e `null` quando não.
 
-A resposta tem teto de 1 MiB e é dividida pelo SEELE em partes de até 10 KiB, respeitando fronteiras UTF-8. Isso é fragmentação do transporte da resposta. Não significa que o SEELE vai fragmentar automaticamente seu pedido de upload.
+### Respostas grandes
 
-### Protocolo recomendado
+Sem `transporte: 'volume'`, a mídia vem em texto no `campo`, em páginas que o produto segue enquanto a resposta trouxer `proximo` — um objeto que o SEELE soma ao pedido seguinte **sem interpretar**: a forma da paginação é sua. A resposta tem teto de 1 MiB e é dividida pelo SEELE em partes de até 10 KiB, respeitando fronteiras UTF-8. Isso é fragmentação do transporte da resposta, e não do seu pedido.
+
+### Um protocolo de upload próprio
+
+Para o que não é imagem, um MOD pode definir seu próprio protocolo em fragmentos: o pedido tem teto de 12 KiB, e base64 ocupa cerca de quatro bytes para cada três. Nomes como `upload-start` e `upload-part` são convenções de PERFIS, e não comandos do SEELE.
 
 | Etapa | Dados | Regra no servidor |
 | --- | --- | --- |
-| Iniciar | slot/tipo, comprimento total | Autorizar, limitar tamanho e reservar token |
-| Enviar parte | token, índice, conteúdo | Conferir dono, ordem, prazo e orçamento |
+| Iniciar | Destino, tipo, comprimento total | Autorizar, limitar tamanho e reservar token |
+| Enviar parte | Token, índice, conteúdo | Conferir dono, ordem, prazo e orçamento |
 | Finalizar | Última parte ou operação explícita | Conferir tamanho e formato, publicar referência |
-| Consultar | Identidade/recurso | Conferir leitura e devolver conteúdo autorizado |
 | Remover | Recurso e revisão | Autorizar dono, atualizar metadados, limpar depois |
 
-O token precisa estar associado ao `ctx.person`, ao destino e a uma expiração. O servidor deve rejeitar fragmentos de outra pessoa, índices inesperados, excesso de tamanho e conclusão incompleta. Defina se uma retransmissão do mesmo fragmento é aceita de forma idempotente ou exige reiniciar; não deixe esse comportamento implícito.
+O token precisa estar associado ao `ctx.person`, ao destino e a uma expiração. O servidor deve rejeitar fragmentos de outra pessoa, índices inesperados, excesso de tamanho e conclusão incompleta. Armazene a referência pública apenas quando o conteúdo estiver completo e validado: um upload interrompido não deve substituir o banner anterior por dados parciais.
 
-Armazene a referência pública apenas quando o conteúdo estiver completo e validado. Um upload interrompido não deve substituir o banner anterior por dados parciais. Limpe temporários vencidos com orçamento de trabalho controlado.
+### Validação e memória
 
-### Validação de mídia
+No servidor, valide envelope, limites e assinatura dos bytes; não confie no MIME informado por quem envia. O produto confere o tipo pelos bytes antes de mostrar, e conferir de novo do seu lado continua sendo certo — o produto protege a janela, e não o seu formato. Não interprete SVG ou HTML enviado por participante como conteúdo confiável.
 
-Esta seção descreve protocolos e dados de servidor. O seletor de arquivos **existe** e é do produto: a forma `arquivo` desenha um botão, a pessoa escolhe, e seu MOD recebe um identificador com o tipo que os **bytes** provaram ser e o tamanho — nunca um caminho. Leia com `SeeleUI.pedaco(arquivo, inicio)` e mande ao seu servidor pelo protocolo que você definir; devolva com `SeeleUI.soltar(arquivo)` quando terminar.
-
-No servidor, valide envelope, limites e assinatura dos bytes; não confie no MIME informado por quem envia. O produto já reconheceu o tipo pelos bytes antes de lhe entregar o identificador, e conferir de novo do seu lado continua sendo certo — o produto protege a janela, não o seu formato.
-
-O servidor de PERFIS mantém uploads de até 10 MiB por avatar/banner em fragmentos próprios. O cliente da API 3 não oferece upload nem validação de dimensões; os arquivos anteriores permanecem armazenados. Para uma garantia forte de dimensões/conteúdo no servidor, é necessária uma validação adequada naquele lado.
-
-Não interprete SVG ou HTML enviado por participante como conteúdo confiável. Não há forma `img` ou renderização de data URI na API 3. Não tente passar marcação como texto para reproduzir essas capacidades. Uma resposta do seu servidor ainda pode conter dados originados de outra pessoa.
-
-### Memória e desempenho
-
-Um limite de 4 MiB no arquivo não garante que um fluxo com várias cópias de base64 e JSON caiba em 8 MiB de runtime. Somam-se fonte, objetos, estado, strings de entrada, buffers e resultado. Teste o pior caso no QuickJS real, não só no Node.
-
-Use somente metadados leves na região. Não baixe imagens que a API não pode exibir. A lista de pessoas e seus controles pertencem ao produto.
+Um limite de 4 MiB no arquivo não garante que um fluxo com várias cópias de base64 e JSON caiba nos 8 MiB do runtime. Somam-se fonte, objetos, estado, strings de entrada e resultado. Teste o pior caso no QuickJS real, e não só no Node.
 
 ## [referencia:eventos] Eventos e aoAcontecer
 
-`globalThis.aoAcontecer(momento, cargaJSON)` recebe um nome e uma string JSON. Faça parse dentro do handler. Não existe um objeto genérico de browser Event nessa assinatura.
+`globalThis.aoAcontecer(momento, cargaJSON)` recebe um nome e uma string JSON. Faça parse dentro do handler. `momento` é **o mesmo nome que o protocolo usa**, para que um relatório de defeito que diga `MessageReceived` ache a mesma palavra no protocolo, no contrato da API e no seu código.
 
 ```js
 globalThis.aoAcontecer = (momento, cargaJSON) => {
   if (momento !== 'MessageReceived') return;
   const evento = JSON.parse(cargaJSON);
   if (!evento.texto.startsWith('$contar')) return;
-  const total = Number(dados.mensagensContadas || '0');
-  dados.mensagensContadas = String(total + 1);
-  mundo.registrar('Mensagem contabilizada');
+  dados.mensagensContadas = String(Number(dados.mensagensContadas || '0') + 1);
+  mundo.registrar('mensagem contada');
 };
 ```
 
-O exemplo conta e registra; ele não envia uma mensagem de resposta ao chat. Não há uma função `mandarMensagem` instalada no runtime inspecionado para completar essa segunda parte.
+O exemplo conta e registra; ele não envia uma mensagem de resposta ao chat. Não há uma função de mandar mensagem no runtime.
 
-### Eventos encaminhados pelo adaptador verificado
+### Os quatro momentos entregues
 
 | momento | Campos da carga JSON |
 | --- | --- |
 | PersonJoined | sala, pessoa, apelido |
 | PersonLeft | sala, pessoa |
 | MessageReceived | canal, mensagem, autor, texto |
-| MessageEdited | canal, mensagem, texto |
 | MessageRemoved | canal, mensagem |
 
-`PersonJoined` e `PersonLeft` incluem contexto de sala de voz no adaptador. Não transforme esses nomes em uma regra universal de cadastro/remoção permanente de pessoa. Para pessoas conectadas na interface, consulte `snapshot.presentes`.
-
-`MessageEdited` não inclui autor nessa carga. `MessageRemoved` não inclui o texto anterior. Se seu MOD precisa de informação que não está no evento, precisa ter uma estratégia compatível com o que realmente recebe; não leia campos inventados.
-
-### Nomes declarados, ainda sem encaminhamento nesse adaptador
-
-O arquivo v1 também lista `PersonPresent`, `PersonGone`, `PersonRenamed`, `PersonIconChanged`, `VoiceRoomCreated`, `VoiceRoomRenamed`, `VoiceRoomDeleted`, `MovedToVoiceRoom`, `ChannelCreated`, `ChannelRenamed`, `ChannelDeleted`, `ChannelWeighed`, `ScreenShareStarted`, `ScreenShareStopped`, `ServerRenamed` e `ServerIconChanged`. A existência na lista não demonstra que o seu handler será chamado. Confira o adaptador do build alvo antes de depender de um deles.
+**O `MessageEdited` saiu na 6**: o produto não tem verbo de editar mensagem, e um momento que nunca chega é pior que um que não existe. `PersonJoined` e `PersonLeft` incluem o contexto de sala de voz; não os transforme numa regra de cadastro permanente. `MessageRemoved` não inclui o texto anterior: se o seu MOD precisa de informação que não está no evento, ele precisa de uma estratégia compatível com o que realmente recebe.
 
 ### Falhas de evento
 
-O despachante executa eventos em sequência. Uma chamada lenta pode atrasar o processamento dos eventos dos MODs seguintes. Falhas do handler podem desligar o MOD, e o desligamento é persistido. Não use exceção como retorno normal para uma situação esperada, como uma mensagem que não corresponde a um comando.
+O despachante executa eventos em sequência: uma chamada lenta atrasa os eventos dos MODs seguintes. **Um `aoAcontecer` que lança desliga o MOD, e o desligamento é gravado** — um bug que lança em todo evento tira o seu MOD do ar até alguém religá-lo. Não use exceção como retorno normal para uma situação esperada, como uma mensagem que não é um comando.
 
-Um MOD sem `aoAcontecer` é válido quando sua metade de servidor usa apenas `aoPedir`. O inverso também pode ser válido, mas tentar fazer um request a um servidor sem `aoPedir` não cria o handler automaticamente.
+Um MOD sem `aoAcontecer` é válido quando a metade de servidor existe para outra coisa. O inverso também pode ser válido, mas um pedido a um servidor sem `aoPedir` não cria o handler.
 
-Fonte: [momento_de e despacho](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-server/src/mods/despacho.rs).
+## [referencia:rede] Rede, relógio, registro, aviso e tema
 
-## [referencia:rede] Rede, relógio e registro
+```js
+const resposta = mundo.buscar('https://servico.example/dados.json');  // texto ou null
+const agora = mundo.agora();                                           // segundos desde 1970
+mundo.registrar('o que aconteceu');                                    // vai para o log de quem hospeda
+mundo.avisar({ canal: 3, carga: { revisao: 7 } });                     // → { ok } ou { ok: false, erro }
+mundo.tema({ fundo: '#0b1d2a', texto: '#f5f1e6' });                    // → { ok } ou { ok: false, erro }
+```
 
 ### mundo.buscar(url)
 
-```js
-const texto = mundo.buscar('https://servico.example/dados.json');
-if (texto === null) {
-  return JSON.stringify({ok:false,error:'servico-indisponivel'});
-}
-const dadosExternos = JSON.parse(texto);
-```
+Um GET síncrono a uma URL `http` ou `https`, que retorna texto ou `null`. Não recebe método, cabeçalhos, corpo nem token: não invente um segundo argumento como se fosse `fetch`. `file://` é recusado, senão a rede faria o que a pasta impede no disco. O endereço `.example` é ilustrativo: use um endpoint conhecido no seu teste, e trate JSON inválido antes de persistir ou desenhar.
 
-O endereço `.example` é ilustrativo e não é um serviço real. Use um endpoint controlado/conhecido no seu teste. Faça tratamento de JSON inválido e valide a resposta antes de persistir ou renderizar.
+**Teto de 2 segundos por busca**, e ele existe por um motivo que vale você saber: o servidor roda um momento por vez, então uma busca lenta sua atrasa **todos os outros MODs** e a fila de eventos atrás deles. Uma resposta acima de 4 MiB é descartada. O retorno não traz status HTTP nem cabeçalhos: valide o conteúdo esperado.
 
-A função faz GET síncrono a uma URL HTTP/HTTPS e retorna texto ou `null`. Não recebe opções de método, cabeçalhos, corpo ou token. Não invente um segundo argumento como se fosse `fetch`. O timeout da requisição nativa é 2 segundos; o limite de corpo aceito é 4 MiB.
+A busca sai da máquina de quem hospeda. Não deixe um participante informar uma URL arbitrária: ele poderia alcançar serviços internos da rede de quem hospeda. Não inclua segredos em URLs, logs, exemplos ou pacotes; a API não oferece cofre de credenciais.
 
-O retorno não fornece status HTTP nem cabeçalhos. Não assuma que uma string representa HTTP 200: valide o conteúdo esperado. A implementação lê o corpo como texto e confere seu tamanho; isso não é uma promessa de leitura em streaming com limite prévio de alocação.
+### mundo.agora() e mundo.registrar(texto)
 
-A busca acontece a partir da máquina do host. Não permita que qualquer participante informe uma URL arbitrária: ele poderia tentar alcançar serviços internos da rede de quem hospeda. Fixe ou restrinja os destinos de acordo com a finalidade do MOD. A restrição a HTTP/HTTPS não equivale a uma proteção completa contra acesso a endereços internos.
+`mundo.agora()` devolve segundos desde a época Unix, pelo relógio de quem hospeda. Não confunda com os milissegundos de `Date.now()`, e não o use como único mecanismo de ordenação de revisões.
 
-Não inclua segredos em parâmetros de URL, logs, exemplos ou pacotes. A API atual não oferece um cofre de credenciais por MOD. Se sua integração precisa de autenticação com configuração privada, trate esse requisito como uma decisão de arquitetura a resolver, não como um campo inventado no manifesto.
+`mundo.registrar` escreve uma linha INFO no registro de quem hospeda, sempre com o seu `id` num campo próprio (`mod_id=`), cortada em 500 caracteres. Você não escolhe o prefixo: uma linha cuja origem você pudesse forjar seria uma linha que ninguém pode usar para decidir qual MOD desligar. Evite registrar mensagens privadas, conteúdo de arquivos, base64 ou credenciais.
 
-### mundo.agora()
+### mundo.avisar({ canal?, carga })
 
-Retorna segundos desde a época Unix, conforme o relógio do host. É útil para expiração de upload ou retenção. Não confunda segundos com milissegundos de `Date.now()`. O relógio pode avançar ou recuar; não o use como único mecanismo de ordenação de revisões.
+Avisa as janelas deste MOD, e cada uma recebe o evento `servidor` com a `carga` já lida. Vai a quem pode ler o canal (sem canal, ao servidor inteiro), inclusive à janela de quem pediu — que pode recebê-lo antes da resposta do próprio pedido. **Só vale se a chamada terminar e o quintal gravar**; dentro de uma chamada, vale o mais novo de cada canal. Até 1 KiB por aviso, 4 por segundo por MOD e 16 canais por chamada; o excedente fica, por canal, só o mais novo, e sai quando a janela abre. As recusas vêm como valor: `aviso-invalido`, `aviso-grande-demais` e `avisos-demais`.
 
-### mundo.registrar(texto)
+### mundo.tema(valores | null)
 
-Registra uma linha com o ID do MOD no log do host. A implementação recorta a mensagem em até 500 caracteres. Use registros curtos e úteis: operação, erro e identificador interno não sensível. Evite despejar mensagens privadas, conteúdo de arquivos, base64, credenciais ou corpo completo de requisições.
+Publica o tema do servidor, só no MOD cujo manifesto declara `"tema": true`. O detalhe está em O tema do servidor.
 
-### Rede no cliente
+## [referencia:interface] Executor, superfícies e ciclo de vida
 
-O executor não é um contexto de navegador: não há CSP para herdar e não há `fetch` para chamar. Faça integrações externas pelo lado de servidor, dentro dos limites reais. Um simulador web que você use para desenvolver **não** é o ambiente final — ele tem APIs que o executor não tem, e um MOD que depende de uma delas passa lá e falha aqui.
+### O que existe no executor
 
-Fonte: [mundo.rs](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-server/src/mods/mundo.rs), [CSP do app](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/apps/seele-app/tauri.conf.json).
+| | O que faz |
+| --- | --- |
+| `SeeleMods.request(id, canal, valor)` | Pergunta à sua metade de servidor, que responde pelo `aoPedir` |
+| `SeeleUI.retrato()` | O que a janela sabe, por lista branca |
+| `SeeleUI.superficies.criar(descricao)` | Uma superfície: `pagina`, `dialogo`, `folha` ou `aviso`; devolve um punho |
+| `SeeleUI.superficies.avisar(texto, tom)` | Um aviso de vida curta; `tom` é `normal` (3,5 s) ou `erro` (10 s) |
+| `SeeleUI.contribuicoes.registrar(pedido)` | Entra num ponto da interface do SEELE, e resolve com `{ handle }` |
+| `SeeleUI.tema(valores, { previa: true, superficie })` | A prévia de um tema, só nesta máquina |
+| `SeeleUI.aoEvento(fn)` | O ouvinte dos eventos; um só, e o último vence |
+| `SeeleUI.pedaco`, `SeeleUI.soltar`, `SeeleUI.enviar` | O arquivo que alguém escolheu, onde a plataforma o tem |
+| `SeeleUI.capacidades()` | O que este build oferece ao seu MOD, nesta plataforma |
+| `console` | Cada chamada vira uma linha no `seele.log` da máquina que roda o MOD |
+| `setTimeout`, `setInterval` e os dois `clear` | A fachada do relógio do anfitrião, com até 256 de pé; acima disso devolvem `0`, que é o «não deu» |
 
-## [referencia:interface] Executor, região, tema e ciclo de vida
+### O ciclo de vida de uma superfície
 
-A API 3 substitui o código dentro da janela por um executor próprio. As funções assíncronas são `SeeleMods.snapshot()`, `SeeleMods.request(id, canal, valor)`, `SeeleUI.regiao(conteudo)`, `SeeleUI.tema(valores)`, `SeeleUI.cartoes(cartoes)`, `SeeleUI.pedaco(arquivo, inicio)` e `SeeleUI.soltar(arquivo)`. `SeeleUI.aoEvento(funcao)` é síncrona e registra um ouvinte. As falhas rejeitam a Promise com Error.
+A `descricao` do `criar` leva `id`, `tipo`, `titulo` e, quando servem, `modal`, `tamanho: { largura }`, `focoInicial` (a `chave` do campo que recebe o foco), `lado`, `imersiva` e `visivel: false` (criar sem mostrar).
 
-### Declarar a região
+- `criar` com um `id` que já está de pé **reabre aquela**, sem recriar e sem trocar o título (quem troca é `titulo(texto)`), e devolve um punho para ela.
+- `montar(arvore)` declara o conteúdo inteiro. Chamar de novo substitui, e o produto reconcilia por `chave`: o que não mudou não é tocado.
+- `atualizar(chave, arvore)` troca um nó e o que está sob ele, numa mensagem própria. É assim que uma ficha que não cabe nos 12 KiB de uma mensagem se monta: um esqueleto, e uma parte por vez.
+- `ocultar()` tira da vista e mantém montada; `mostrar()` traz de volta.
+- `fechar()` tira do documento e **guarda** o que ela tem: `montar` numa fechada vale, e aparece quando ela volta. O som de uma superfície fechada para; ocultar não para.
+- `descartar()` acaba com ela, e o id fica livre. **Fechada continua de pé**: ela conta no teto de 12 superfícies do MOD. Quem não vai reabrir descarta.
+- **A saída da sessão descarta tudo, sem perguntar** e sem mandar `fechar`.
 
-```js
-await SeeleUI.regiao([
-  {forma:'titulo', dentro:'FICHA'},
-  {forma:'texto', dentro:`pontos: ${pontos}`},
-  {forma:'campo', chave:'nome', rotulo:'NOME', valor:nome},
-  {forma:'escolha', chave:'classe', rotulo:'CLASSE', valor:classe, opcoes:[
-    {valor:'guerreira', dentro:'GUERREIRA'},
-    {valor:'maga', dentro:'MAGA'},
-  ]},
-  {forma:'linha', dentro:[
-    {forma:'botao', chave:'gravar', dentro:'GRAVAR'},
-    {forma:'botao', chave:'descartar', dentro:'DESCARTAR', desligado:true},
-  ]},
-]);
-```
+Uma montagem cuja árvore tem o que não coube ou não serve **monta o que coube** e rejeita com `nos-recusados`, que leva `recusados`, a conta, e `amostra`: até oito `{ motivo, chave, forma, propriedade, tipo, classe }`. **A fundura também é teto** (16 níveis numa superfície, 6 num cartão): o galho que passa dela é recusado com o motivo `teto-de-fundura`.
 
-Uma nova chamada substitui toda a região do MOD. As formas aceitas são `titulo`, `texto`, `linha`, `lista`, `item`, `campo`, `escolha`, `botao`, `arquivo`, `tela` e `midia`. Uma forma desconhecida não vira um agrupamento.
+### Os formulários, e o que está sujo
 
-**O produto reconcilia em vez de reconstruir.** Um `campo` com a mesma `chave` é o mesmo campo entre dois desenhos: ele não é removido e recriado, e por isso quem está digitando não perde o foco nem o cursor. Enquanto uma caixa tem o foco, o produto **não sobrescreve o valor dela** — o que você mandar em `valor` só entra quando ninguém está editando ali. É isso que permite consultar o servidor de quatro em quatro segundos sem apagar o que a pessoa escreveu no meio.
+Dentro de um `formulario`, cada forma de entrada declara `chave`, `rotulo` e `valor`, e pode declarar as **regras** que o produto confere antes de deixar o `submeter` sair — `obrigatorio`, `tamanhoMaximo`, e, só no `numero`, `minimo`, `maximo` e `inteiro` —, o `erro`, a frase do MOD, e o `inicial`, o valor gravado. A frase da regra é do produto, o campo é marcado, e o foco vai a ele. O `formulario` declara `primario` e `secundario` (o produto monta os dois botões) e `emProgresso` (o primário ignora o segundo clique).
 
-O que isso exige de você: guarde o rascunho **separado** do que o servidor diz e desenhe o rascunho enquanto ele existir. O produto preservar o foco não basta sozinho, porque o foco ficaria numa caixa cujo valor o seu próprio MOD acabou de trocar.
+A recusa da sua metade de servidor volta ao campo que a causou por `punho.formulario.erros({ chave: 'frase' })`; `{}` limpa. Uma chave que não é de um campo à vista é recusada como `chave-desconhecida`.
 
-### O que a pessoa faz volta como evento
+**O sujo é do produto.** Um campo cujo valor difere do `inicial` suja a superfície, e voltar ao gravado a limpa. `suja(true)` soma o que o MOD sabe e o produto não vê. **Uma superfície suja sempre pergunta antes de fechar**, inclusive quando quem pede é o próprio MOD, e a resposta da pessoa vence: ao descartar, o MOD recebe `fechar` com `descartou: true`.
 
-```js
-SeeleUI.aoEvento(evento => {
-  if (evento.nome === 'campo') { rascunho[evento.chave] = evento.valor; repintar(); }
-});
-```
+- **Sem `inicial`, o inicial é o valor da primeira montagem do campo**, e não muda quando o MOD regrava o valor. Um controle que o MOD regrava declara `inicial` igual ao `valor`; sem isso, depois da primeira gravação, a superfície fica suja para sempre.
+- **Para fechar sem perguntar**, declare o gravado como `inicial`, ou feche com `fechar('descartar')`: é o MOD dizendo que o rascunho pode sair.
 
-Um pedido tem número e resposta; um evento não tem nem um nem outro, porque quem digita não espera o MOD confirmar que recebeu a tecla. **Um ouvinte só, e o último vence.**
+### Os eventos da interface
 
-| `nome` | Vem de | Campos |
+| nome | Quando | O que traz |
 | --- | --- | --- |
-| campo | `campo` | chave, valor |
-| escolha | `escolha` | chave, valor |
-| botao | `botao` | chave |
-| arquivo | `arquivo` | chave, arquivo (`{id, tipo, papel, bytes}`) ou `null` com `porque` |
-| traco | `tela` | chave, fase (`comecou`/`moveu`/`terminou`), x, y, alvo |
-| midia | `midia` | chave, estado |
+| campo | Digitou num `campo` ou `textoLongo` | `chave`, `valor` |
+| escolha | Mudou uma `escolha` | `chave`, `valor`, em texto |
+| numero | Mexeu num `numero` ou `deslizante` | `chave`, `valor`, um número |
+| marca | Mudou uma `marca` ou um `interruptor` | `chave`, `valor`, booleano |
+| cor | Mudou uma `cor` | `chave`, `valor` |
+| botao | Apertou um `botao` (com `confirmar`, só depois do sim) | `chave` |
+| submeter | Enviou um `formulario` que passou nas regras | `chave`, `valores` |
+| aba | Escolheu uma aba | `chave` das `abas`, `valor` da aba |
+| arquivo | Escolheu, ou desistiu de escolher | `chave`, `resultado` (`cancelado` ou `falhou`, com `porque`), e `arquivo: { id, papel, bytes }` |
+| traco | Arrastou numa `tela` | `chave`, `fase`, `x`, `y`, `alvo` |
+| midia | O estado de uma mídia mudou | `chave`, `estado` (`tocando`, `pausada`, `terminou`, `recusada` ou `falhou`), `porque` |
+| link | Apertou um `link` | `chave`, `aberto`, e `porque` quando não abriu |
+| tela | O fundo de uma `tela` não carregou | `chave`, `estado: 'fundo-falhou'`, `porque` |
+| acao | Apertou a ação principal de uma contribuição | `acao`, e o alvo que o produto escreveu (`pessoa`, `canal`), em texto |
+| fechar-pedido | A pessoa pediu para fechar uma superfície suja | `superficie`, `porque`, `temAlteracoes` |
+| fechar | Uma superfície fechou | `superficie`, `porque`, e `descartou: true` quando a pessoa descartou |
+| contribuicao | Uma contribuição não coube, ou não tem onde entrar | `ponto`, `destino`, `recusados`, `amostra` e `motivo` (`orcamento` ou `regiao-ausente`) |
 
-Cancelar o seletor de arquivo **é uma resposta**: chega um evento `arquivo` com `arquivo: null` e um `porque`. Trate-o; silêncio ali é o seu MOD parecendo travado.
+Cancelar o seletor de arquivo **é uma resposta**: trate-a. Silêncio ali é o seu MOD parecendo travado. Compare chaves como **texto**: `Number('peca-3')` é `NaN`, e `NaN` não é igual a nada.
 
-### Desenhar: `tela` e figuras declaradas
+### O som
 
-Um MOD não escreve pixel. Ele declara figuras e o produto as pinta, e é o produto quem decide qual figura o dedo acertou:
+Uma `midia` com som é tocada pelo produto, e o botão TOCAR/PAUSAR é dele.
+
+- **`tocando` vale quando muda.** Um som que a pessoa pausou não volta sozinho no redesenho seguinte que o declare `tocando: true`. A exceção é o som que terminou: `tocando: true` sobre ele toca de novo, do começo.
+- **`repetir: true` toca em laço**, sem redesenho, e o MOD não recebe `terminou` dele.
+- **Fora da tela, a declaração não liga o som**: ela é recusada, com o motivo, e um som que tocava ali é pausado. Fechar uma superfície cala o som dela; ocultar, não.
+- O som decodificado tem teto de 64 MiB por superfície, por contribuição e nos cartões de um MOD — pouco menos de três minutos de estéreo a 48 kHz. Acima dele, o som chega como `recusada`, com os números no `porque`.
+- No celular, som de MOD só com a tela acesa.
+
+### No celular e no navegador
+
+A mesma API, o mesmo motor e os mesmos limites. O que muda é a casca, e o MOD sabe dela por `retrato.onde`, `retrato.regioes` e o evento `lugar`. No celular, sete das oito regiões existem; o `status.barra` não, e uma contribuição para ele é aceita e recebe `regiao-ausente`. O diálogo modal ocupa a sessão acima da faixa de voz e das abas; o não modal fica embaixo, até 85% da altura dela; a folha é uma folha de baixo, que cresce com o conteúdo. No toque, um dedo sobre uma figura com `chave` arrasta, e um dedo no vazio de uma `tela` rola a página. No navegador, `SeeleUI.enviar` e o seletor de arquivo não existem.
+
+### Descarregamento
+
+O produto para o executor e retira as superfícies, as contribuições, a mídia montada, a prévia do tema e os arquivos escolhidos. Temporizadores e promessas do executor não sobrevivem à saída da sessão, e você não precisa registrar nada para que isso aconteça. **Depois da revogação, um pedido seu recebe recusa, e não silêncio**: quem sai no meio de um envio recebe `sessao-encerrada` em vez de uma promessa que nunca resolve.
+
+## [referencia:contribuicoes] Contribuições, capa e citação
+
+Uma contribuição entra num **ponto com nome** da interface do SEELE — nunca num seletor de CSS, num nó do documento ou em HTML de texto.
+
+| ponto | Modos | O que é |
+| --- | --- | --- |
+| servidor.navegacao | substituir, adicionar | A lista do servidor; `listarNaBarra: false` tira a entrada da lista de quem não tem uso para ela (no celular, da aba SERVIDOR) |
+| canal.cabecalho | substituir, adicionar | O cabeçalho do canal |
+| canal.item | adicionar | Um canal da lista, por `alvo` |
+| compositor.ferramentas | adicionar | Ao lado do campo de mensagem |
+| chamada.palco | substituir, adicionar | Uma camada sobre a chamada |
+| servidor.aparencia | substituir | A aparência do servidor: na 6, o MOD de janela não a pinta por ela |
+| pessoa.identidade, pessoa.detalhes, pessoa.acoes | adicionar | Na pessoa, por `alvo` |
+| pessoa.cartao | substituir, adicionar | O cartão da pessoa na lista, por `alvo`, numa gramática menor: nada que receba foco ou clique |
+| pessoa.avatar, pessoa.capa | substituir | A foto e a capa da pessoa, por `alvo`, com `conteudo: { doServidor }` |
+| sala.acoes | adicionar | Uma ação na sala de voz, por `alvo` |
+
+O `pedido` do `registrar` leva `ponto`, `modo`, e, quando servem, `alvo` (o id da pessoa, do canal ou da sala), `conteudo` (a árvore, ou a mídia nos pontos de imagem), `prioridade` (de -100 a 100: ordena duas substituições do mesmo ponto, e quem escolhe é a pessoa), `rotulo`, `nomeAcessivel` e `acaoPrincipal`. A `acaoPrincipal` é o nome que volta no evento `acao` quando a pessoa aperta, com o alvo que o **produto** escreveu: trocar o que se desenha não troca a identidade.
+
+- **`atualizar(handle, conteudo)` troca sem sair**, e a linha não volta à nativa no meio. Resolve com `true`, ou com `false` quando o punho não está mais de pé — e aí é registrar de novo. Registrar de novo o que está de pé é `contribuicao-ja-existe`.
+- **O produto não revoga por presença.** A contribuição de uma pessoa que saiu do servidor continua de pé até o MOD a revogar; o evento `pessoas` com `saiu` é a hora.
+- **Os tetos**: 128 contribuições sem alvo de pé, e 256 alvos por ponto.
+- **Uma contribuição para uma região que a casca não tem** é aceita e não aparece: o MOD recebe o evento `contribuicao` com `regiao-ausente`, e a aba DIAGNÓSTICO conta.
+- **O que o produto garante**: o apelido verificado fica à vista, num lugar que o MOD não cobre; uma região substituída continua carregando os itens do núcleo; ao revogar, a apresentação nativa é recalculada; «usar apresentação padrão» existe no controle nativo de MODs.
+- `classes` são de superfície: numa contribuição, elas não pintam nada, e o evento `contribuicao` conta isso.
+
+As recusas: `ponto-desconhecido` (leva `pontoPedido`, o que veio, e `pontos`, os que a API tem), `modo-recusado`, `sem-alvo`, `conteudo-invalido`, `teto-de-contribuicoes`, `teto-de-alvos` (leva `teto`), `contribuicao-ja-existe` e `contribuicao-de-outro-mod`.
+
+### O cartão de uma pessoa
 
 ```js
-{forma:'tela', chave:'tabuleiro', largura:640, altura:480, figuras:[
-  {tipo:'retangulo', x:0, y:0, largura:640, altura:480, cor:'#0b0a08'},
-  {tipo:'linha', x:0, y:0, ate_x:640, ate_y:480, cor:'#241F19'},
-  {tipo:'circulo', x:120, y:80, raio:16, cor:'#6BFFB6', chave:'peca-3'},
-  {tipo:'texto', x:120, y:80, dentro:'A', corpo:12, cor:'#EAE3CF'},
-]}
-```
-
-As figuras são `retangulo`, `circulo`, `texto` e `linha`. `retangulo` e `circulo` aceitam `preenchida:false` para sair só de contorno; `texto` aceita `corpo` entre 6 e 64.
-
-Uma figura com `chave` responde ao toque: o evento `traco` traz essa chave em `alvo`, ou `null` quando o dedo caiu no vazio — `null`, e não ausente, porque «não peguei nada» é uma resposta. A **última figura declarada ganha o toque** quando duas se sobrepõem, que é a ordem em que elas foram pintadas. `linha` não recebe toque: ela é grade, parede e régua, e dar-lhe área de acerto roubaria o toque de toda figura em cima dela.
-
-O `alvo` é fixado quando o dedo desce e viaja nas três fases. As coordenadas são as da sua tela declarada, não as da janela, e o movimento é agregado por quadro: um arraste não manda um evento por pixel.
-
-Compare a chave como **texto**. `Number('peca-3')` é `NaN`, e `NaN` não é igual a nada: uma peça comparada assim para de seguir o dedo sem erro nenhum na tela.
-
-### Mídia
-
-A forma `midia` toca som ou vídeo que **vem do seu pacote ou do seu servidor**, e nunca de um endereço na rede:
-
-```js
-{forma:'midia', chave:'trilha', fonte:'som/tema.ogg', tocando:true}
-{forma:'midia', chave:'retrato', doServidor:{canal, pedido:{op:'asset', person:id}, campo:'image'}}
-```
-
-`fonte` é um arquivo do seu pacote, e ele precisa estar declarado em `arquivos` no manifesto. `doServidor` faz o SEELE pedir ao **seu** servidor e ler o base64 no campo que você nomear. Não existe uma terceira origem: um endereço qualquer faria a janela de quem conversa buscar bytes na rede de um estranho.
-
-O tipo é decidido **pelos bytes**, e nunca pelo que o manifesto ou o servidor dizem que é (ADR 0027). Um som mandado no lugar de uma imagem é recusado pelo nome, e a recusa chega até você. Declare `tocando:true` para tocar; o estado real volta pelo evento `midia`, porque o navegador pode recusar tocar sem gesto.
-
-### Tema da sessão
-
-```js
-await SeeleUI.tema({
-  fundo:'#050403', painel:'#0b0a08', texto:'#EAE3CF',
-  apagado:'#7A7061', acento:'#6BFFB6', borda:'#241F19',
-  densidade:'compacta', fonte:'mono',
-  arredondamento:8, brilho:false,
-});
-```
-
-São **seis cores** — `fundo`, `painel`, `texto`, `apagado`, `acento`, `borda` —, mais `densidade` (`compacta` ou `confortavel`), `fonte` (`mono` ou `sans`), `arredondamento` (inteiro de 0 a 24) e `brilho` (`true` ou `false`). `fonte` escolhe entre as duas pilhas de tipo que o produto declara, e não é família livre: a escala de tipo daqui é medida, e uma família qualquer moveria tamanho, entrelinha e contraste de uma vez.
-
-**O arredondamento é número, e o brilho é booleano.** Quem escreve o `px` é o produto, e a sombra que o brilho liga é montada pelo produto a partir de um token dele. Mande `8`, e não `'8px'`; mande `true`, e não um `box-shadow`. Fora do intervalo é recusa com o intervalo escrito.
-
-O produto abre em **canto reto e sem sombra** — é a estética dele, em `specs/07-estetica.md` —, e o tema de servidor é a exceção nomeada ali: o efeito vale só naquela sessão e sai com ela.
-
-A chamada substitui o pedido de tema deste MOD. `await SeeleUI.tema({})` retira os tokens pedidos por ele; não escreva cores padrão por cima da escolha pessoal. A saída da sessão também remove a camada automaticamente.
-
-O produto valida nomes, valores `#rrggbb`, posse dos tokens por outro MOD e contraste texto/fundo mínimo de 4,5:1. Uma recusa não confirma o tema solicitado: só registre a aplicação depois de a Promise resolver.
-
-### Dar cartão a pessoas na lista do produto
-
-```js
-const recusados = await SeeleUI.cartoes({
-  '7': [
-    {forma:'midia', chave:'retrato', doServidor:{canal, pedido:{op:'asset', person:'7'}, campo:'image'}},
-    {forma:'titulo', chave:'nome', dentro:'Lia da Torre'},
-    {forma:'texto', chave:'pronome', dentro:'ela/dela'},
+await SeeleUI.contribuicoes.registrar({
+  ponto: 'pessoa.cartao',
+  modo: 'adicionar',
+  alvo: 7, // o id da pessoa, como o retrato o dá
+  conteudo: [
+    { forma: 'titulo', chave: 'nome', dentro: 'Lia da Torre' },
+    { forma: 'texto', chave: 'pronome', dentro: 'ela/dela' },
   ],
 });
 ```
 
-Esta é a **única superfície de um MOD fora da região dele**. O que você manda é a **mesma declaração da região**, e quem monta é o **mesmo renderer** — `createElement` e `textContent`, como em todo o resto. Você não escolhe posição, tamanho, tipografia nem vizinho, e não alcança nenhum outro nó.
+Você não escolhe posição, tamanho, tipografia nem vizinho, e não alcança nenhum outro nó. A gramática é menor: nada que receba foco ou clique, porque a linha da lista já tem um botão do produto, e dividir a ordem de tabulação com um terceiro é o tipo de coisa que ninguém consegue depurar depois. Uma forma recusada é contada, e chega pelo evento `contribuicao`.
 
-A chave é o `id` da pessoa como aparece no retrato. Duas coisas mudam em relação à região:
+### A capa, e a citação
 
-**A gramática é menor.** Um cartão aceita `titulo`, `texto`, `linha`, `lista`, `item` e `midia`. Não aceita `campo`, `escolha`, `botao`, `arquivo` nem `tela` — nada que receba foco ou clique. A linha do roster já tem um botão do produto, e dividir a ordem de tabulação e a área de toque com um terceiro é o tipo de coisa que ninguém consegue depurar depois. Uma forma recusada **é contada**, e a chamada devolve quantas: um botão que você declarou e não apareceu vira um número, e não um sumiço.
+A capa de uma pessoa é o ponto `pessoa.capa`, em `substituir`, por `alvo`, com `conteudo: { doServidor }` — a mesma forma do `pessoa.avatar`. O produto a pinta no cartão da chamada e no perfil, sobre placas que mantêm o texto e os controles legíveis. Animada até seis ao mesmo tempo, escolhidas pela vista; com a preferência de movimento reduzido do sistema, ou fora da vista, um quadro parado.
 
-**Os tetos são menores.** 64 pessoas por MOD, 24 nós por cartão, 4 níveis de fundura, e a mídia dos cartões tem contador e orçamento próprios — 64 mídias e 8 MiB, separados dos da região. Um cartão é por pessoa: o que não couber em 24 nós é uma região, e a região já existe.
+**Citar, em vez de carregar de novo.** `fundoDeMidia: { daPessoa: 'capa' }` numa `caixa` e `retrato({ daPessoa: 'avatar' })` usam a imagem que a contribuição da pessoa já carregou — sem pedido novo, e contada uma vez. Num cartão, a pessoa é a do destino. Com `pessoa: id`, é a que o MOD nomeia, numa superfície também, se ela estiver na sessão. Fora da sessão, o fundo fica liso e o retrato na inicial, sem recusa. Quando a pessoa troca a foto e o MOD faz `atualizar` na contribuição, quem cita mostra a nova sem remontar.
 
-O retrato vem do **seu servidor**, pela mesma `doServidor` da região; o tamanho dele é da folha do produto. Um cartão sem nada dentro não entra — uma moldura vazia ao lado de um nome é o produto anunciando uma ausência que ninguém pediu. Cada chamada **substitui** os seus cartões, e eles saem junto com a sua região.
+### A chamada
 
-### O que o executor não tem
+O ponto `chamada.palco` é uma camada sobre a chamada, com a grade de vídeo do produto por baixo. Ele começa escondido: VER O PALCO, na barra da chamada, o traz; VER A GRADE o devolve, sem desmontar; sair da sala o desmonta. O pedido feito do palco leva `contexto.sala`, e o MOD sabe o tamanho pelo evento `lugar`, com `regiao: 'chamada.palco'` — 0 × 0 escondido.
 
-Não existem `document`, `window`, `getComputedStyle`, `CSSStyleSheet`, `document.adoptedStyleSheets`, observação do DOM da página, `localStorage`, `sessionStorage`, `indexedDB`, `caches`, `BroadcastChannel` nem o global do Tauri.
+## [referencia:estilos] Estilos, classes e composição
 
-**`fetch` também não existe**, nem `XMLHttpRequest`, `WebSocket` ou `Worker`. Eles não existem porque ninguém os ligou num contexto de QuickJS, e não porque alguém os apagou no começo do arquivo — a diferença importa, porque o segundo caso se contorna e o primeiro não. Faça integrações de rede no servidor, com `mundo.buscar`.
+`estilo` numa forma declara propriedades por categoria, **validadas uma a uma e montadas de partes conferidas — nunca texto de CSS**: cor e transparência (`cor`, `fundo`, `opacidade`), preenchimento e gradiente, borda e raio, sombra, tipografia, layout (`direcao`, `alinhar`, `distribuir`, `quebra`, `crescer`, `encolher`, `base`, `intervalo`, `colunas`, `largura`, `altura` e os mínimos e máximos), transformação (`girar`, `escalar`, `mover`), recorte, transição e animação (`nenhuma`, `pulso`, `aurora`, `brilho`, `flutuar`). Uma cor é `#rgb`, `#rrggbb`, `#rrggbbaa`, ou um token do tema — `{ tema: 'acento' }` —, que acompanha o tema em vigor.
 
-Promise, JSON, TextEncoder, `setTimeout`, `setInterval`, `clearTimeout`, `clearInterval` e `console` continuam disponíveis.
+**O que não serve é contado, e não some calado.** Uma propriedade que o validador não conhece, ou um valor que não serve, é contado como recusa — e, numa propriedade composta (`borda`, `sombra`, `gradiente`, `mover`, `transicao`, `animacao`), também a parte declarada que não serve: a propriedade sai com o padrão naquela parte, e a recusa chega ao MOD como `nos-recusados`, com a propriedade na amostra. Um número fora do intervalo não é erro: ele é preso no limite.
 
-### Descarregamento
+### Classes
 
-O produto para o executor e retira a região, o tema, os cartões, a mídia montada e os arquivos escolhidos. Não existe mais o evento `seele-mod-unload`. Apague listeners de unload, limpeza de nós, folhas e observadores e restauração de estilos. Temporizadores e promessas do executor não sobrevivem à saída da sessão, e você não precisa registrar nada para que isso aconteça.
+**Classes são de superfície**: `punho.classes({ nome: { base, sobre, foco, ativo, desligado, invalido, escolhido, consultas } })`, e o nó pede a classe com `classe`. O seletor é escrito pelo produto e preso àquela superfície: duas superfícies com a classe `cartao` não se alcançam, e nenhuma alcança o SEELE. Os estados são seletores — sem eles, uma cor de passar o mouse custaria um evento por movimento. `consultas: [{ ateLargura, estilo }]` aplica o estilo até uma largura, **a da superfície**, e não a da janela: um diálogo de 400 px numa janela de 1400 é estreito.
 
-**Depois da revogação, um pedido seu recebe recusa, e não silêncio.** Quem sai no meio de um envio recebe `sessao-encerrada` em vez de uma Promise que nunca resolve.
-
-### Migrar da API 2
-
-1. Declare `api: 3` no manifesto — ou `api: 4`, se você for usar superfícies, contribuições ou classes de estilo. As duas são executadas.
-2. Preserve handlers, autorização, persistência e dados do servidor.
-3. Converta o desenho em árvores de `SeeleUI.regiao`, usando `campo`, `escolha` e `botao` no lugar dos controles que você montava em HTML.
-4. Registre `SeeleUI.aoEvento` e guarde o rascunho separado do que o servidor diz.
-5. Converta as seis cores, a densidade e a fonte para `SeeleUI.tema`.
-6. Troque desenho em canvas por figuras declaradas numa `tela`.
-7. Retire seletores, CSS, listeners de unload e qualquer acesso ao DOM.
-8. Teste o pacote exato no SEELE, incluindo saída durante carregamento e troca de servidor.
-
-`api-too-old` recusa pacotes antigos antes de executá-los. Não existe um modo de compatibilidade.
-
-## [referencia:api4] A API 4: superfícies, contribuições e estilos
-
-Três acréscimos, e a mesma fronteira de sempre: o MOD **declara**, e quem monta é o renderer do produto. Nenhum deles entrega um nó do documento, um seletor ou um texto de CSS.
-
-Tudo nesta seção exige `"api": 4` no manifesto. Num pacote de API 3 estes objetos não existem — ver «Aceitar a API 3 não dá à API 3 o que a 4 tem».
-
-### Superfícies: janela, página, painel e aviso
-
-Na API 3, um MOD tinha uma região e nada mais: tudo o que ele quisesse mostrar dividia a mesma faixa com todos os outros. A API 4 dá quatro lugares, e o produto monta a casca de cada um.
-
-| Tipo | Onde ela aparece | O que o produto garante |
-| --- | --- | --- |
-| `dialogo` | Por cima da aplicação, numa camada própria | Foco contido, Escape que pede a saída, o resto da aplicação inerte de verdade, o foco de volta ao acionador ao fechar |
-| `pagina` | No centro, no lugar da conversa | Um VOLTAR do produto, e o foco entrando ao abrir |
-| `painel` | Numa coluna à esquerda ou à direita | Largura entre 200 e 640; a conversa não é empurrada para fora |
-| `aviso` | Numa fila curta, no canto | Até 4 na fila; os mais velhos saem sozinhos |
-
-```js
-const janela = await SeeleUI.superficies.criar({
-  id: 'perfil',                       // seu, até 64 caracteres
-  tipo: 'dialogo',                    // dialogo | pagina | painel | aviso
-  titulo: 'Perfil',                   // o nome acessível da janela
-  tamanho: { largura: 480 },          // pedido; o produto contém na área útil
-  modal: true,                        // só para `dialogo`; padrão é `true`
-  lado: 'direita',                    // só para `painel`
-  focoInicial: 'apelido',             // a `chave` do nó que recebe o foco
-  fecharComAlteracoes: 'confirmar',   // 'fechar' (padrão) ou 'confirmar'
-});
-
-await janela.titulo('Perfil de Alex');
-await janela.classes({ destaque: { base: { cor: '#6BFFB6', peso: 'forte' } } });
-await janela.montar([
-  { forma: 'titulo', chave: 't', dentro: 'PERFIL' },
-  { forma: 'campo', chave: 'apelido', rotulo: 'APELIDO', valor: '' },
-  { forma: 'acoes', chave: 'fixas', fixas: true, dentro: [
-    { forma: 'botao', chave: 'gravar', dentro: 'GRAVAR' },
-  ] },
-]);
-
-await janela.suja(true);      // há alterações não gravadas
-await janela.ocultar();       // continua montada; o que foi digitado permanece
-await janela.mostrar();       // volta ao palco, com o conteúdo de antes
-await janela.fechar('pronto');// sai do palco; o punho continua válido
-await janela.descartar();     // acaba com ela
-```
-
-**O que a casca é, e por que você não a monta.** O cabeçalho com o título, a linha que diz **de qual MOD** a janela é, o botão de sair, o foco e a camada são do produto. Uma janela que pudesse desenhar o próprio cabeçalho poderia desenhar o cabeçalho do SEELE — e uma tela de confiança que se pode imitar não é uma tela de confiança.
-
-**`ocultar` não é `fechar`, e `fechar` não é `descartar`.** Ocultar mantém tudo montado; fechar tira do palco e preserva o punho; descartar acaba com a superfície e solta o que ela segurava. `mostrar` depois de qualquer um dos dois traz a superfície de volta ao documento. Depois de `descartar`, qualquer método recusa — em vez de devolver sucesso numa janela que não existe.
-
-**Alterações não gravadas não vetam a saída.** Com `fecharComAlteracoes: 'confirmar'` e `suja(true)`, a primeira tentativa de fechar manda o evento `fechar-pedido` **e** abre a confirmação do produto. Quem decide é quem está olhando. Um MOD não prende ninguém numa janela.
-
-```js
-SeeleUI.aoEvento(evento => {
-  if (evento.nome === 'fechar-pedido') { /* grave agora, se der */ }
-  if (evento.nome === 'fechar') { /* ela saiu; `descartou` diz se foi sem gravar */ }
-});
-```
-
-O atalho para o caso curto:
-
-```js
-await SeeleUI.superficies.avisar('perfil gravado', 'normal');  // ou 'erro'
-```
-
-### Contribuições: entrar na interface do SEELE
-
-Uma contribuição é o MOD entrando num **ponto semântico** de um componente do produto — por ID e por modo, nunca por seletor.
-
-| Ponto | Modos | O que ele é |
-| --- | --- | --- |
-| `pessoa.identidade` | `adicionar` | Ao lado do nome, na linha do roster: pronome, distintivo, marca de papel |
-| `pessoa.cartao` | `substituir`, `adicionar` | A linha inteira da pessoa, ou um bloco a mais nela |
-| `pessoa.detalhes` | `adicionar` | Seções no perfil detalhado, dentro do recolhível do produto |
-| `pessoa.acoes` | `adicionar` | Um botão do produto, com o seu rótulo, no rodapé do cartão |
-| `canal.item` | `adicionar` | Ao lado do nome do canal, na lista |
-| `canal.cabecalho` | `adicionar` | Conteúdo e ações na barra do canal aberto |
-| `compositor.ferramentas` | `adicionar` | Ações ao lado do ENVIAR |
-| `sala.acoes` | `adicionar` | Ações no cabeçalho de um grupo de sala de voz |
-| `servidor.navegacao` | `adicionar` | Uma entrada na navegação lateral, que abre o seu MOD |
-| `servidor.aparencia` | `substituir` | O tema da sessão |
-
-```js
-const { handle } = await SeeleUI.contribuicoes.registrar({
-  ponto: 'pessoa.acoes',
-  modo: 'adicionar',
-  alvo: pessoaId,          // obrigatório nos pontos por alvo; ausente vale para todos
-  prioridade: 0,           // -100 a 100; ordena, e não autoriza
-  rotulo: 'FICHA',         // o texto do botão
-  nomeAcessivel: 'abrir a ficha desta pessoa',
-  acaoPrincipal: 'ficha',  // volta em `evento.acao` quando alguém aperta
-  conteudo: [{ forma: 'texto', chave: 'c', dentro: '·rpg' }],
-});
-
-await SeeleUI.contribuicoes.revogar(handle);
-```
-
-**Um exemplo por ponto** está no vetor de referência do repositório do SEELE, em `apps/seele-app/testes/mod-de-referencia/cliente/main.js`: ele registra nos dez, com o alvo vindo do retrato, e revoga um para exercitar a volta.
-
-Três garantias do produto, e elas não são negociáveis:
-
-- **trocar o que se desenha não troca a identidade.** O botão é montado pelo produto e carrega o **ID real** da pessoa ou do canal. O que volta em `evento.pessoa` é esse ID, e nunca o texto que você desenhou;
-- **o diagnóstico nativo recolhe em vez de sumir.** Substituir o cartão de uma pessoa não apaga sinal, estado do microfone nem o caminho até a moderação: eles descem para um recolhível do produto;
-- **ao revogar, o nativo é recalculado do estado de agora** — nunca restaurado de um desenho guardado. A pessoa pode ter mudado de sala enquanto a sua janela estava aberta.
-
-**Dois MODs no mesmo ponto de `substituir`** não se resolvem por quem respondeu por último: a prioridade declarada decide, a disputa fica visível na gestão de MODs, e quem administra o servidor pode escolher o provedor — ou **a apresentação nativa**, que é uma terceira escolha e não a ausência de escolha.
-
-Um MOD revoga o que ele registrou. Os punhos são sequenciais, e passar o punho de outro MOD é recusado pelo nome. A saída da sessão limpa tudo sem perguntar; você não precisa registrar nada para isso acontecer.
-
-**`decorar` não existe nesta versão, e continua pendente.** O plano da API previu um terceiro modo — mudar a apresentação de um nó **do SEELE** sem trocar o conteúdo dele: pôr uma cor num canal sem assumir o desenho do item.
-
-O que falta é o contrato dele. O vocabulário de estilo que existe hoje é um só, pensado para o que você desenha **dentro da sua raiz**, onde sumir com o próprio conteúdo é escolha sua; aplicado a um nó do produto, ele inclui propriedades que encobrem um controle nativo. A resposta para isso é um segundo conjunto — quais propriedades, em quais pontos, sobre quais nós —, e ele ainda não foi escrito. Nada nisso diz que decorar seja incompatível com segurança: cor, tipografia, fundo e borda em pontos determinados não exigem oferecer deslocamento nem opacidade sobre o nome que abre a moderação.
-
-Enquanto isso, registrar `decorar` é recusado com essa razão escrita, em vez de aceito sem efeito.
-
-### Estilos: propriedades declaradas, nunca texto de CSS
-
-A fronteira nunca foi «cantos arredondados são feios». Ela é **alcance**: o estilo de um MOD não pode alcançar a janela inteira, buscar bytes na rede, cobrir uma confirmação do produto nem sobreviver à saída do servidor.
-
-Nada disso exige proibir gradiente, sombra ou animação. Exige que o **valor** de cada propriedade seja construído pelo produto a partir de partes que ele conferiu:
-
-```js
-// aceito: partes conferidas, uma a uma
-{ sombra: { x: 0, y: 4, desfoque: 12, cor: '#00000055' } }
-
-// não existe: um texto que o motor de CSS interpreta
-{ boxShadow: '0 4px 12px rgba(0,0,0,.3), url(http://…)' }
-```
-
-Por isso não há nenhuma função que receba CSS e tente limpá-lo. Limpeza por substituição de texto é uma corrida contra o analisador do navegador, e quem escreve o analisador não sabe que a corrida existe.
-
-| Categoria | Exemplos de propriedade |
-| --- | --- |
-| Cor e transparência | `cor`, `fundo`, `opacidade` |
-| Preenchimento e gradiente | `gradiente: { angulo, paradas: [{ cor, em }] }` |
-| Borda e raio | `borda: { largura, estilo, cor }`, `raio` |
-| Sombra | `sombra: { x, y, desfoque, espalha, cor }` |
-| Tipografia | `familia`, `peso`, `corpo`, `entrelinha`, `espacamento`, `alinhamento`, `transformar` |
-| Layout | `direcao`, `alinhar`, `distribuir`, `quebra`, `crescer`, `encolher`, `base`, `intervalo`, `preenchimento`, `margem`, medidas |
-| Transformação | `girar`, `escalar`, `mover` |
-| Recorte | `recortar` |
-| Transição e animação | duração, suavização, e animações por nome |
-
-Cores são `#rgb`, `#rrggbb` ou `#rrggbbaa`. Nomes e funções de cor não entram.
-
-`familia` escolhe entre as fontes que o produto já carrega (`mono` e `sans`). **Fonte arbitrária de rede não entra** — é a janela de quem conversa buscando bytes de um terceiro. Fonte empacotada no seu MOD, ou escolhida de um conjunto que o produto gerencie, é outra coisa: não é o mesmo acesso, e não foi decidida nesta versão. Se você precisa de uma, proponha a extensão em vez de contorná-la. Animações são **presets** — `nenhuma`, `pulso`, `aurora`, `brilho`, `flutuar` —, e não `@keyframes`, pela mesma razão da sombra: um keyframe declarado por um MOD é um texto que vira regra. Todas param sob `prefers-reduced-motion`.
-
-**Estado é seletor, e seletor é regra.** `sobre`, `foco`, `ativo`, `desligado`, `invalido` e `escolhido` não existem como propriedade de um nó — por isso eles vêm por classe, e não por `estilo`:
-
-```js
-await janela.classes({
-  cartao: {
-    base: { fundo: '#101014', raio: 8, borda: { largura: 1, estilo: 'solida', cor: '#2A2A33' } },
-    sobre: { borda: { largura: 1, estilo: 'solida', cor: '#FF6B00' } },
-    foco: { cor: '#FFFFFF' },
-    // Do **contêiner**, e não da janela: um painel arrastado para 300 px
-    // continua dentro de uma janela de 1400.
-    consultas: [{ ateLargura: 360, estilo: { corpo: 11 } }],
-  },
-});
-// e no nó:
-{ forma: 'texto', chave: 'n', classe: 'cartao', dentro: 'Alex' }
-```
-
-O nome da classe é higienizado e prefixado com a identidade **daquela superfície**: duas superfícies suas com a classe `cartao` não se alcançam, e nenhuma das duas alcança nada do SEELE.
-
-`estilo` por nó funciona em qualquer declaração — região, cartão ou superfície. **Declarar classes é por superfície**: uma região não tem folha própria, então um `classe` numa região nomeia uma classe que nenhuma regra desenha.
+**Fora do alcance de qualquer estilo**: `url(...)`, `@import`, HTML ativo, seletor que alcance fora da superfície, `keyframes` do MOD e família de tipo livre. O movimento reduzido do sistema vale onde quer que um MOD apareça, e, no celular, nenhum estilo desce um controle abaixo de 44 px nem um campo abaixo de 16 px de letra.
 
 ### Compor lado a lado
 
 Três propriedades, e as três precisam estar juntas. É o erro mais comum, e ele não avisa — a declaração é aceita e o desenho sai empilhado.
 
 ```js
-caixa([
-  caixa([formulario], { crescer: 1, base: 0, larguraMinima: 300 }),
-  caixa([previa],     { crescer: 1, base: 0, larguraMinima: 260 }),
-], { direcao: 'linha', intervalo: 20, quebra: 'sim', alinhar: 'inicio' })
+{ forma: 'caixa', estilo: { direcao: 'linha', intervalo: 20, quebra: 'sim', alinhar: 'inicio' }, dentro: [
+  { forma: 'caixa', estilo: { crescer: 1, base: 0, larguraMinima: 300 }, dentro: [formulario] },
+  { forma: 'caixa', estilo: { crescer: 1, base: 0, larguraMinima: 260 }, dentro: [previa] },
+] }
 ```
 
-- **`direcao: 'linha'`** faz a caixa ser uma linha. Ela sozinha já basta para isso: declarar uma direção liga o contêiner, e não é preciso escolher uma primitiva específica antes.
-- **`base: 0`** é o que divide. Sem ele cada coluna parte do tamanho do próprio conteúdo; o par não cabe, e `quebra: 'sim'` as põe uma debaixo da outra.
-- **`larguraMinima`** é o que faz a quebra acontecer pelo motivo certo: enquanto as duas mínimas couberem, elas dividem o espaço; quando não couberem, a linha quebra sozinha — sem consulta de contêiner nenhuma.
+- **`direcao: 'linha'`** faz a caixa ser uma linha.
+- **`base: 0`** é o que divide. Sem ele, cada coluna parte do tamanho do próprio conteúdo; o par não cabe, e a quebra as põe uma debaixo da outra.
+- **`larguraMinima`** é o que faz a quebra acontecer pelo motivo certo: enquanto as duas mínimas couberem, elas dividem o espaço; quando não couberem, a linha quebra sozinha.
 
 `pilha` é uma coluna com a régua da superfície e `grade` são colunas iguais. Use-as quando for isso que você quer; `caixa` com `direcao` é para quando a proporção é sua.
 
 ### Resumir texto sem cortar linhas
 
-`estilo: { linhasMaximas: 2 }` mostra até duas linhas com reticências, sem alterar o texto guardado. Aceita um inteiro de 1 a 20 e pode ser removido numa atualização. Use numa caixa contendo somente texto, nunca para esconder controles. Ofereça um caminho para o conteúdo completo, como abrir o perfil ao selecionar seu cartão. O resumo acompanha a largura disponível; a prévia deve usar a largura do destino. Se precisar de margem interna, coloque o texto resumido numa caixa externa com `preenchimento`; aplicar o preenchimento no próprio texto pode expor parte de outra linha no WebKit.
-
-Abrir uma página seleciona um único destino central, inclusive entre MODs diferentes. A página anterior é ocultada, preservando seus campos; escolher um canal ou chamada mostra o destino nativo. `mostrar` retorna à página, enquanto `descartar` libera seus recursos. A saída do servidor descarta todas as páginas da sessão.
+`estilo: { linhasMaximas: 2 }` mostra até duas linhas com reticências, sem alterar o texto guardado. Aceita um inteiro de 1 a 20. Use numa caixa contendo somente texto, nunca para esconder controles, e ofereça um caminho para o conteúdo completo.
 
 ### O que o produto já desenha por você
 
-Você não precisa reconstruir a aparência do SEELE. A casca de uma superfície — cabeçalho com o título em cartela, a origem, a saída, o rodapé de ações fixas, a rolagem, o foco — é do produto, e os controles saem com a tipografia, a altura e os estados desta casa:
+A casca de uma superfície — cabeçalho com o título, a origem, a saída, o rodapé de ações fixas, a rolagem, o foco — é do produto, e os controles saem com a tipografia, a altura e os estados desta casa: um `campo` é rótulo em cima e caixa embaixo; um `botao` tem a altura dos botões do SEELE, e `variante: 'primaria'` é bloco sólido; uma `marca` ou um `interruptor` são controle e texto lado a lado; uma `cor` traz amostra e hexadecimal juntos; `acoes` com `fixas: true` leva os botões ao rodapé. O que sobra para você é a composição e a personalidade do seu conteúdo.
 
-- um `campo` é rótulo em cima e caixa embaixo, na largura da coluna;
-- um `botao` tem a altura dos botões do SEELE, e `variante: 'primaria'` é bloco sólido, como a ação principal do produto;
-- uma `marca` ou um `interruptor` são uma linha: controle e texto lado a lado;
-- uma `cor` traz amostra e hexadecimal juntos, no mesmo controle;
-- o corpo de uma superfície separa o que você declara no primeiro nível, sem você pedir `intervalo`.
+## [referencia:tema] O tema do servidor
 
-O que sobra para você é a composição e a personalidade do seu conteúdo — que é onde `estilo` e `classes` existem para ser usados.
+O tema é de **duas portas**, uma de cada lado:
 
-### Migrar da API 3 para a 4
+- **a do servidor**: o manifesto declara `"tema": true`, e a metade de servidor publica o tema com `mundo.tema(valores)`. Um tema por servidor: o primeiro MOD com a porta, enquanto estiver ligado. A tela de aceite mostra a porta.
+- **a de quem vê**: o ponto `servidor.aparencia`. «O SEELE desenha» tira o tema daquele servidor nesta máquina.
 
-Nada quebra. A 4 não tirou nada da 3, e um pacote que declara 3 continua sendo executado.
+`mundo.tema` devolve `{ ok: true }` quando a forma é válida e o tema foi publicado — **e não quando ele foi aplicado**: o contraste é conferido por cada janela, que conta o desfecho pelo evento `tema`. As recusas vêm como valor, nunca como exceção: `sem-porta-de-tema`, `tema-de-outro-mod`, `tema-invalido`, `tema-grande-demais`, `chave-desconhecida`, `valor-invalido` e `regiao-desconhecida`, com a `chave`. O servidor guarda o tema, e ele sobrevive ao reinício; `null` o tira. O servidor não confere quem pediu: leia `contexto.admin` se quiser restringir.
 
-1. Troque `"api": 3` por `"api": 4` no manifesto — só se você for usar o que ela acrescenta.
-2. O que estava em `SeeleUI.regiao` continua funcionando. Mova para uma superfície o que **interrompe**: editar um perfil, criar uma campanha, confirmar algo. A região é para o que fica de pé ao lado da conversa.
-3. Troque a faixa permanente por uma entrada em `servidor.navegacao`: uma região que desenha ao conectar é o produto decidindo, por omissão, que a sua atividade está acontecendo o tempo todo.
-4. Se você desenhava cartões com `SeeleUI.cartoes`, ele continua existindo. `pessoa.cartao` no modo `substituir` é o caminho novo, e é o que participa da disputa e da escolha nativa.
-5. Onde você fazia contas de cor no cliente, declare classes com estados e consultas.
-6. Se o seu pacote precisa rodar nas duas versões, pergunte a `SeeleUI.capacidades()` antes de chamar, e mantenha o caminho da 3 vivo.
-7. Teste os dois pacotes — o de API 3 e o de API 4 — no mesmo aplicativo. É o que o conjunto aceito promete, e é o que a publicação vai encontrar.
+### As chaves
 
-### Limites desta seção
+São uma lista fechada de nomes do contrato, e nunca nomes de CSS:
 
-| Recurso | Limite | Responsável |
-| --- | --- | --- |
-| Superfícies de pé por MOD | 12 | Janela |
-| Avisos na fila | 4, os mais velhos saem | Janela |
-| Nós de uma superfície | 4096 | Janela |
-| Fundura de uma superfície | 16 níveis | Janela |
-| Campos por superfície | 128 | Janela |
-| Mídias por superfície | 24 | Janela |
-| Bytes de mídia por superfície | 24 MiB | Janela |
-| Contribuições de pé por MOD | 128 | Janela |
-| Classes por superfície | 64 | Janela |
-| Consultas de contêiner por classe | 4 | Janela |
-| Regras compiladas por superfície | 512 | Janela |
-| Paradas de um gradiente | 8 | Janela |
-| Corpo de texto | 9 a 96 | Janela |
+| Chave | Valor |
+| --- | --- |
+| fundo, painel, texto, apagado, acento, borda | Cor `#rrggbb` |
+| densidade | `compacta` ou `confortavel` |
+| fonte | `mono` ou `sans` |
+| arredondamento | Inteiro de 0 a 24 |
+| brilho | Booleano |
+| modo | `claro` ou `escuro`, que tem de concordar com o fundo |
+| regioes | `{ '<região>': { fundo, texto, apagado, acento, borda } }`, as oito regiões, conferidas uma a uma |
 
-Uma declaração que não couber no orçamento do ponto **não some em silêncio**: a recusa é contada e volta como evento `contribuicao`, com o ponto e quantos nós foram recusados.
+`densidade` e `fonte` são escolhas, e não números, porque uma cor o produto confere e um espaçamento não: `0px` deixaria a sessão ilegível sem violar regra nenhuma. `fonte` escolhe entre as duas pilhas que o produto declara, e não é família livre. O produto escreve o `px` do arredondamento e monta a sombra do brilho a partir de um token dele.
+
+### O contraste
+
+**O contraste é conferido pela casca, ao aplicar**, em todos os pares que o produto desenha: o texto e o acento a 4,5:1 sobre o fundo e o painel, o apagado a 3:1. O acento fraco e o segundo apagado são do produto, derivados do seu tema. As cores de estado do produto — o fósforo, o azul e o vermelho — também: sob um tema, a casca as deriva das suas superfícies, e quando nenhuma luminosidade serve, o tema é recusado com o par. Cada janela diz o desfecho pelo evento `tema`: `aplicado`, `recusado` (com os `pares`, e a `regiao` quando quem recusou foi uma região) ou `nativo` (quem vê escolheu «o SEELE desenha»).
+
+**Nenhum item do núcleo de confiança é alcançado pelo tema**: o MUDO, o fone, o «no ar», o SAIR e o veredito da conexão leem tokens próprios.
+
+### A prévia
+
+A metade de cliente só faz a prévia: `SeeleUI.tema(valores, { previa: true, superficie: id })` pinta só nesta máquina, com o selo «prévia não publicada», e sai quando a superfície fecha ou com `SeeleUI.tema(null, { previa: true })`. Uma prévia recusada rejeita com `contraste`, com os `pares`. O cálculo que a casca faz para derivar e recusar está, por inteiro, no guia do repositório do SEELE (ver Fontes), como uma função que você copia e chama antes de publicar.
 
 ## [referencia:limites] Todos os limites em um lugar
 
-Valores verificados no código da revisão, separados de decisões dos MODs de exemplo.
+Valores do código desta revisão, separados de decisões dos MODs de exemplo.
 
 | Recurso | Limite ou comportamento | Responsável |
 | --- | --- | --- |
-| Pedido JSON | 12 KiB UTF-8 | Janela e protocolo |
-| Pedidos pendentes | 8 na ponte compartilhada da janela | Cliente SEELE |
-| Espera de resposta | 15 segundos | Cliente SEELE |
+| Uma mensagem da janela | 12 KiB UTF-8; acima, `mensagem-grande` | Janela |
+| Pedidos em voo | 8; o nono, `too-many-requests` | Janela |
+| Espera de resposta | 15 segundos; depois, `falhou` | Janela |
 | Resposta do handler | 1 MiB | Runtime |
 | Fragmento de resposta | até 10 KiB UTF-8 | Host |
-| KV dados | 256 KiB, chaves + valores | Runtime/persistência |
+| Quintal (`dados`) | 256 KiB, chaves + valores; acima, `quintal-cheio` | Runtime |
 | Arquivo próprio | 4 MiB por arquivo | arquivos |
-| Resposta mundo.buscar | 4 MiB de texto aceito | mundo |
-| Timeout mundo.buscar | 2 segundos por busca | Cliente HTTP nativo |
-| Mensagem de log | até 500 caracteres | mundo.registrar |
-| Memória JS | 8 MiB por runtime de MOD | QuickJS |
-| Orçamento de execução | 500 consultas de interrupção | QuickJS |
+| Imagem pelo volume | 10 MiB | volume |
+| Resposta de `mundo.buscar` | 4 MiB de texto | mundo |
+| Prazo de `mundo.buscar` | 2 segundos por busca | mundo |
+| Linha de `mundo.registrar` | 500 caracteres | mundo |
+| Aviso do servidor | 1 KiB, 4 por segundo por MOD, 16 canais por chamada | mundo |
+| Memória JS no servidor | 8 MiB por MOD; a chamada morre, o contexto sobrevive | QuickJS |
+| Trabalho no servidor | cerca de 500 consultas, perto de 225 ms; a chamada morre | QuickJS |
 | Conjunto anunciado | até 12 MODs | Protocolo |
 | Alcances | até 16 itens, 32 bytes cada | Protocolo |
-| Nós de uma região | 512 | Janela |
-| Fundura da região | 8 níveis | Janela |
-| Campos por região | 32 | Janela |
-| Telas por região | 4 | Janela |
-| Mídias por região | 4 | Janela |
-| Figuras por tela | 256 | Janela |
-| Traços guardados por tela | 256 | Janela |
-| Lado de uma tela | 1024 | Janela |
-| Opções de uma escolha | 64 | Janela |
-| Texto de um nó | 4096 caracteres | Janela |
-| Valor de um campo | 1024 caracteres | Janela |
-| Mídia montada | 4 MiB | Janela |
+| Arquivos do pacote | até 16 | Manifesto |
+| Superfícies de pé | 12 por MOD; avisos, 4; folhas à vista, 3 | Janela |
+| Numa superfície | 4096 nós, 16 de fundura, 128 campos, 4 telas, 24 mídias | Janela |
+| Mídia numa superfície | um bolso de 24 MiB que a `midia`, o `retrato` e o `fundoDeMidia` dividem; a `midia`, até 10 MiB dele | Janela |
+| Som decodificado | 64 MiB de pé por superfície, por contribuição e nos cartões | Janela |
+| Figuras numa tela | 256, até o teto da mensagem | Janela |
+| Contribuições | 128 sem alvo de pé; 256 alvos por ponto | Janela |
+| Capas animadas | 6 ao mesmo tempo | Janela |
+| Classes | 64 por superfície, 4 consultas por classe, 512 regras | Janela |
 | Arquivo escolhido | 10 MiB, até 4 de pé por vez | Janela |
 | Pedaço de arquivo escolhido | 65535 bytes, múltiplo de 3 | Janela |
-| Pessoas com cartão, por MOD | 64 | Janela |
-| Nós num cartão | 24 | Janela |
-| Fundura de um cartão | 4 níveis | Janela |
-| Mídias somadas nos cartões | 64 | Janela |
-| Bytes de mídia nos cartões | 8 MiB | Janela |
+| Temporizadores | 256 de pé | Executor |
+| `console` | 32 linhas de uma vez, depois 4 por segundo; 512 caracteres por linha | Executor |
 
-As 500 consultas são um orçamento de trabalho do interpretador; a documentação do runtime apresenta uma aproximação de cerca de 225 ms no ambiente de referência. Isso não é um timeout garantido de 225 ms em todas as máquinas. Chamadas nativas de rede têm seu próprio limite porque não são interrompidas pelo mesmo contador de instruções.
+Os 225 ms não são de relógio: são de trabalho. Uma máquina lenta te dá o mesmo tanto de operações e demora mais, em vez de te cortar antes. Um laço infinito não derruba a sala: ele derruba a sua chamada. Mas um `aoAcontecer` que falha **desliga** o MOD.
 
-O prelúdio admite até oito mensagens pendentes por executor; os pedidos ao servidor também passam pelo mapa compartilhado de oito pedidos da ponte da janela. Se vários pacotes consultam ao mesmo tempo, todos disputam esse limite. Use concorrência pequena e consultas sem sobreposição.
-
-O limite de tamanho de arquivo não torna seguro ocupar indefinidamente o disco, e o limite de resposta não torna barato carregar todas as imagens a cada quatro segundos. Defina limites menores conforme o produto.
+O limite de tamanho de arquivo não torna seguro ocupar indefinidamente o disco, e o limite de resposta não torna barato carregar todas as imagens a cada leitura. Defina limites menores conforme o produto.
 
 ### Regras dos exemplos, não da plataforma
 
-O servidor de Perfis mantém limites próprios de upload, lotes de até 32 pessoas e um número máximo de perfis. Estilo mantém regras próprias de validação das opções salvas; a API impõe contraste texto/fundo mínimo de 4,5:1. Esses valores pertencem aos MODs e podem evoluir. Não os descreva como constantes universais da API.
+O servidor de PERFIS mantém limites próprios de upload, lotes de até 32 pessoas e um número máximo de perfis. ESTILO mantém regras próprias de validação das opções salvas. Esses valores pertencem aos MODs e podem evoluir: não os descreva como constantes da API.
 
-## [referencia:erros] Erros e diagnóstico
+## [referencia:erros] Recusas e diagnóstico
 
 Há três classes de falha: o pacote não carrega; o transporte não conclui; a regra do MOD recusa uma operação. Registre qual classe falhou antes de mudar o código.
 
+### O pacote não carrega
+
 | Sinal | Significado provável | Próximo passo |
 | --- | --- | --- |
-| malformed | JSON/campo/tipo inválido no manifesto | Validar chaves, tipos e sintaxe |
-| api-too-old | API retirada, anterior à 3 | Migrar o pacote; não há compatibilidade |
-| api-too-new | API pedida superior ao build | Usar build compatível ou API suportada |
-| request-too-large | Pedido excede 12 KiB UTF-8 | Reduzir corpo ou implementar fragmentos |
-| too-many-requests | Oito pedidos já pendentes | Evitar sobreposição e limitar concorrência |
-| timeout | Resposta não chegou em 15 s | Consultar estado antes de repetir mutação |
-| invalid-response | Falha ao interpretar resposta remontada | Retornar string JSON válida |
-| bridge-refused | Recusa interna genérica do host | Conferir log, canal, permissões, handler e hash |
-| conflito | Convenção do MOD para revisão antiga | Recarregar e oferecer nova decisão |
-| sem-permissao | Convenção do MOD para autorização | Explicar a ação não disponível |
+| malformed | JSON, campo ou tipo inválido no manifesto, ou a chave `tema` abaixo da API 6 | Validar chaves, tipos e sintaxe |
+| malformed-id | `id` fora de `autor/nome` | Corrigir o `id`: minúsculas, dígitos, hífen e uma barra |
+| schema-too-new | `schema` maior do que o lido | Declarar `schema: 1` |
+| empty | Nem `client` nem `server` | Declarar ao menos uma metade |
+| tema-sem-metade-de-servidor | `"tema": true` sem `server` | Acrescentar a metade de servidor, ou tirar a chave |
+| api-too-old | API fora do conjunto: no indexador, abaixo da 3; no app 0.16, abaixo da 6 | Portar para a 6, ou hospedar pelo Servidor 0.15 |
+| api-too-new | API pedida superior ao build | Usar um build compatível ou a API suportada |
 
-Códigos da interface podem variar conforme a versão. Erros de `invoke` também podem rejeitar a Promise. Não use a tabela como uma enumeração exaustiva de todas as mensagens internas do aplicativo.
+### A lista fechada da janela
 
-### MOD instalado, mas sem interface
+**O erro que o MOD recebe é um nome de uma lista fechada.** A frase fica na tela, e o motivo no `seele.log`. O prelúdio rejeita com um `Error` cujo `message` e `erro` são o nome, e que leva os outros campos como propriedades:
 
-Confira se está ligado no servidor, se a conexão aceitou o conjunto, se o conteúdo instalado corresponde ao exigido, se `client` aponta para um arquivo existente e se o script inicializa sem exceção. Confira se o cliente usa apenas as funções que o prelúdio expõe, se a árvore contém formas aceitas e se existe um canal válido. O estado carregado, sozinho, não prova que a inicialização interna concluiu.
+```js
+try {
+  await SeeleUI.enviar(arquivo.id, token);
+} catch (falha) {
+  if (falha.erro === 'tipo-recusado') dizer('não é imagem que o SEELE lê: ' + falha.detectado);
+  else dizer(falha.erro);
+}
+```
+
+| Grupo | Os nomes |
+| --- | --- |
+| ponte | `falhou` (o genérico), `too-many-requests`, `fila-cheia`, `mensagem-grande`, `tipo-desconhecido`, `sessao-encerrada` |
+| volume | `sem-espera`, `tipo-recusado`, `formato-desconhecido`, `arquivo-grande-demais`, `nao-gravei`, `incompleto`, `sessao-encerrada` |
+| arquivo | `banco-indisponivel`, `arquivo-nao-esta-de-pe`, `arquivo-de-outro-mod`, `arquivo-ilegivel`, `caminho-invalido`, `papel-nao-serve`, `arquivos-demais-de-pe` |
+| superfícies | `tipo-desconhecido`, `chave-desconhecida`, `orcamento`, `forma-desconhecida`, `nos-recusados`, `superficie-desconhecida`, `sem-previa`, `contraste`, `teto-de-folhas`, `teto-de-superficies` |
+| contribuições | `ponto-desconhecido`, `modo-recusado`, `sem-alvo`, `conteudo-invalido`, `teto-de-contribuicoes`, `teto-de-alvos`, `contribuicao-ja-existe`, `contribuicao-de-outro-mod` |
+| tema, no servidor | `sem-porta-de-tema`, `tema-de-outro-mod`, `tema-invalido`, `tema-grande-demais`, `chave-desconhecida`, `valor-invalido`, `regiao-desconhecida` — em `mundo.tema`, como valor |
+
+**Um nome fora da lista chega como `falhou`, sem campos.** Não há outro caminho: a janela confere a lista na fronteira. O envelope `{ ok: false, error }` de um pedido é outra coisa: `bridge-refused` e `quintal-cheio` são do anfitrião, e o resto é do seu MOD (ver Pedidos e respostas).
 
 ### bridge-refused
 
-A mesma resposta pode representar MOD desligado, falta de leitura, canal desconhecido, arquivo ou hash divergente, ausência de metade de servidor, ausência de `aoPedir`, erro do handler ou falha de persistência. O cliente recebe um identificador estável; detalhes ficam no log do host. Não adivinhe a causa só pelo código genérico.
+A mesma resposta pode representar MOD desligado, falta de leitura, canal desconhecido, conteúdo divergente, ausência de metade de servidor ou de `aoPedir`, erro do handler ou falha de persistência. O cliente recebe um nome estável; os detalhes ficam no log de quem hospeda. Não adivinhe a causa só pelo código genérico.
+
+### MOD instalado, mas sem interface
+
+Confira se está ligado no servidor, se a conexão aceitou o conjunto, se o conteúdo instalado corresponde ao exigido, se `client` aponta para um arquivo existente e se o script inicializa sem exceção. Confira se o cliente usa apenas o que `SeeleUI.capacidades()` diz que existe, se a árvore contém formas aceitas e se a contribuição não recebeu `regiao-ausente`.
+
+### O `console`, e onde ele escreve
+
+A metade de cliente tem `console`, e cada chamada vira **uma linha no `seele.log` da máquina que roda o MOD**: `console.debug` e `trace` em DEBUG, que o `seele.log` não grava por padrão; `log`, `info`, `dir` e `table` em INFO; `warn` em WARN; `error` e o `assert` cuja condição é falsa em ERROR. `group`, `time`, `count` e `clear` existem e não fazem nada. O erro que o seu código não pegou também chega, em ERROR, com o texto e a pilha quando o lançado é um `Error`.
+
+```text
+… WARN seele_app: console do MOD mod_id=fulano/meu-mod texto="o retrato não veio"
+```
+
+Para ver só o seu MOD — o `console`, as mídias que a janela recusou, as montagens que não couberam e o que o servidor disse dele, que usam o mesmo campo:
+
+```sh
+grep "mod_id=fulano/meu-mod" ~/.config/seele/seele.log
+```
+
+O arquivo fica em `~/.config/seele/` no macOS e no Linux (ou em `$SEELE_HOME`, quando definido) e em `%APPDATA%\tech.datadev.seele\` no Windows. Os erros da metade de servidor vão ao `seele.log` de quem hospeda: `mod threw: …` com o que ela lançou e onde, ou `mod failed: …` quando o motor recusou o que o MOD lhe deu.
+
+### A aba DIAGNÓSTICO e o modo de desenvolvedor
+
+Em Configurações › MODs › Diagnóstico, QUEM PINTA CADA LUGAR mostra os pontos onde um MOD pode entrar, quem desenha cada um agora, quem pediu e perdeu, a escolha desta máquina e a mídia em uso, com o motivo de cada recusa. As contribuições que não têm onde entrar também são contadas ali. «Nenhum MOD usa este lugar agora» é a resposta que você mais precisa ler quando o seu não aparece. Na mesma aba, MODO DE DESENVOLVEDOR contorna na tela cada lugar onde um MOD pode entrar, com o nome do ponto como a API o chama — é o que você escreve em `ponto`.
 
 ### Servidor não aceita entrada após ligar
 
-Confira os limites do anúncio, em especial cada item `reach`. Um pacote pode ser legível em disco e ainda produzir um anúncio recusado. Use o fluxo suportado para desligar/corrigir em um ambiente de teste. Não recomende apagar o banco do usuário como solução padrão.
+Confira os limites do anúncio, em especial cada item de `reach`. Um pacote pode ser legível em disco e ainda produzir um anúncio recusado. Use o fluxo suportado para desligar e corrigir num ambiente de teste. Não recomende apagar o banco de alguém como solução padrão.
 
 ### Atualização não aparece
 
-Compare ID, versão e hash anunciado com o pacote instalado. Confira se o catálogo fixou o commit novo, se houve reavaliação e se a cópia exigida pelo host foi atualizada. Um push isolado não basta. Não altere um pacote ativo diretamente esperando recarregamento automático de conteúdo arbitrário.
+Compare ID, versão e hash anunciado com o pacote instalado. Confira se o catálogo fixou o commit novo, se houve reavaliação e se a cópia exigida pelo host foi atualizada. Um push isolado não basta.
 
-### Instrumentação útil
-
-No host desktop usado como referência, o log fica em `~/.config/seele/seele.log`. Procure o ID do MOD e a operação relacionada. No cliente, confira console e estado de carregamento quando as ferramentas do ambiente permitirem. Use IDs de correlação gerados pelo MOD sem incluir conteúdo privado nos registros.
-
-Reproduza o defeito com uma sequência curta, resultado esperado, resultado observado, versão do app, commit/hash do pacote, papel da pessoa e indicação de teste nativo ou simulado.
+Reproduza o defeito com uma sequência curta, resultado esperado, resultado observado, versão do app, commit ou hash do pacote, papel da pessoa e indicação de teste nativo ou simulado.
 
 ## [referencia:testes] Testes e matriz de compatibilidade
 
@@ -1310,7 +1169,7 @@ node --check cliente/main.js
 node --check servidor/main.js
 ```
 
-Valide também o manifesto, caminhos, existência dos arquivos, comprimento UTF-8 dos alcances e ID. Se houver build, execute-o antes dos testes e verifique que o arquivo gerado corresponde ao fonte versionado. Um teste que só comprova que um arquivo existe não verifica autorização nem persistência.
+Valide também o manifesto, os caminhos, a existência dos arquivos, o comprimento UTF-8 dos alcances e o ID. Se houver build, execute-o antes dos testes e verifique que o arquivo gerado corresponde ao fonte versionado. Um teste que só comprova que um arquivo existe não verifica autorização nem persistência.
 
 ### Camada 2 — handlers
 
@@ -1318,29 +1177,30 @@ Instancie um contexto novo para cada pedido, mas reutilize o armazenamento simul
 
 | Área | Casos relevantes |
 | --- | --- |
-| Identidade | Corpo forja person/admin; contexto precisa prevalecer |
-| Permissões | Leitor tenta escrever; membro tenta administrar |
+| Identidade | O corpo forja `person` ou `admin`; o contexto precisa prevalecer |
+| Permissões | Quem só lê tenta escrever; um membro tenta administrar |
 | Concorrência | Dois pedidos com a mesma revisão |
-| Isolamento | Mesmo MOD em dois servidores/canais conforme a política |
-| Persistência | Novo runtime lê o estado anterior |
-| Tamanho | Limite exato, acima do limite, Unicode |
+| Isolamento | O mesmo MOD em dois servidores ou canais, conforme a política |
+| Persistência | Um runtime novo lê o estado anterior |
+| Tamanho | Limite exato, acima do limite, Unicode, quintal cheio |
+| Aviso | A escrita avisa; a recusa não avisa |
 | Imagens | MIME falso, SVG, arquivo inválido, upload incompleto |
-| Falhas | Disco falha antes/depois do KV; timeout e repetição |
+| Falhas | O disco falha antes ou depois do quintal; prazo e repetição |
 | Migração | Estado antigo, atual e versão desconhecida |
 
-Uma VM Node é um teste de lógica, não uma reprodução do QuickJS. Execute também no runtime real com o limite de memória quando o MOD manipular estado grande, imagens ou strings extensas.
+Uma VM do Node é um teste de lógica, e não uma reprodução do QuickJS. Execute também no runtime real com o limite de memória quando o MOD manipular estado grande, imagens ou strings extensas.
 
 ### Camada 3 — interface
 
-Execute o cliente final com a ponte simulada. Verifique formas renderizadas, limites de profundidade, mensagens de erro, leitura autorizada, rejeição de tema, fim do executor e remoção da região na saída. Marque a prévia como simulada. Não deixe um endpoint que aceita identidade arbitrária virar um backend de produção.
+Execute o cliente com uma ponte simulada que responda como o anfitrião: as mensagens, as respostas com número e as recusas pelo nome. Verifique o que é montado, a reconciliação por `chave`, os tetos, as mensagens de erro, a leitura autorizada, a superfície suja, o fim do executor e a retirada na saída. Marque a prévia como simulada. Não deixe um endpoint que aceita identidade arbitrária virar um backend de produção.
 
 ### Camada 4 — SEELE nativo
 
-Teste host e participante reais. Observe instalação, anúncio, aceite, hash, carregamento, leitura por outra pessoa, desconexão, reinício e atualização. O ambiente nativo pode ter CSP e restrições de rede diferentes do navegador.
+Teste host e participante reais. Observe instalação, anúncio, aceite, hash, carregamento, leitura por outra pessoa, o aviso chegando à outra janela, desconexão, reinício e atualização. Teste também no celular quando o MOD desenha em superfícies ou depende do volume.
 
 ### Matriz a publicar no README
 
-Informe versão do SEELE, sistema operacional, papel testado, tipo de pacote, commit do MOD e quais caminhos passaram. Não declare “funciona em todas as plataformas” só porque funcionou em um navegador desktop. Teste a região em janelas estreitas e largas com outros MODs ativos.
+Informe a versão do SEELE, o sistema operacional, o papel testado, o tipo de pacote, o commit do MOD e quais caminhos passaram. Não declare «funciona em todas as plataformas» só porque funcionou num navegador do computador. Teste as superfícies em janelas estreitas e largas, com outros MODs ativos.
 
 ## [referencia:seguranca] Segurança, privacidade e coexistência
 
@@ -1350,96 +1210,125 @@ O cliente executa num executor fora da janela e só pode apresentar o que a API 
 
 | Origem | Como tratar |
 | --- | --- |
-| Contexto de aoPedir | Autoridade de identidade/permissões da sessão |
+| Contexto de `aoPedir` | Autoridade de identidade e permissões da sessão |
 | Corpo do pedido | Entrada não confiável, validar integralmente |
-| Texto de perfil/chat | Dados de participante, enviar como string em dentro |
+| Texto de perfil ou chat | Dados de participante, enviar como string em `dentro` |
 | Resposta HTTP externa | Dados externos, conferir forma e limites |
 | Arquivo enviado | Bytes não confiáveis, não confiar só no MIME |
 | Árvore declarativa | Apenas as formas da API, sem HTML |
 
-Não exponha a lista inteira de dados só porque a resposta é privada no transporte. Uma operação de leitura deve filtrar campos e recursos conforme a política. Guarde apenas o que precisa e explique para o usuário o que é público no servidor.
+Não exponha a lista inteira de dados só porque a resposta chega só a quem pediu. Uma operação de leitura deve filtrar campos e recursos conforme a política. Guarde apenas o que precisa e explique para quem usa o que é público no servidor. Lembre que um aviso vai a toda janela que pode ler o canal dele: não ponha numa carga de aviso o que não poderia estar numa leitura.
 
-Evite URLs de mídia arbitrárias, pois podem causar requisições de participantes a terceiros. Quando o host consulta serviços externos, declare os destinos e a finalidade. Não faça telemetria oculta ou coleta de dados que não tenham relação com o recurso.
+Evite URLs de mídia arbitrárias, pois podem causar requisições de participantes a terceiros. Quando o host consulta serviços externos, declare os destinos e a finalidade. Não faça telemetria oculta nem coleta de dados sem relação com o recurso.
 
 ### Regras de convivência
 
-Use chaves próprias no estado e consulte apenas os dados necessários. A região é do MOD; painéis nativos, controles de áudio e ações de moderação pertencem ao SEELE.
+Use chaves próprias no estado e consulte apenas os dados necessários. As superfícies e contribuições são do MOD; painéis nativos, controles de áudio, ações de moderação e o núcleo de confiança pertencem ao SEELE.
 
-Um MOD de tema e um MOD de perfis podem coexistir com regiões independentes. Tokens de tema não podem ter dois donos na mesma sessão; uma disputa é recusada explicitamente.
+Um MOD de tema e um MOD de perfis podem coexistir. O tema de um servidor tem um dono só: o primeiro MOD com a porta, enquanto estiver ligado; outro recebe `tema-de-outro-mod`. Duas substituições do mesmo ponto não se misturam: quem escolhe qual vale é a pessoa.
 
 ### Limites da privacidade
 
-O host executa o código de servidor e mantém seu banco e arquivos. A ponte autenticada evita confiar numa pessoa forjada no corpo e mantém a resposta fora do histórico comum, mas não transforma o host em um ambiente que não possa acessar seus próprios dados. Descreva a proteção real, sem prometer criptografia ou sigilo que o MOD não implementa.
+O host executa o código de servidor e mantém o banco e os arquivos dele. A ponte autenticada evita confiar numa pessoa forjada no corpo e mantém a resposta fora do histórico comum, mas não transforma o host num ambiente que não possa acessar os próprios dados. Descreva a proteção real, sem prometer criptografia ou sigilo que o MOD não implementa.
 
 ## [referencia:exemplo] Exemplo executável e receitas
 
-O Contador contém somente [manifesto](exemplos/contador/mod.json), [cliente](exemplos/contador/cliente/main.js) e [servidor](exemplos/contador/servidor/main.js). Baixe o [ZIP](exemplos/contador.zip) da API 3.
+O Contador contém somente [manifesto](exemplos/contador/mod.json), [cliente](exemplos/contador/cliente/main.js) e [servidor](exemplos/contador/servidor/main.js). Baixe o [ZIP](exemplos/contador.zip) da API 6.
 
 ### O que ele demonstra
 
-- Descoberta do canal com snapshot e consulta por request.
-- Região de leitura declarada com titulo e texto.
-- Ciclo periódico sem consultas sobrepostas e com erros tratados.
-- Persistência, revisão e autorização no servidor, inalteradas desde a API 2.
-- Testes de incrementar e zerar sem fingir botões que a API não oferece.
+- Uma entrada em `servidor.navegacao` que abre uma página pelo evento `acao`.
+- Uma página que reabre pelo mesmo `id`, e que pode ser montada fechada.
+- Leitura e escrita pelo canal `0`, de escopo de servidor.
+- Persistência, revisão e autorização no servidor, com a recusa dita na página.
+- Um botão que pergunta antes, pelo `confirmar`.
+- O aviso do servidor que atualiza as outras janelas sem consulta periódica, e a revisão mais nova vencendo quando o aviso chega antes da resposta.
 
-O cliente só consulta. As operações de escrita existem no handler e são testadas diretamente; não há edição pela região. O exemplo não implementa uploads, paginação ou recibos de idempotência.
+O exemplo não implementa uploads, paginação nem recibos de idempotência. Foi exercitado no motor e no anfitrião do produto: a página abre, soma, recusa o ZERAR de quem não administra, acompanha o aviso de outra pessoa, relê no conflito e zera para quem administra.
 
 ### Receita: tema compartilhado
 
-Guarde as cores e a revisão no servidor. Uma leitura devolve a configuração; uma escrita exige `ctx.admin`. O cliente mapeia os valores para `fundo`, `painel`, `texto`, `apagado`, `acento` e `borda`, escolhe `densidade` e `fonte`, e chama `SeeleUI.tema`. Se estiver desativado, envie `{}`. Trate recusas de contraste e conflito; não marque o tema como aplicado antes da confirmação. O editor é seu: `campo` para cada cor, `escolha` para densidade e fonte, `botao` para gravar.
+Declare `"tema": true` e uma metade de servidor. Guarde as cores e a revisão no servidor; uma escrita exige `contexto.admin` e termina em `mundo.tema(valores)`. Trate cada recusa de `mundo.tema` como valor, e não marque o tema como aplicado antes de o evento `tema` dizer `aplicado` em cada janela. O editor é uma superfície: `cor` para cada cor, `escolha` para densidade e fonte, a prévia com `SeeleUI.tema(valores, { previa: true, superficie })`, e um `formulario` para gravar.
 
 ### Receita: perfil por servidor
 
-Use `ctx.person` como dono e mantenha a autorização no servidor. Consulte metadados em lotes e apresente nome, ID, pronomes, status e biografia na região. Não busque imagens que a API não pode exibir. Edição, avatar, banner e decoração da lista nativa aguardam extensão da API.
+Use `contexto.person` como dono e mantenha a autorização no servidor. A foto e a capa são `pessoa.avatar` e `pessoa.capa`, com `conteudo: { doServidor }` lido pelo volume; o resumo é `pessoa.cartao`; a ficha completa é uma folha ou um diálogo, com um `formulario` e `formulario.erros` para as recusas do servidor. Revogue a contribuição de quem saiu pelo evento `pessoas`.
 
 ### Receita: ficha por canal
 
-Use o canal autenticado como escopo e filtre as fichas pelo papel e identidade. Declare os dados autorizados como texto e listas; não exponha notas privadas para simular uma interface completa. Criação, edição, rolagens por clique, tabuleiro, retratos e som aguardam uma superfície de interação.
+Use o canal autenticado como escopo e filtre as fichas pelo papel e pela identidade. A ficha é uma superfície montada por partes com `atualizar`, quando passa dos 12 KiB; rolagens e tabuleiro são uma `tela` com figuras pegáveis; o som da cena vem de `arquivos` do pacote. Não exponha notas privadas num aviso: ele vai a toda janela que lê o canal.
 
 ### Projetos para leitura
 
-[ESTILO](https://github.com/DATA-AND-DEV/ESTILO), [PERFIS](https://github.com/DATA-AND-DEV/PERFIS) e [MESA](https://github.com/DATA-AND-DEV/MESA) mantêm a lógica de servidor e os dados anteriores. As versões 2.0.0 migram o cliente para a API 3 e documentam os recursos suspensos. Versões anteriores são históricas e não executam no runtime atual.
+[ESTILO](https://github.com/DATA-AND-DEV/ESTILO), [PERFIS](https://github.com/DATA-AND-DEV/PERFIS) e [MESA](https://github.com/DATA-AND-DEV/MESA) mantêm a lógica de servidor e os dados anteriores, e saem em duas linhas: a 4.x na API 6, a 3.x no Servidor 0.15. São projetos completos, e mais complexos que um primeiro MOD.
+
+## [referencia:linha-015] A linha do Servidor 0.15
+
+As APIs 3, 4 e 5 continuam rodando no **Servidor 0.15**, que o launcher oferece a quem hospeda nessa linha. O indexador aceita pacotes delas, e os três MODs oficiais mantêm a 3.x ali, que ainda pode ganhar consertos.
+
+| | Servidor 1.0 (app 0.16) | Servidor 0.15 |
+| --- | --- | --- |
+| APIs executadas | 6 | 5, 4 e 3 |
+| Desenho | Superfícies e contribuições | `SeeleUI.regiao`, a faixa de 240 px, e, desde a 4, superfícies e contribuições |
+| Cartão na lista | O ponto `pessoa.cartao` | `SeeleUI.cartoes` |
+| Leitura | `SeeleUI.retrato()` | `SeeleMods.snapshot()` |
+| Tema que todos veem | A metade de servidor, `mundo.tema` | A janela, `SeeleUI.tema(valores)` |
+| Chave `tema` no manifesto | Aceita | Recusada como `malformed` |
+
+**Um MOD não roda nas duas linhas com o mesmo pacote.** O app 0.16 recusa as APIs 3 a 5 inteiras, e o Servidor 0.15 não executa a 6. Quem precisa das duas mantém dois pacotes, cada um com a sua `api`, e cada um passa pela avaliação.
+
+### Portar da 5 para a 6
+
+1. Troque `"api": 5` por `"api": 6` no manifesto.
+2. Troque `SeeleMods.snapshot()` por `SeeleUI.retrato()`, e leia as mudanças pelos eventos da tela em vez de consultar de tempos em tempos.
+3. Mova o que estava em `SeeleUI.regiao` para uma superfície, aberta por uma entrada em `servidor.navegacao` — ou para o ponto que corresponde ao que ela mostrava.
+4. Troque `SeeleUI.cartoes` pelo ponto `pessoa.cartao`, com `alvo`.
+5. Mova o tema publicado para a metade de servidor: `"tema": true` e `mundo.tema`. A janela fica com a prévia.
+6. Troque o `painel` por `folha`, e confira os eventos que o seu servidor esperava: o `MessageEdited` saiu.
+7. Teste o pacote novo no app 0.16, e mantenha o antigo, se precisar, para o Servidor 0.15.
+
+### O guia das versões anteriores
+
+O guia da linha 0.15, com a região, o `snapshot`, os cartões e o tema pela janela, e o contador de exemplo na API 3, continua legível no repositório do indexador, na revisão em que foi publicado: [o guia da API 4](https://github.com/DATA-AND-DEV/SEELE-MODS-INDEXER/blob/dab1ed315d5f/docs/guia-criacao-mods.md).
 
 ## [referencia:fontes] Fontes, manutenção e glossário
 
-Esta revisão foi construída a partir do código local do SEELE, do ADR 0049 e das emendas de 19/09/2026, do guia de migração API 2 → 3, do executor e do indexador. Os contratos API 1/2 permanecem referências históricas do domínio e do servidor. Quando um comentário histórico diverge de uma função executável, o guia descreve a função e explicita a diferença. As afirmações de implementação devem ser revalidadas ao atualizar o runtime.
+Esta revisão foi construída a partir do contrato congelado da API 6, do guia de MODs do repositório do SEELE, do prelúdio do motor, do anfitrião dos MODs e do indexador. Quando um comentário diverge de uma função executável, o guia descreve a função. As afirmações de implementação devem ser revalidadas ao atualizar o runtime.
 
 ### Fontes primárias
 
-- [Migração API 2 → 3](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/docs/migracao-de-mods-api-2-para-3.md)
-
-- [Contrato histórico API 1](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/api/v1.json)
-- [Contrato histórico API 2](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/api/v2.json)
-- [Manifesto e hash de conteúdo](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-proto/src/mods.rs)
-- [Runtime QuickJS](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-server/src/mods/mod.rs)
-- [Ponte autenticada](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-server/src/mods/pedidos.rs)
-- [Adaptador de eventos](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-server/src/mods/despacho.rs)
-- [Cliente da ponte](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/apps/seele-app/ui/base.js)
-- [Tipos do snapshot](https://github.com/DATA-AND-DEV/SEELE/blob/fbcb09786c29219a18e20289381aa7d0e0ae13ac/crates/seele-ffi/src/types.rs)
+- [O contrato da API 6](https://github.com/DATA-AND-DEV/SEELE/blob/v0.16.0/api/v6.json)
+- [O que muda para quem escreve MOD](https://github.com/DATA-AND-DEV/SEELE/blob/v0.16.0/api/README.md)
+- [Como se faz um MOD, o guia do repositório](https://github.com/DATA-AND-DEV/SEELE/blob/v0.16.0/docs/como-se-faz-um-mod.md)
+- [Manifesto e hash de conteúdo](https://github.com/DATA-AND-DEV/SEELE/blob/v0.16.0/crates/seele-proto/src/mods.rs)
+- [O prelúdio do executor](https://github.com/DATA-AND-DEV/SEELE/blob/v0.16.0/crates/seele-motor/src/preludio.rs)
+- [O anfitrião da metade de servidor](https://github.com/DATA-AND-DEV/SEELE/blob/v0.16.0/crates/seele-server/src/mods/mod.rs)
 - [Indexador e processo de publicação](https://github.com/DATA-AND-DEV/SEELE-MODS-INDEXER)
 
 ### Glossário
 
 | Termo | Significado |
 | --- | --- |
-| Manifesto | mod.json que identifica o pacote e seus scripts |
-| Host | Máquina/pessoa que hospeda o servidor |
-| Cliente do MOD | Executor QuickJS próprio da sessão, fora da janela |
-| Handler | Função chamada pelo runtime para um pedido/evento |
-| KV ou quintal | Objeto dados persistido como chave/valor textual |
-| Snapshot | Consulta do estado exposto pelo aplicativo |
-| Revisão | Número do seu estado para detectar alterações concorrentes |
+| Manifesto | `mod.json`, que identifica o pacote e os seus scripts |
+| Host | A máquina, ou a pessoa, que hospeda o servidor |
+| Cliente do MOD | O executor QuickJS próprio da sessão, fora da janela |
+| Superfície | Uma janela do produto que o MOD declara: página, diálogo, folha ou aviso |
+| Contribuição | O que o MOD põe num ponto com nome da interface do SEELE |
+| Ponto | Um lugar com nome onde uma contribuição entra, como `servidor.navegacao` |
+| Retrato | A leitura do que a janela sabe, por lista branca |
+| Aviso do servidor | O que `mundo.avisar` manda às janelas do MOD, pelo evento `servidor` |
+| Handler | Função chamada pelo runtime para um pedido ou evento |
+| Quintal | O objeto `dados`, persistido como chave e valor em texto |
+| Revisão | O número do seu estado para detectar alterações concorrentes |
 | Idempotência | Repetir uma operação sem aplicar o efeito duas vezes |
-| Hash de conteúdo | Identidade calculada sobre caminhos e bytes do pacote |
-| CSP | Política do WebView para scripts, estilos e conexões |
-| Descarregamento | parada do executor e retirada de região, tema, mídia e arquivos pelo produto |
-| Avaliação | Revisão de um commit/conteúdo para publicação no catálogo |
+| Hash de conteúdo | A identidade calculada sobre os caminhos e os bytes do pacote |
+| Descarregamento | A parada do executor e a retirada das superfícies, contribuições, mídia e arquivos pelo produto |
+| Avaliação | A revisão de um commit e do conteúdo para publicação no catálogo |
 
 ### Como manter este guia
 
-Atualize a fonte Markdown, regenere a página, execute os testes do exemplo e da navegação, confira links e abra a página em larguras diferentes. Se um novo evento ou método for implementado, inclua sua assinatura, origem dos dados, autorização, retorno, erros, limites e um exemplo testável. Preserve a distinção entre contrato declarado e binding executável.
+Atualize a fonte Markdown, regenere a página, execute os testes do exemplo e da navegação, confira os links e abra a página em larguras diferentes. Se um novo evento ou método for implementado, inclua a assinatura, a origem dos dados, a autorização, o retorno, as recusas, os limites e um exemplo testável. **O exemplo é da API que o indexador oferece**: numa ruptura, um exemplo aceito pelo indexador e recusado pelo aplicativo atual ensina errado.
 
-O indexador aceita novos pacotes somente na API 3. Versões antigas já publicadas permanecem no histórico append-only apenas quando ID, versão e hash correspondem ao catálogo anterior; isso não as torna executáveis no SEELE atual. O catálogo assinado precisa ser regenerado junto da publicação, anunciando `api_oferecida: 3`.
+O indexador aceita novos pacotes nas APIs 6, 5, 4 e 3: a 6, da linha do Servidor 1.0, e as 5, 4 e 3, da linha 0.15, porque o launcher ainda oferece aquela linha. Versões antigas já publicadas permanecem no histórico append-only apenas quando ID, versão e hash correspondem ao catálogo anterior; isso não as torna executáveis no SEELE atual. O catálogo assinado precisa ser regenerado junto da publicação, anunciando `api_oferecida: 6` e `apis_aceitas: [6, 5, 4, 3]`.
 
-O hash não é o SHA-256 do ZIP. O algoritmo de conteúdo ordena caminhos e inclui contagem de arquivos, comprimentos dos caminhos, bytes dos caminhos, comprimentos dos conteúdos e bytes dos conteúdos, usando comprimentos inteiros de 64 bits em big-endian. Use as ferramentas oficiais e os vetores do indexador para reproduzi-lo; não crie um cálculo simplificado em um script de release.
+O hash não é o SHA-256 do ZIP. O algoritmo de conteúdo ordena caminhos e inclui contagem de arquivos, comprimentos dos caminhos, bytes dos caminhos, comprimentos dos conteúdos e bytes dos conteúdos, usando comprimentos inteiros de 64 bits em big-endian. Use as ferramentas oficiais e os vetores do indexador para reproduzi-lo; não crie um cálculo simplificado num script de release.
