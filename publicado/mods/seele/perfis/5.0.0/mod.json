@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "id": "seele/perfis",
+  "version": "5.0.0",
+  "api": 7,
+  "repo": "https://github.com/DATA-AND-DEV/PERFIS",
+  "reach": [
+    "cartão das pessoas",
+    "foto e capa da pessoa",
+    "entrada na navegação",
+    "perfis no servidor",
+    "imagens públicas no servidor",
+    "envio de imagens"
+  ],
+  "client": "cliente/main.js",
+  "server": "servidor/main.js"
+}

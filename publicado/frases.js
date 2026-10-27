@@ -74,7 +74,7 @@ export const ROTULOS_DE_NIVEL = {
  * Nenhuma delas oferece «tentar assim mesmo» (ADR 0029). */
 export const FALHAS = {
   "sem-resposta":
-    "mods.seele.app.br não respondeu. Se você estava entrando num servidor com mod, é por isso que não entrou — a lista dos mods vem daqui.",
+    "mods.seele.sh não respondeu. Se você estava entrando num servidor com mod, é por isso que não entrou — a lista dos mods vem daqui.",
   "assinatura-nao-confere":
     "o catálogo e a assinatura dele não combinam. Quase sempre é cache: um dos dois chegou velho de um nó da CDN. Recarregue daqui a um minuto. Se continuar, não use este catálogo.",
   "hash-nao-bate":

@@ -1,6 +1,6 @@
 # Como criar MODs para o SEELE
 
-Guia prático e referência técnica. Revisão de 21/10/2026. Manifesto schema 1, API de MOD 6: a do app 0.16 e do Servidor 1.0. A documentação distingue o que o produto executa, as convenções de autoria e o que não existe — e diz qual é qual.
+Guia prático e referência técnica. Revisão de 25/10/2026. Manifesto schema 1, API de MOD 7: a do app 0.17 e do Servidor 2.0, que também executam a 6, a do app 0.16 e do Servidor 1.0. A documentação distingue o que o produto executa, as convenções de autoria e o que não existe — e diz qual é qual.
 
 ## Comece por aqui
 
@@ -325,7 +325,7 @@ Publicar o código no GitHub não é o mesmo que obter verificação no catálog
 
 Crie uma versão nova para conteúdo novo. Não reescreva uma versão já publicada. Atualizar o arquivo no host, atualizar o que o servidor exige e atualizar o que o participante instalou precisam resultar no mesmo hash. Uma etiqueta `1.0.0` igual nos dois lados não basta.
 
-**A API que você declara é uma versão só.** Um pacote da 6 roda no app 0.16 e no Servidor 1.0; um das APIs 3 a 5 continua rodando no Servidor 0.15. Quem quer as duas linhas publica dois pacotes, como os três MODs oficiais — a 4.x na API 6, a 3.x na linha legada —, e cada um passa pela avaliação.
+**A API que você declara é uma versão só.** Um pacote da 7 roda no app 0.17 e no Servidor 2.0, e não roda no app 0.16. Um da 6 roda nos apps 0.16 e 0.17 e nos Servidores 1.0 e 2.0, sem ser republicado. Um das APIs 3 a 5 continua rodando no Servidor 0.15. Um pacote da API 6 serve as linhas 1 e 2 sem ser republicado. Um pacote por API só é preciso quando as APIs são incompatíveis, por exemplo para alcançar a linha 0.15 e a linha 2 ao mesmo tempo (a 5, a 4 e a 3 de um lado, a 6 ou a 7 do outro): é o que fazem os três MODs oficiais — a 4.x na API 6, a 3.x na linha legada —, e cada pacote passa pela avaliação.
 
 Planeje migrações de dados e faça backup antes de testar uma atualização sobre um mundo existente. A propriedade `state` do manifesto não executa uma migração automaticamente. Sua lógica deve reconhecer versões antigas do estado e transformá-las de maneira explícita.
 
@@ -333,7 +333,7 @@ Teste entrar com pacote antigo, entrar com pacote novo, atualizar durante uma se
 
 ## Superfície e compatibilidade
 
-O indexador oferece a API 6 (`VERSAO_DA_API`, o espelho de `MOD_API_VERSION`) e lê o manifesto de esquema 1. A ponte de pedidos entrou com o protocolo 6, e o Servidor 1.0 é o protocolo 1.0 mais a API 6. São números diferentes: versão do manifesto, versão da API do MOD e versão do protocolo de rede. A versão do seu pacote, por exemplo `3.0.0`, é outro identificador.
+O indexador oferece a API 7 (`VERSAO_DA_API`, o espelho de `MOD_API_VERSION`) e lê o manifesto de esquema 1. A ponte de pedidos entrou com o protocolo 6, o Servidor 1.0 é o protocolo 1.0 mais a API 6, e o Servidor 2.0 (app 0.17) executa a API 7 e a 6. São números diferentes: versão do manifesto, versão da API do MOD e versão do protocolo de rede. A versão do seu pacote, por exemplo `3.0.0`, é outro identificador.
 
 O que está no catálogo assinado hoje, e o que já chegou na máquina de alguém, é o que as releases publicadas dizem:
 
@@ -341,19 +341,23 @@ O que está no catálogo assinado hoje, e o que já chegou na máquina de algué
 curl -sS "https://api.github.com/repos/DATA-AND-DEV/SEELE-RELEASES/releases" | head -40
 ```
 
-### Duas linhas de servidor
+### Três linhas de servidor
 
-**A 6 é uma ruptura.** Ela tirou `SeeleUI.regiao` (a faixa de 240 px), `SeeleUI.cartoes` (trocado pelo ponto `pessoa.cartao`) e `SeeleMods.snapshot` (trocado por `SeeleUI.retrato()`), e por isso o app 0.16 executa só ela. As APIs 3, 4 e 5 continuam rodando no Servidor 0.15, que o launcher oferece, e o indexador aceita as duas linhas: o conjunto dele é a união, e não o de um aplicativo só.
+**A 6 é uma ruptura.** Ela tirou `SeeleUI.regiao` (a faixa de 240 px), `SeeleUI.cartoes` (trocado pelo ponto `pessoa.cartao`) e `SeeleMods.snapshot` (trocado por `SeeleUI.retrato()`), e por isso o app 0.16 executa só ela. As APIs 3, 4 e 5 continuam rodando no Servidor 0.15, que o launcher oferece, e o indexador aceita as linhas todas: o conjunto dele é a união, e não o de um aplicativo só.
+
+**A 7 é um alargamento da 6, e não uma ruptura.** Ela traz a 6 inteira e acrescenta as permissões do MOD e a capacidade `acoes` (veja **As permissões e as ações**, no capítulo do manifesto). Um MOD da 6 roda no app 0.17 sem permissões e sem ser republicado. O contrário não vale: o app 0.16 não executa a 7, e por isso o catálogo só oferece à 0.16 as versões que declaram a API 6.
+
+As linhas são três, e é delas que o indexador tira o conjunto (`APIS_POR_LINHA`): a linha `2` (app 0.17, Servidor 2.0) executa a 7 e a 6; a `1` (app 0.16, Servidor 1.0) executa a 6; a `0.15` executa a 5, a 4 e a 3.
 
 | O que o número diz | Onde ele está | Valor nesta revisão |
 | --- | --- | --- |
-| O teto que o cliente entende | `MOD_API_VERSION` | 6 no app 0.16; 5 no Servidor 0.15 |
-| O conjunto que o cliente executa | `APIS_ACEITAS` | 6 no app 0.16; 5, 4, 3 no Servidor 0.15 |
-| O teto que o indexador publica | `api_oferecida` no catálogo | 6 |
-| O conjunto que o indexador aceita | `apis_aceitas` no catálogo | 6, 5, 4, 3: a união das duas linhas |
-| O que o seu pacote declara | `api` no manifesto | 6 para o app 0.16 e o Servidor 1.0; 3, 4 ou 5 para o Servidor 0.15 |
+| O teto que o cliente entende | `MOD_API_VERSION` | 7 no app 0.17; 6 no app 0.16; 5 no Servidor 0.15 |
+| O conjunto que o cliente executa | `APIS_ACEITAS` | 7 e 6 no app 0.17; 6 no app 0.16; 5, 4, 3 no Servidor 0.15 |
+| O teto que o indexador publica | `api_oferecida` no catálogo | 7 |
+| O conjunto que o indexador aceita | `apis_aceitas` no catálogo | 7, 6, 5, 4, 3: a união das três linhas |
+| O que o seu pacote declara | `api` no manifesto | 7 para o app 0.17 e o Servidor 2.0; 6 para qualquer um dos apps 0.16 e 0.17 e dos Servidores 1.0 e 2.0; 3, 4 ou 5 para o Servidor 0.15 |
 
-Um pacote que pede mais do que o teto é recusado como `api-too-new`; um fora do conjunto, como `api-too-old` — no app 0.16, toda API abaixo da 6, e a tela aponta o Servidor 0.15 no launcher. As duas recusas acontecem antes de executar qualquer código. Numa ruptura, a ordem de publicação é a dos pacotes da 6 entrarem no catálogo **antes** do aplicativo que os executa, e foi assim que os três MODs oficiais saíram na 4.0.0.
+Um pacote que pede mais do que o teto é recusado como `api-too-new`; um fora do conjunto, como `api-too-old` — no app 0.16 e no app 0.17, toda API abaixo da 6, e a tela aponta o Servidor 0.15 no launcher. O app 0.16 recusa a 7 como `api-too-new`; se o manifesto da 7 traz `permissoes`, a recusa é `malformed`, porque a 0.16 não conhece a chave. As duas recusas acontecem antes de executar qualquer código. Numa ruptura, a ordem de publicação é a dos pacotes da 6 entrarem no catálogo **antes** do aplicativo que os executa, e foi assim que os três MODs oficiais saíram na 4.0.0.
 
 ### O que a plataforma não tem não existe
 
@@ -413,16 +417,21 @@ O manifesto é JSON estrito. **Chaves desconhecidas são recusadas, e é de prop
 | schema | número inteiro | Use 1 nesta revisão |
 | id | string | autor/nome; minúsculas ASCII, dígitos e hífen; uma barra |
 | version | string | Versão do autor; o core não a interpreta como SemVer |
-| api | número inteiro | 6 para o app 0.16 e o Servidor 1.0; 3, 4 ou 5 para o Servidor 0.15 — inclusive em MODs somente de servidor |
+| api | número inteiro | 7 para o app 0.17 e o Servidor 2.0; 6 para os apps 0.16 e 0.17 e os Servidores 1.0 e 2.0; 3, 4 ou 5 para o Servidor 0.15 — inclusive em MODs somente de servidor |
 | repo | string | Repositório público do pacote |
 | reach | string[] | Opcional no parser; declare alcances úteis para quem aceita |
 | state | inteiro ou ausente | Versão declarativa dos seus dados; sem migração automática |
 | client | string ou ausente | Script de cliente relativo à raiz |
 | server | string ou ausente | Script de servidor relativo à raiz |
 | arquivos | string[] ou ausente | Mídia que o pacote traz, relativa à raiz; até 16, e nenhum caminho sai da pasta |
-| tema | booleano ou ausente | Só na API 6: `true` abre a porta do tema do servidor (`mundo.tema`); exige `server`. `null` não vale como ausente |
+| tema | booleano ou ausente | Da API 6 em diante: `true` abre a porta do tema do servidor (`mundo.tema`); exige `server`. `null` não vale como ausente |
+| permissoes | lista ou ausente | Só na API 7: as ações que o MOD pede ao servidor, `{ "acao", "nome", "todos" }` cada uma; veja abaixo |
 
-Ao menos `client` ou `server` precisa existir (sem nenhum, `empty`). Uma API fora do conjunto aceito é recusada antes de executar código: acima do teto, como `api-too-new`; fora do conjunto, como `api-too-old`. O indexador aceita `6, 5, 4, 3`, a união das duas linhas de servidor; cada aplicativo executa só a da linha dele — o app 0.16 só a 6, e o Servidor 0.15 a 5, a 4 e a 3. Não existe compatibilidade com cliente de API 2.
+Ao menos `client` ou `server` precisa existir (sem nenhum, `empty`). Uma API fora do conjunto aceito é recusada antes de executar código: acima do teto, como `api-too-new`; fora do conjunto, como `api-too-old`. O indexador aceita `7, 6, 5, 4, 3`, a união das três linhas; cada aplicativo executa só a da linha dele — o app 0.17 a 7 e a 6, o app 0.16 só a 6, e o Servidor 0.15 a 5, a 4 e a 3. Não existe compatibilidade com cliente de API 2.
+
+**As permissões e as ações (API 7).** `permissoes` é uma lista como `[{ "acao": "fechar-mesa", "nome": "Fechar a mesa", "todos": false }]`. Declarar exige `"api": 7`: um manifesto da 6 com a chave é recusado como `permissoes-pedem-api-nova`, e não ignorado. A ação usa só `a-z`, `0-9` e hífen, até 32 bytes; o nome (o que a tela de cargos mostra) não é vazio, até 48 bytes; a ação não se repete; e o teto é de 8 permissões por MOD. Fora disso, `permissoes-invalidas`. A capacidade `acoes` é a última da lista da API 7: o MOD pede uma ação declarada, e o servidor confere o MOD ligado, a ação declarada e a permissão da pessoa antes de chamar a metade de servidor. A recusa volta como `acao-nao-declarada` ou `sem-permissao`. **Na janela, a chamada é `SeeleMods.acao(id, canal, acao, valor)`**, e só existe com a capacidade `acoes`. O `id` que vai é sempre o do próprio MOD, como no `request`. A resposta é a da metade de servidor, como a do `request`, e a recusa dos cargos chega como valor, `{ ok: false, recusa }`. A janela não confere nada: quem decide é o servidor.
+
+**Na metade de servidor, a operação protegida se guarda por `contexto.acao`**, que o host escreve depois do portão dos cargos e que é `null` num `request` comum: `if (contexto.acao !== 'fechar-mesa') return recusa;`. **Nunca por `contexto.permissoes`**, que é informativo e chega também num `request` comum, e nunca pelo corpo do pedido (um `pedido.acao`, um `admin` ou um contexto escrito pelo cliente não decidem nada). O `request` comum continua valendo para as leituras, e para as mutações que outra regra já protege (o dono, o mestre da mesa, a própria pessoa). O exemplo é a fixture `apps/seele-app/testes/mod-de-acoes` do repositório do SEELE. Um MOD da 6 não declara nada disso e continua rodando, sem permissões.
 
 **A chave `tema` é da API 6.** Num pacote de API 3, 4 ou 5 ela é recusada como `malformed`: a linha 0.15 não conhece a chave, e a linha 1 não executa essas APIs, então o pacote não instalaria em build nenhuma. E `"tema": true` sem `server` é recusado como `tema-sem-metade-de-servidor`: quem pinta a aparência é a metade de servidor, e sem ela a porta nunca pintaria nada.
 
@@ -439,7 +448,7 @@ Ao menos `client` ou `server` precisa existir (sem nenhum, `empty`). Uma API for
 | version | 32 bytes UTF-8 |
 | repo | 256 bytes UTF-8 |
 | reach: quantidade | 16 itens |
-| reach: cada item | 32 bytes UTF-8 |
+| reach: cada item | 32 bytes UTF-8 na linha 1 (apps 0.16, Servidor 1.0); 48 na linha 2 (app 0.17, Servidor 2.0). Para servir as duas linhas, 32 |
 
 Esses limites são do anúncio, não apenas do parser de JSON. Um manifesto pode passar por uma etapa de leitura e falhar ao ser anunciado. Os alcances de ESTILO e PERFIS já expuseram essa diferença durante testes: uma descrição longa impediu a entrada no servidor até ser corrigida.
 
@@ -1266,16 +1275,17 @@ Use o canal autenticado como escopo e filtre as fichas pelo papel e pela identid
 
 As APIs 3, 4 e 5 continuam rodando no **Servidor 0.15**, que o launcher oferece a quem hospeda nessa linha. O indexador aceita pacotes delas, e os três MODs oficiais mantêm a 3.x ali, que ainda pode ganhar consertos.
 
-| | Servidor 1.0 (app 0.16) | Servidor 0.15 |
-| --- | --- | --- |
-| APIs executadas | 6 | 5, 4 e 3 |
-| Desenho | Superfícies e contribuições | `SeeleUI.regiao`, a faixa de 240 px, e, desde a 4, superfícies e contribuições |
-| Cartão na lista | O ponto `pessoa.cartao` | `SeeleUI.cartoes` |
-| Leitura | `SeeleUI.retrato()` | `SeeleMods.snapshot()` |
-| Tema que todos veem | A metade de servidor, `mundo.tema` | A janela, `SeeleUI.tema(valores)` |
-| Chave `tema` no manifesto | Aceita | Recusada como `malformed` |
+| | Servidor 2.0 (app 0.17) | Servidor 1.0 (app 0.16) | Servidor 0.15 |
+| --- | --- | --- | --- |
+| APIs executadas | 7 e 6 | 6 | 5, 4 e 3 |
+| Desenho | Superfícies e contribuições | Superfícies e contribuições | `SeeleUI.regiao`, a faixa de 240 px, e, desde a 4, superfícies e contribuições |
+| Cartão na lista | O ponto `pessoa.cartao` | O ponto `pessoa.cartao` | `SeeleUI.cartoes` |
+| Leitura | `SeeleUI.retrato()` | `SeeleUI.retrato()` | `SeeleMods.snapshot()` |
+| Tema que todos veem | A metade de servidor, `mundo.tema` | A metade de servidor, `mundo.tema` | A janela, `SeeleUI.tema(valores)` |
+| Chave `tema` no manifesto | Aceita | Aceita | Recusada como `malformed` |
+| Chave `permissoes` e capacidade `acoes` | Só na API 7 | Recusada (`malformed`, ou `api-too-new` sem a chave) | Não existe: a linha só executa as APIs 5, 4 e 3 |
 
-**Um MOD não roda nas duas linhas com o mesmo pacote.** O app 0.16 recusa as APIs 3 a 5 inteiras, e o Servidor 0.15 não executa a 6. Quem precisa das duas mantém dois pacotes, cada um com a sua `api`, e cada um passa pela avaliação.
+**Um MOD de uma linha antiga não roda na outra com o mesmo pacote.** Os apps 0.16 e 0.17 recusam as APIs 3 a 5 inteiras, o Servidor 0.15 não executa a 6 nem a 7, e o app 0.16 não executa a 7. Só o pacote da 6 atravessa as linhas 1 e 2. Quem precisa da linha 0.15 e de uma das linhas 1 ou 2 mantém dois pacotes, cada um com a sua `api` (de 3 a 5 para a 0.15, 6 para a 1 e a 2), e cada um passa pela avaliação. Quem precisa só das linhas 1 e 2 publica um pacote da 6; um pacote da 7 serve só a linha 2.
 
 ### Portar da 5 para a 6
 
@@ -1327,8 +1337,8 @@ Esta revisão foi construída a partir do contrato congelado da API 6, do guia d
 
 ### Como manter este guia
 
-Atualize a fonte Markdown, regenere a página, execute os testes do exemplo e da navegação, confira os links e abra a página em larguras diferentes. Se um novo evento ou método for implementado, inclua a assinatura, a origem dos dados, a autorização, o retorno, as recusas, os limites e um exemplo testável. **O exemplo é da API que o indexador oferece**: numa ruptura, um exemplo aceito pelo indexador e recusado pelo aplicativo atual ensina errado.
+Atualize a fonte Markdown, regenere a página, execute os testes do exemplo e da navegação, confira os links e abra a página em larguras diferentes. Se um novo evento ou método for implementado, inclua a assinatura, a origem dos dados, a autorização, o retorno, as recusas, os limites e um exemplo testável. **O exemplo é de uma API que o aplicativo atual executa**: numa ruptura, um exemplo aceito pelo indexador e recusado pelo aplicativo atual ensina errado. O contador continua na API 6 **de propósito**: a API oferecida é a 7, e a 6 é a compatibilidade intencional, porque roda nos apps 0.16 e 0.17 (linhas 1 e 2). Só mude o exemplo para a 7 se abrir mão da linha 1.
 
-O indexador aceita novos pacotes nas APIs 6, 5, 4 e 3: a 6, da linha do Servidor 1.0, e as 5, 4 e 3, da linha 0.15, porque o launcher ainda oferece aquela linha. Versões antigas já publicadas permanecem no histórico append-only apenas quando ID, versão e hash correspondem ao catálogo anterior; isso não as torna executáveis no SEELE atual. O catálogo assinado precisa ser regenerado junto da publicação, anunciando `api_oferecida: 6` e `apis_aceitas: [6, 5, 4, 3]`.
+O indexador aceita novos pacotes nas APIs 7, 6, 5, 4 e 3: a 7 e a 6, da linha do Servidor 2.0, a 6 também da linha do Servidor 1.0, e as 5, 4 e 3, da linha 0.15, porque o launcher ainda oferece aquela linha. Versões antigas já publicadas permanecem no histórico append-only apenas quando ID, versão e hash correspondem ao catálogo anterior; isso não as torna executáveis no SEELE atual. O catálogo assinado precisa ser regenerado junto da publicação, anunciando `api_oferecida: 7` e `apis_aceitas: [7, 6, 5, 4, 3]`.
 
 O hash não é o SHA-256 do ZIP. O algoritmo de conteúdo ordena caminhos e inclui contagem de arquivos, comprimentos dos caminhos, bytes dos caminhos, comprimentos dos conteúdos e bytes dos conteúdos, usando comprimentos inteiros de 64 bits em big-endian. Use as ferramentas oficiais e os vetores do indexador para reproduzi-lo; não crie um cálculo simplificado num script de release.

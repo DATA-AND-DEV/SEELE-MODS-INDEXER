@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "id": "seele/estilo",
+  "version": "5.0.0",
+  "api": 7,
+  "repo": "https://github.com/DATA-AND-DEV/ESTILO",
+  "reach": [
+    "tema do servidor",
+    "dialogo de aparencia",
+    "entrada de navegacao",
+    "aviso do servidor"
+  ],
+  "tema": true,
+  "client": "cliente/main.js",
+  "server": "servidor/main.js",
+  "permissoes": [
+    {
+      "acao": "mudar-tema",
+      "nome": "Mudar a aparência do servidor",
+      "todos": false
+    }
+  ]
+}

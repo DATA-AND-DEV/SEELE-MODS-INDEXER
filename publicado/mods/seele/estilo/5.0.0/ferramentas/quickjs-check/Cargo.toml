@@ -1,0 +1,11 @@
+[package]
+name = "seele-estilo-quickjs-check"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[dependencies]
+rquickjs = "=0.12.2"
+serde_json = "1"
