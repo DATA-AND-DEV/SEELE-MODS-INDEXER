@@ -221,3 +221,23 @@ test('API 3 não considera pacotes antigos compatíveis; mantém a consulta hist
   assert.deepEqual(filtrar([...MODS, atual], {api:3}).map(m=>m.id), ['novo/atual']);
   assert.deepEqual(filtrar([atual], {api:2}), []);
 });
+
+for (const [menor, maior] of [
+  ["4.0.1", "5.0.0"], ["5.9.0", "5.10.0"], ["5.0.9", "5.0.10"],
+  ["9.0.0", "10.0.0"], ["5.0.0-rc.9", "5.0.0-rc.10"],
+  ["5.0.0-rc.10", "5.0.0"], ["5.0.0-1", "5.0.0-beta"],
+]) {
+  test(`empate de data escolhe ${maior} sobre ${menor} nas duas ordens`, () => {
+    const versoes = [menor, maior].map(versao => ({versao, publicado_em: 1000}));
+    for (const ordem of [versoes, [...versoes].reverse()]) {
+      const mod = {versoes: ordem};
+      assert.equal(versaoMaisRecente(mod).versao, maior);
+      assert.equal(versaoEscolhida(mod).versao, maior);
+      assert.equal(versaoEscolhida(mod, menor).versao, menor);
+      assert.deepEqual(ordem.map(v => v.versao), ordem === versoes ? [menor, maior] : [maior, menor]);
+    }
+    assert.equal(versaoMaisRecente({versoes: [
+      {versao: maior, publicado_em: 1000}, {versao: menor, publicado_em: 1001},
+    ]}).versao, menor);
+  });
+}

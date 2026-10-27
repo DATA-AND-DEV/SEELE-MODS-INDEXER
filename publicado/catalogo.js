@@ -16,10 +16,39 @@ export const ORDENS = [
 /** `oficial` primeiro: é o único nível cuja prova somos nós. */
 const PESO_DO_NIVEL = { oficial: 0, verificado: 1, "com-notas": 2 };
 
+/** Compara SemVer sem perder precisão nos componentes numéricos. */
+function compararSemver(a, b) {
+  const padrao = /^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+[0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*)?$/;
+  const x = a.match(padrao), y = b.match(padrao);
+  const texto = (p, q) => p < q ? -1 : p > q ? 1 : 0;
+  // Catálogos antigos podem conter versões livres; o empate continua estável.
+  if (!x || !y) return texto(a, b);
+  const numero = (p, q) => texto(BigInt(p), BigInt(q));
+  for (let i = 1; i <= 3; i++) {
+    const ordem = numero(x[i], y[i]);
+    if (ordem) return ordem;
+  }
+  if (!x[4] || !y[4]) return x[4] ? -1 : y[4] ? 1 : 0;
+  const px = x[4].split("."), py = y[4].split(".");
+  for (let i = 0; i < Math.max(px.length, py.length); i++) {
+    if (px[i] === undefined) return -1;
+    if (py[i] === undefined) return 1;
+    const nx = /^[0-9]+$/.test(px[i]), ny = /^[0-9]+$/.test(py[i]);
+    const ordem = nx && ny ? numero(px[i], py[i]) : nx !== ny ? (nx ? -1 : 1) : texto(px[i], py[i]);
+    if (ordem) return ordem;
+  }
+  return 0; // Metadados de build não alteram a precedência SemVer.
+}
+
+/** Data primeiro; no mesmo instante, a maior versão semântica primeiro. */
+export function compararVersoesRecentes(a, b) {
+  return b.publicado_em - a.publicado_em || compararSemver(b.versao, a.versao);
+}
+
 /** A versão que a tela mostra, e sobre a qual a decisão de instalar é feita. */
 export function versaoMaisRecente(mod) {
   return mod.versoes.reduce((maior, atual) =>
-    atual.publicado_em > maior.publicado_em ? atual : maior,
+    compararVersoesRecentes(atual, maior) < 0 ? atual : maior,
   );
 }
 

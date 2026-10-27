@@ -16,6 +16,7 @@
 
 import {
   ORDENS,
+  compararVersoesRecentes,
   acaoDeInstalar,
   avaliacaoDaVersao,
   versaoEscolhida,
@@ -269,7 +270,7 @@ function telaCatalogo(estado, acoes) {
  */
 export function botoesDeVersao(mod, escolhida) {
   return [...mod.versoes]
-    .sort((a, b) => b.publicado_em - a.publicado_em)
+    .sort(compararVersoesRecentes)
     .map((v) => ({
       versao: v.versao,
       // O selo é o da versão da linha, nunca o do MOD: é ele que diz que

@@ -253,3 +253,15 @@ test("a solicitação de inclusão aponta para o repositório que existe", () =>
   }
   assert.equal(url.searchParams.get("labels"), "inclusão");
 });
+
+test("lista desempata pela versão numérica, preservando data e catálogo", () => {
+  const versoes = ["4.0.1", "5.9.0", "5.10.0"].map(versao => ({versao, publicado_em: 1000}));
+  versoes.push({versao: "1.0.0", publicado_em: 1001});
+  for (const ordem of [versoes, [...versoes].reverse()]) {
+    const antes = JSON.stringify(ordem);
+    const lista = botoesDeVersao({versoes: ordem, nivel: "oficial"}, versoes[2]);
+    assert.deepEqual(lista.map(v => v.versao), ["1.0.0", "5.10.0", "5.9.0", "4.0.1"]);
+    assert.deepEqual(lista.filter(v => v.escolhida).map(v => v.versao), ["5.10.0"]);
+    assert.equal(JSON.stringify(ordem), antes);
+  }
+});
