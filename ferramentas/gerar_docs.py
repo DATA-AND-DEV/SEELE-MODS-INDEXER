@@ -228,6 +228,10 @@ def gerar(destino: Path, raiz_seele: Path | None = None, producao: bool = False)
                        'estado': p['estado'], 'sha256': sha, 'condicoes_abertas': dela})
     (destino / 'fontes.json').write_text(json.dumps(fontes, ensure_ascii=False, indent=1), encoding='utf-8')
     (destino / '_headers').write_text(CABECALHOS, encoding='utf-8')
+    # A raiz Pages é este diretório: não herdar ./publicado do catálogo pai.
+    (destino / 'wrangler.jsonc').write_text(json.dumps({
+        'name': 'seele-docs', 'pages_build_output_dir': './',
+    }, indent=2) + '\n', encoding='utf-8')
     return destino
 
 

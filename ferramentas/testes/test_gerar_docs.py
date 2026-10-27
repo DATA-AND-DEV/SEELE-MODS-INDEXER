@@ -16,6 +16,10 @@ precisa_do_seele = pytest.mark.skipif(not os.path.isfile(os.path.join(SEELE, 'RE
 @precisa_do_seele
 def test_o_site_de_docs_traz_o_guia_os_estilos_e_nenhum_link_local_quebrado(tmp_path):
     destino = gerar_docs.gerar(tmp_path / 'site-docs', SEELE)
+    config = json.loads((destino / 'wrangler.jsonc').read_text(encoding='utf-8'))
+    assert config['name'] == 'seele-docs'
+    assert config['pages_build_output_dir'] == './'
+    assert (destino / config['pages_build_output_dir']).resolve() == destino.resolve()
     for arquivo in ['index.html', 'mods/index.html', '_headers', 'casca.css', 'estilo.css', 'tokens.css', 'fontes.css']:
         assert (destino / arquivo).exists(), arquivo
     for pagina in [destino / 'index.html', destino / 'mods/index.html'] + [destino / p['slug'] / 'index.html' for p in gerar_docs.paginas()]:
