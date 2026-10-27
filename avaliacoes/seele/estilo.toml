@@ -292,3 +292,17 @@ commit = "73e36f78f105f43f936b718e4b5c09e8b8cd677e"
 nivel = "oficial"
 notas = ["roda-no-servidor"]
 avaliado_em = 1792609079
+
+# 5.0.0 — avaliação por delta sobre a última versão publicada.
+# API 7: salvar e restaurar o tema passam pela ação mudar-tema. O servidor
+# exige ctx.acao; ctx.permissoes apenas informa a interface. O delta mantém
+# a validação do tema. 63 testes passaram e os dois scripts passaram em node --check.
+# Fontes conferidas por SHA-256 contra a preparação testada. Estes testes
+# de código não substituem uma nova validação física de interface.
+
+[[versoes]]
+versao = "5.0.0"
+commit = "13a79ee59ab4bb2388e934e6bfd6013b016b888d"
+nivel = "oficial"
+notas = ["roda-no-servidor"]
+avaliado_em = 1793120730

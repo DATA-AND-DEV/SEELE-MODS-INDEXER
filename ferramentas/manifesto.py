@@ -10,6 +10,7 @@ divergir: eles atravessam para o `frases.js`, e um código sem frase mostra
 o identificador cru para quem lê."""
 
 import json
+import unicodedata
 from dataclasses import dataclass, field
 
 from ferramentas.recusa import Recusado
@@ -17,7 +18,7 @@ from ferramentas.recusa import Recusado
 ESQUEMA_DO_MANIFESTO = 1
 
 # Espelho de `seele_proto::mods::MOD_API_VERSION`.
-VERSAO_DA_API = 6
+VERSAO_DA_API = 7
 
 # **A união das linhas**, da mais nova para a mais velha: o que
 # `seele_proto::mods::apis_de_toda_linha()` tira de `APIS_POR_LINHA`, e não
@@ -25,12 +26,17 @@ VERSAO_DA_API = 6
 #
 # # Por que a união, e não o conjunto do app
 #
-# Desde o corte da API 6, o `APIS_ACEITAS` do produto é só o da linha dele: a
-# `[6]` da linha 1 (o app 0.16, o Servidor 1.0). As 5, 4 e 3 são da linha 0.15,
-# que o launcher roda ao lado, e quem hospeda pelo Servidor 0.15 instala do
-# mesmo catálogo. O indexador serve as duas linhas, então aceita o que alguma
-# delas executa. Uma API fora de toda linha (a 7, antes de existir) continua
-# recusada, e uma que saiu de toda linha também.
+# Desde o corte da API 6, o `APIS_ACEITAS` do produto é só o da linha dele. Na
+# 0.17 (`APIS_POR_LINHA`) são três linhas: a 2 (o app 0.17, o Servidor 2.0) com
+# a `[7, 6]`, a 1 (o app 0.16, o Servidor 1.0) com a `[6]`, e a 0.15 com as 5, 4
+# e 3, que o launcher roda ao lado. O indexador serve todas do mesmo catálogo,
+# então aceita o que alguma delas executa. Uma API fora de toda linha (a 8,
+# antes de existir) continua recusada, e uma que saiu de toda linha também.
+#
+# A 7 é um alargamento da 6 (o `api/v7.json` do SEELE): um pacote da 6 continua
+# aceito e continua rodando na 0.17, sem precisar ser republicado. Quem impede
+# a 0.16 de baixar um pacote da 7 é a `api` de cada versão do catálogo, que é a
+# que o `mod.json` declara (`gerar.py`), e não esta lista.
 #
 # # Por que um conjunto, e não um número
 #
@@ -51,19 +57,36 @@ VERSAO_DA_API = 6
 # Aceitar a 3 não dá à 3 o que a 4 tem: as capacidades são por versão e quem as
 # aplica é o prelúdio do executor, do lado do cliente. A 2 não volta — ela
 # executava na janela.
-APIS_ACEITAS = (6, 5, 4, 3)
+APIS_ACEITAS = (7, 6, 5, 4, 3)
 
 # A API em que a chave `tema` nasceu. A linha 0.15 não a conhece e a recusa
 # (`deny_unknown_fields`), e a linha 1 não executa as APIs da 0.15: um pacote
 # abaixo da 6 que declare a chave não instala em build nenhuma.
 API_DO_TEMA = 6
 
+# Espelho de `seele_proto::mods::PRIMEIRA_API_COM_PERMISSOES`: a API em que a
+# chave `permissoes` nasceu (as ações que o MOD pede por `AcaoDeMod`).
+API_DAS_PERMISSOES = 7
+
+# Espelhos de `seele_proto::cargos`: `MAX_PERMISSOES_POR_MOD`, `MAX_ACAO_LEN`
+# e `MAX_NOME_DA_PERMISSAO_DE_MOD`. Os dois tamanhos são em **bytes** UTF-8,
+# como o `len()` de uma `String` do Rust, e não em caracteres.
+TETO_DE_PERMISSOES = 8
+TETO_DA_ACAO = 32
+TETO_DO_NOME_DA_PERMISSAO = 48
+
+# As chaves de uma `PermissaoDeclarada`, que lá também é `deny_unknown_fields`.
+# `todos` é `bool` com `#[serde(default)]`: ausente vale `false`, e `null` não
+# desserializa.
+CHAVES_DA_PERMISSAO = {"acao", "nome", "todos"}
+OBRIGATORIAS_DA_PERMISSAO = {"acao", "nome"}
+
 # Toda chave que o esquema 1 conhece. Uma chave fora daqui é recusada em vez
 # de ignorada, pelo motivo que o Rust escreve em `deny_unknown_fields`: uma
 # chave com erro de digitação instala um MOD sem a coisa que o autor achou
 # que estava lá, e o autor nunca descobre.
 CHAVES = {"schema", "id", "version", "api", "repo", "reach", "state", "client", "server",
-          "arquivos", "tema"}
+          "arquivos", "tema", "permissoes"}
 OBRIGATORIAS = {"schema", "id", "version", "api", "repo"}
 
 # O tipo de cada chave, porque o `serde` do Rust valida isso na
@@ -73,7 +96,7 @@ OBRIGATORIAS = {"schema", "id", "version", "api", "repo"}
 TIPOS = {
     "schema": int, "id": str, "version": str, "api": int, "repo": str,
     "reach": list, "state": int, "client": str, "server": str, "arquivos": list,
-    "tema": bool,
+    "tema": bool, "permissoes": list,
 }
 
 # Os únicos campos que o Rust declara `Option<T>`. Para os demais, um `null`
@@ -103,6 +126,106 @@ class Manifesto:
     client: str | None = None
     server: str | None = None
     tema: bool = False
+    permissoes: list["PermissaoDeclarada"] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class PermissaoDeclarada:
+    """Espelho de `seele_proto::cargos::PermissaoDeclarada`."""
+
+    acao: str
+    nome: str
+    todos: bool = False
+
+
+class _Objeto(dict):
+    """Um objeto JSON que lembra as chaves que vieram repetidas.
+
+    O `json` do Python fica com a última e não avisa; o `serde` do Rust recusa
+    o campo duplicado num `struct`. Só a `PermissaoDeclarada` consulta isto:
+    um `{"todos": false, "todos": true}` lido de um jeito aqui e de outro lá
+    seria uma permissão dada a todo mundo sem que quem revisou visse."""
+
+    repetidas: frozenset[str] = frozenset()
+
+
+def _objeto(pares: list[tuple[str, object]]) -> _Objeto:
+    objeto = _Objeto(pares)
+    if len(objeto) != len(pares):
+        chaves = [chave for chave, _ in pares]
+        objeto.repetidas = frozenset(chave for chave in chaves if chaves.count(chave) > 1)
+    return objeto
+
+
+def _acao_valida(acao: str) -> bool:
+    """Espelho de `cargos::acao_valida`: `[a-z0-9-]`, de 1 a 32 bytes, sem `-` nas pontas."""
+    return (
+        0 < len(acao) <= TETO_DA_ACAO
+        and not acao.startswith("-")
+        and not acao.endswith("-")
+        and all(("a" <= c <= "z") or ("0" <= c <= "9") or c == "-" for c in acao)
+    )
+
+
+def _nome_de_permissao_valido(nome: str) -> bool:
+    """Espelho de `cargos::nome_de_permissao_valido`.
+
+    `char::is_control` do Rust é a categoria `Cc`, e é o que se confere aqui. O
+    `trim` de lá corta o espaço branco Unicode, como o `strip` daqui; onde os
+    dois discordam (de U+001C a U+001F) o caractere é `Cc`, e é recusado de
+    qualquer jeito."""
+    return (
+        bool(nome.strip())
+        and len(nome.encode("utf-8")) <= TETO_DO_NOME_DA_PERMISSAO
+        and not any(unicodedata.category(c) == "Cc" for c in nome)
+    )
+
+
+def _permissoes_do_json(lista: list) -> list[PermissaoDeclarada]:
+    """O que o `serde` faria com a lista: forma e tipos, ou `malformed`."""
+    lidas = []
+    for posicao, entrada in enumerate(lista):
+        onde = f"permissoes[{posicao}]"
+        if not isinstance(entrada, dict):
+            raise Recusado("malformed", f"{onde} não é um objeto")
+        repetidas = getattr(entrada, "repetidas", frozenset())
+        if repetidas:
+            raise Recusado("malformed", f"{onde} repete a chave: " + ", ".join(sorted(repetidas)))
+        desconhecidas = set(entrada) - CHAVES_DA_PERMISSAO
+        if desconhecidas:
+            raise Recusado("malformed", f"{onde} chave desconhecida: " + ", ".join(sorted(desconhecidas)))
+        faltando = OBRIGATORIAS_DA_PERMISSAO - set(entrada)
+        if faltando:
+            raise Recusado("malformed", f"{onde} falta: " + ", ".join(sorted(faltando)))
+        for chave in ("acao", "nome"):
+            if not isinstance(entrada[chave], str):
+                raise Recusado("malformed", f"{onde}.{chave} deveria ser str")
+            # Um `\ud800` sozinho: o `json` do Python o aceita como um surrogate
+            # solto, que não é texto Unicode e não codifica em UTF-8; o
+            # `serde_json` recusa o documento inteiro. Um par válido já chega
+            # aqui juntado num caractere só.
+            if any(0xD800 <= ord(c) <= 0xDFFF for c in entrada[chave]):
+                raise Recusado("malformed", f"{onde}.{chave} traz um surrogate isolado")
+        todos = entrada.get("todos", False)
+        if not isinstance(todos, bool):
+            raise Recusado("malformed", f"{onde}.todos deveria ser bool")
+        lidas.append(PermissaoDeclarada(acao=entrada["acao"], nome=entrada["nome"], todos=todos))
+    return lidas
+
+
+def _validar_declaradas(lista: list[PermissaoDeclarada]) -> None:
+    """Espelho de `cargos::validar_declaradas`, na mesma ordem: a primeira recusa vale."""
+    if len(lista) > TETO_DE_PERMISSOES:
+        raise Recusado("permissoes-invalidas", f"declara {len(lista)} permissões, o teto é {TETO_DE_PERMISSOES}")
+    vistas: set[str] = set()
+    for posicao, declarada in enumerate(lista):
+        if not _acao_valida(declarada.acao):
+            raise Recusado("permissoes-invalidas", f"permissoes[{posicao}] tem uma ação inválida: {declarada.acao!r}")
+        if not _nome_de_permissao_valido(declarada.nome):
+            raise Recusado("permissoes-invalidas", f"permissoes[{posicao}] tem um nome inválido")
+        if declarada.acao in vistas:
+            raise Recusado("permissoes-invalidas", f"permissoes[{posicao}] repete a ação {declarada.acao!r}")
+        vistas.add(declarada.acao)
 
 
 def _bem_formado(identificador: str) -> bool:
@@ -154,7 +277,7 @@ def ler(texto: str, *, historico: bool = False) -> Manifesto:
     o catálogo anterior. Não autoriza novos pacotes com uma API retirada.
     """
     try:
-        cru = json.loads(texto)
+        cru = json.loads(texto, object_pairs_hook=_objeto)
     except json.JSONDecodeError as erro:
         raise Recusado("malformed", f"linha {erro.lineno}, coluna {erro.colno}") from erro
 
@@ -195,6 +318,7 @@ def ler(texto: str, *, historico: bool = False) -> Manifesto:
     arquivos = cru.get("arquivos", []) or []
     if any(not isinstance(item, str) for item in arquivos):
         raise Recusado("malformed", "arquivos deveria ser uma lista de textos")
+    permissoes = _permissoes_do_json(cru.get("permissoes", []))
     if len(arquivos) > TETO_DE_ARQUIVOS:
         raise Recusado("malformed", f"declara {len(arquivos)} arquivos, o teto é {TETO_DE_ARQUIVOS}")
     for posicao, arquivo in enumerate(arquivos):
@@ -224,6 +348,24 @@ def ler(texto: str, *, historico: bool = False) -> Manifesto:
     # de `empty`, na ordem do Rust (`Refused::TemaSemMetadeDeServidor`).
     if cru.get("tema", False) and cru.get("server") is None:
         raise Recusado("tema-sem-metade-de-servidor", "declara \"tema\": true sem metade de servidor")
+    # As permissões, depois do tema e na ordem do Rust: `PermissoesPedemApiNova`,
+    # e então `PermissoesInvalidas`. Recusadas, e não ignoradas: o autor que as
+    # escreveu conta com elas, e um app que as ignorasse deixaria a ação passar
+    # sem cargo.
+    if permissoes and cru["api"] < API_DAS_PERMISSOES:
+        raise Recusado(
+            "permissoes-pedem-api-nova",
+            f'declara permissoes com a API {cru["api"]}; permissões pedem a API {API_DAS_PERMISSOES}',
+        )
+    # **Mais estrito que o Rust da 0.17, e de propósito.** Lá um `"permissoes":
+    # []` numa API 6 passa. Mas um pacote da 6 é oferecido também ao app 0.16,
+    # que recusa o manifesto inteiro só por ter a chave (`deny_unknown_fields`,
+    # medido em `tests/manifesto_da_0_16.rs` do SEELE). É o caso da chave `tema`
+    # abaixo da 6: uma chave que uma linha que escolheria o pacote não conhece
+    # não entra no catálogo.
+    if "permissoes" in cru and cru["api"] < API_DAS_PERMISSOES:
+        raise Recusado("malformed", f'chave desconhecida para a API {cru["api"]}: permissoes')
+    _validar_declaradas(permissoes)
 
     return Manifesto(
         schema=cru["schema"],
@@ -237,4 +379,5 @@ def ler(texto: str, *, historico: bool = False) -> Manifesto:
         client=cru.get("client"),
         server=cru.get("server"),
         tema=cru.get("tema", False),
+        permissoes=permissoes,
     )

@@ -498,3 +498,90 @@ def test_api3_preserva_bytes_do_historico_sem_admitir_substituicao(mundo, monkey
         gerar(raiz, secreta, agora=1757100200)
     assert erro.value.codigo == 'api-too-old'
     assert json.loads((raiz / 'publicado/catalogo.json').read_text()) == atual
+
+
+# ------------------------------------------- a API 7 no catálogo, e a 0.16
+#
+# Quem impede o app 0.16 de baixar um pacote da 7 é a `api` de cada versão do
+# catálogo: ele escolhe a versão mais nova cuja API ele executa
+# (`versaoParaEsteApp` em `apps/seele-app/ui/camada-mods.js` do SEELE, igual no
+# `8faa3379b` da v0.16.0). A réplica abaixo é aquela função, com a lista de
+# cada app.
+
+def _versao_para_este_app(versoes, apis_que_este_app_aceita):
+    for versao in reversed(versoes):
+        if int(versao["api"]) in apis_que_este_app_aceita:
+            return versao
+    return None
+
+
+APIS_DO_APP_0_16 = [6]
+APIS_DO_APP_0_17 = [7, 6]
+
+
+def _commitar_manifesto(autor, manifesto):
+    (autor / "mod.json").write_text(json.dumps(manifesto), encoding="utf-8")
+    (autor / "cliente" / "main.js").write_text(f"// {manifesto['version']}\n", encoding="utf-8")
+    git(autor, "add", "-A")
+    git(autor, "commit", "-q", "-m", manifesto["version"])
+    return git(autor, "rev-parse", "HEAD")
+
+
+def _catalogo_da_6_e_da_7(mundo, permissoes):
+    raiz, secreta, _ = mundo
+    autor = raiz.parent / "repo-do-autor"
+    base = {"schema": 1, "id": "juli/cinza-frio", "repo": "https://github.com/juli/seele-cinza-frio",
+            "client": "cliente/main.js"}
+    da_6 = _commitar_manifesto(autor, {**base, "version": "2.1.0", "api": 6})
+    da_7 = _commitar_manifesto(autor, {**base, "version": "3.0.0", "api": 7, "permissoes": permissoes})
+    (raiz / "avaliacoes" / "juli" / "cinza-frio.toml").write_text(
+        f"""
+id = "juli/cinza-frio"
+repo = "{autor}"
+titulo = "Cinza Frio"
+resumo = "Contraste alto."
+
+[[versoes]]
+versao = "2.1.0"
+commit = "{da_6}"
+nivel = "verificado"
+notas = []
+avaliado_em = 1757000000
+
+[[versoes]]
+versao = "3.0.0"
+commit = "{da_7}"
+nivel = "verificado"
+notas = []
+avaliado_em = 1757000900
+""",
+        encoding="utf-8",
+    )
+    gerar(raiz, secreta, agora=1757100000)
+    return json.loads((raiz / "publicado" / "catalogo.json").read_text(encoding="utf-8"))
+
+
+def test_o_catalogo_publica_a_api_que_cada_mod_json_declara(mundo):
+    catalogo = _catalogo_da_6_e_da_7(mundo, [{"acao": "fechar-mesa", "nome": "Fechar a mesa"}])
+    assert catalogo["api_oferecida"] == 7
+    assert catalogo["apis_aceitas"] == [7, 6, 5, 4, 3]
+    versoes = catalogo["mods"][0]["versoes"]
+    assert [(v["versao"], v["api"]) for v in versoes] == [("2.1.0", 6), ("3.0.0", 7)]
+
+
+def test_o_app_0_16_nao_e_oferecido_a_versao_da_api_7(mundo):
+    catalogo = _catalogo_da_6_e_da_7(mundo, [{"acao": "fechar-mesa", "nome": "Fechar a mesa"}])
+    versoes = catalogo["mods"][0]["versoes"]
+    assert _versao_para_este_app(versoes, APIS_DO_APP_0_16)["versao"] == "2.1.0"
+    assert _versao_para_este_app(versoes, APIS_DO_APP_0_17)["versao"] == "3.0.0"
+    # E um MOD só da 7 não tem versão nenhuma para a 0.16.
+    so_da_7 = [v for v in versoes if v["api"] == 7]
+    assert so_da_7 and _versao_para_este_app(so_da_7, APIS_DO_APP_0_16) is None
+
+
+def test_permissoes_invalidas_nao_entram_no_catalogo(mundo):
+    raiz, _, _ = mundo
+    with pytest.raises(Recusado) as erro:
+        _catalogo_da_6_e_da_7(mundo, [{"acao": "Fechar Mesa", "nome": "Fechar"}])
+    assert erro.value.codigo == "permissoes-invalidas"
+    assert not (raiz / "publicado").exists()

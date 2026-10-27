@@ -592,3 +592,17 @@ commit = "90f3818770dac09810663d35c9c4c966c98951bd"
 nivel = "oficial"
 notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
 avaliado_em = 1792609079
+
+# 5.0.0 — avaliação por delta sobre a última versão publicada.
+# API 7: manifesto, identificação do cliente e ferramentas atualizados.
+# O servidor é idêntico ao da 4.0.0; nenhuma ação ou permissão nova declarada.
+# 85 testes passaram e um foi ignorado; node --check passou nas duas metades.
+# Fontes conferidas por SHA-256 contra a preparação testada. Estes testes
+# de código não substituem uma nova validação física de interface.
+
+[[versoes]]
+versao = "5.0.0"
+commit = "11fb8d845fec64c4a06d0e8fd2a29962f4d7ad67"
+nivel = "oficial"
+notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
+avaliado_em = 1793120730

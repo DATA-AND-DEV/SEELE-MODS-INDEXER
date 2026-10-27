@@ -334,10 +334,12 @@ def _api6(**extra) -> str:
     return json.dumps(manifesto)
 
 
-def test_o_indexador_oferece_a_6_e_aceita_a_uniao_das_linhas():
+def test_o_indexador_oferece_a_7_e_aceita_a_uniao_das_linhas():
+    # A 0.17 (`APIS_POR_LINHA` do SEELE): a linha 2 com a 7 e a 6, a 1 com a 6,
+    # a 0.15 com a 5, a 4 e a 3.
     from ferramentas.manifesto import APIS_ACEITAS
-    assert VERSAO_DA_API == 6
-    assert APIS_ACEITAS == (6, 5, 4, 3)
+    assert VERSAO_DA_API == 7
+    assert APIS_ACEITAS == (7, 6, 5, 4, 3)
 
 
 def test_um_manifesto_da_api_6_e_lido():
@@ -401,3 +403,197 @@ def test_tema_numa_api_da_linha_0_15_e_malformed(api):
 @pytest.mark.parametrize("api", [3, 4, 5])
 def test_a_linha_0_15_continua_publicavel(api):
     assert ler(_api6(api=api, client="c.js")).api == api
+
+
+# ------------------------------------------------- a API 7 e as permissões
+#
+# Espelho de `seele_proto::mods::read_manifest` na 0.17 e de
+# `seele_proto::cargos::validar_declaradas`: `permissoes` é uma lista de
+# `PermissaoDeclarada { acao, nome, todos }` (`deny_unknown_fields`, `todos`
+# com `#[serde(default)]`), só da API 7 em diante, até 8 por MOD, ação
+# `[a-z0-9-]` de 1 a 32 bytes sem `-` nas pontas, nome não vazio de até 48
+# bytes sem caractere de controle, sem ação repetida.
+
+def _api7(*permissoes, **extra) -> str:
+    import json
+    manifesto = {"schema": 1, "id": "seele/mesa", "version": "5.0.0", "api": 7,
+                 "repo": "https://example.invalid/x", "client": "c.js"}
+    if permissoes:
+        manifesto["permissoes"] = list(permissoes)
+    manifesto.update(extra)
+    return json.dumps(manifesto)
+
+
+FECHAR = {"acao": "fechar-mesa", "nome": "Fechar a mesa"}
+
+
+def _recusa(texto: str) -> Recusado:
+    with pytest.raises(Recusado) as erro:
+        ler(texto)
+    return erro.value
+
+
+def test_um_manifesto_da_api_7_com_permissao_e_lido():
+    from ferramentas.manifesto import PermissaoDeclarada
+    m = ler(_api7(FECHAR))
+    assert m.api == 7
+    assert m.permissoes == [PermissaoDeclarada(acao="fechar-mesa", nome="Fechar a mesa", todos=False)]
+
+
+def test_todos_sem_a_chave_vale_false_e_com_ela_vale_o_que_diz():
+    assert ler(_api7({**FECHAR, "todos": True})).permissoes[0].todos is True
+    assert ler(_api7({**FECHAR, "todos": False})).permissoes[0].todos is False
+
+
+def test_a_api_7_sem_permissoes_e_lida_com_a_lista_vazia():
+    assert ler(_api7()).permissoes == []
+    assert ler(_api7(permissoes=[])).permissoes == []
+
+
+def test_um_mod_da_api_6_continua_aceito_sem_permissoes():
+    # A 7 é alargamento: um pacote da 6 não precisa ser republicado.
+    m = ler(_api6(server="servidor/main.js", tema=True))
+    assert m.api == 6 and m.permissoes == []
+
+
+def test_a_api_7_com_tema_e_permissoes_e_lida():
+    m = ler(_api7(FECHAR, server="servidor/main.js", tema=True))
+    assert m.tema is True and len(m.permissoes) == 1
+
+
+def test_os_tetos_exatos_passam():
+    oito = [{"acao": f"acao-{n}", "nome": f"Ação {n}"} for n in range(8)]
+    assert len(ler(_api7(*oito)).permissoes) == 8
+    assert ler(_api7({"acao": "a" * 32, "nome": "N"})).permissoes[0].acao == "a" * 32
+    assert ler(_api7({"acao": "a", "nome": "n" * 48})).permissoes[0].nome == "n" * 48
+    # 48 **bytes**: 24 «ç» são 48 bytes em UTF-8.
+    assert ler(_api7({"acao": "a", "nome": "ç" * 24})).permissoes[0].nome == "ç" * 24
+    assert ler(_api7({"acao": "0-9", "nome": "  com espaço  "})).permissoes[0].acao == "0-9"
+
+
+@pytest.mark.parametrize("api", [3, 4, 5, 6])
+def test_permissoes_sem_a_api_7_sao_recusadas(api):
+    erro = _recusa(_api7(FECHAR, api=api))
+    assert erro.codigo == "permissoes-pedem-api-nova"
+
+
+@pytest.mark.parametrize("api", [3, 4, 5, 6])
+def test_a_lista_vazia_abaixo_da_7_e_malformed(api):
+    # Mais estrito que o Rust da 0.17 (lá passa), porque o app 0.16 recusa o
+    # manifesto inteiro só por ter a chave, e um pacote da 6 é oferecido a ele.
+    erro = _recusa(_api7(api=api, permissoes=[]))
+    assert erro.codigo == "malformed"
+    assert "permissoes" in erro.detalhe
+
+
+def test_sem_api_e_malformed():
+    import json
+    sem_api = json.loads(_api7(FECHAR))
+    del sem_api["api"]
+    assert _recusa(json.dumps(sem_api)).codigo == "malformed"
+
+
+def test_a_api_8_e_api_too_new_mesmo_com_permissoes():
+    assert _recusa(_api7(FECHAR, api=8)).codigo == "api-too-new"
+
+
+def test_nove_permissoes_e_permissoes_invalidas():
+    nove = [{"acao": f"acao-{n}", "nome": f"Ação {n}"} for n in range(9)]
+    erro = _recusa(_api7(*nove))
+    assert erro.codigo == "permissoes-invalidas"
+    assert "9" in erro.detalhe
+
+
+@pytest.mark.parametrize("acao", ["", "Fechar Mesa", "fechar_mesa", "-a", "a-", "-", "a" * 33,
+                                  "ação", "a b", "x²", "١"])
+def test_acao_fora_da_regra_e_permissoes_invalidas(acao):
+    assert _recusa(_api7({"acao": acao, "nome": "N"})).codigo == "permissoes-invalidas"
+
+
+@pytest.mark.parametrize("nome", ["", "   ", "\t\n", "n" * 49, "ç" * 25, "sino\x07", "linha\nnova", "\x7f"])
+def test_nome_fora_da_regra_e_permissoes_invalidas(nome):
+    assert _recusa(_api7({"acao": "a", "nome": nome})).codigo == "permissoes-invalidas"
+
+
+def test_acao_repetida_e_permissoes_invalidas_na_segunda():
+    erro = _recusa(_api7(FECHAR, {**FECHAR, "nome": "Outro nome"}))
+    assert erro.codigo == "permissoes-invalidas"
+    assert "permissoes[1]" in erro.detalhe
+
+
+def test_a_primeira_recusa_vale_na_ordem_do_rust():
+    # O teto vem antes de qualquer entrada.
+    nove_tortas = [{"acao": "X", "nome": ""} for _ in range(9)]
+    assert "9" in _recusa(_api7(*nove_tortas)).detalhe
+    # Numa entrada, a ação antes do nome; entre entradas, a de posição menor.
+    assert "ação" in _recusa(_api7({"acao": "X", "nome": ""})).detalhe
+    assert "permissoes[0]" in _recusa(_api7({"acao": "a", "nome": ""}, {"acao": "B", "nome": "N"})).detalhe
+    # `PermissoesPedemApiNova` antes de `PermissoesInvalidas`.
+    assert _recusa(_api7({"acao": "X", "nome": "N"}, api=6)).codigo == "permissoes-pedem-api-nova"
+    # E as duas depois de `empty` e da porta do tema.
+    assert _recusa(_api7({"acao": "X", "nome": "N"}, client=None)).codigo == "empty"
+    assert _recusa(_api7({"acao": "X", "nome": "N"}, tema=True)).codigo == "tema-sem-metade-de-servidor"
+
+
+@pytest.mark.parametrize("entrada", [
+    {**FECHAR, "admin": True},                        # chave desconhecida
+    {"acao": "a"},                                    # falta nome
+    {"nome": "N"},                                    # falta acao
+    {"acao": 1, "nome": "N"},
+    {"acao": "a", "nome": None},
+    {"acao": None, "nome": "N"},
+    {**FECHAR, "todos": None},                        # `bool`, e não `Option<bool>`
+    {**FECHAR, "todos": "true"},
+    {**FECHAR, "todos": 1},
+    "fechar-mesa",
+    None,
+    ["fechar-mesa", "Fechar"],
+])
+def test_entrada_que_o_serde_nao_desserializa_e_malformed(entrada):
+    assert _recusa(_api7(entrada)).codigo == "malformed"
+
+
+@pytest.mark.parametrize("permissoes", [None, {}, "fechar-mesa", 1, True])
+def test_permissoes_que_nao_e_lista_e_malformed(permissoes):
+    assert _recusa(_api7(permissoes=permissoes)).codigo == "malformed"
+
+
+def test_malformed_vem_antes_da_api_das_permissoes():
+    # O `serde` falha antes de o `read_manifest` olhar a API.
+    assert _recusa(_api7({**FECHAR, "admin": True}, api=6)).codigo == "malformed"
+
+
+@pytest.mark.parametrize("escape", [r"\ud800", r"\udbff", r"\udc00", r"\udfff",
+                                    r"\ude00\ud83d", r"N\ud800", r"\ud800N"])
+@pytest.mark.parametrize("chave", ["acao", "nome"])
+def test_surrogate_isolado_e_malformed_e_nao_excecao_crua(chave, escape):
+    # O `serde_json` recusa o JSON com surrogate solto (alto ou baixo, ou o par
+    # na ordem errada); o `json` do Python o aceita, e o `encode` da conta de
+    # bytes estourava `UnicodeEncodeError` em vez de recusar.
+    entrada = {"acao": "a", "nome": "N"}
+    entrada[chave] = "SURROGATE"
+    texto = _api7(entrada).replace("SURROGATE", escape)
+    erro = _recusa(texto)
+    assert erro.codigo == "malformed"
+    assert f"permissoes[0].{chave}" in erro.detalhe
+
+
+def test_par_de_surrogates_valido_e_um_caractere_de_quatro_bytes():
+    # `😀` é «😀», 4 bytes em UTF-8: 12 cabem nos 48, 13 não.
+    doze = _api7({"acao": "a", "nome": "PAR"}).replace("PAR", r"😀" * 12)
+    assert ler(doze).permissoes[0].nome == "😀" * 12
+    assert ler(_api7({"acao": "a", "nome": "😀" * 12})).permissoes[0].nome == "😀" * 12
+    treze = _api7({"acao": "a", "nome": "PAR"}).replace("PAR", r"😀" * 13)
+    assert _recusa(treze).codigo == "permissoes-invalidas"
+    # Um caractere válido fora do ASCII continua valendo, escrito ou escapado.
+    assert ler(_api7({"acao": "a", "nome": "Mesa ç 中"})).permissoes[0].nome == "Mesa ç 中"
+
+
+def test_chave_repetida_numa_permissao_e_malformed():
+    # O `serde` recusa o campo duplicado; o `json` do Python ficaria com o
+    # último e daria a permissão a todo mundo.
+    texto = ('{"schema":1,"id":"seele/mesa","version":"5.0.0","api":7,"repo":"r","client":"c.js",'
+             '"permissoes":[{"acao":"a","nome":"N","todos":false,"todos":true}]}')
+    erro = _recusa(texto)
+    assert erro.codigo == "malformed"
+    assert "todos" in erro.detalhe

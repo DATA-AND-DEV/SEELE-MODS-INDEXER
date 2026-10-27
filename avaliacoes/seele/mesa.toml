@@ -325,3 +325,31 @@ commit = "8e78e09165ca50ef465b0d1d6761d5590911518a"
 nivel = "oficial"
 notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
 avaliado_em = 1792609079
+
+# 4.0.1 — avaliação por delta sobre a última versão publicada.
+# API 6: somente mod.json mudou em relação à 4.0.0. Versão nova e dois
+# textos de reach encurtados para respeitar o limite de 32 bytes da linha 0.16.
+# Cliente e servidor idênticos aos da 4.0.0. 142 testes passaram; node --check passou.
+# Fontes conferidas por SHA-256 contra a preparação testada. Estes testes
+# de código não substituem uma nova validação física de interface.
+
+[[versoes]]
+versao = "4.0.1"
+commit = "57ab27ad57f06056da8f750b71ef2369ffa1799f"
+nivel = "oficial"
+notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
+avaliado_em = 1793120730
+
+# 5.0.0 — avaliação por delta sobre a última versão publicada.
+# API 7: criar a mesa exige a ação criar-campanha validada pelo hospedeiro.
+# A ação não autoriza outras operações; permissões de mestre e proprietário
+# continuam aplicadas. 150 testes passaram; node --check passou nas duas metades.
+# Fontes conferidas por SHA-256 contra a preparação testada. Estes testes
+# de código não substituem uma nova validação física de interface.
+
+[[versoes]]
+versao = "5.0.0"
+commit = "8234cd90155ce482a6f6ea11cae9ae75adf07d16"
+nivel = "oficial"
+notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
+avaliado_em = 1793120730

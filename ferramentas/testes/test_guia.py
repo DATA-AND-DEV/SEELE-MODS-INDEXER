@@ -38,7 +38,7 @@ def test_generated_downloads_and_links_exist():
 
 def test_exemplo_zip_exato_e_manifesto_na_api_que_o_indexador_oferece():
     import zipfile
-    from ferramentas.manifesto import ler, VERSAO_DA_API
+    from ferramentas.manifesto import ler, VERSAO_DA_API, APIS_ACEITAS
     root = SOURCE.parents[1] / 'site/guia/exemplos'
     with zipfile.ZipFile(root / 'contador.zip') as zip_:
         assert sorted(zip_.namelist()) == ['cliente/main.js', 'mod.json', 'servidor/main.js']
@@ -50,7 +50,23 @@ def test_exemplo_zip_exato_e_manifesto_na_api_que_o_indexador_oferece():
         # união das duas linhas de servidor, e um exemplo da 3 continuava
         # aceito aqui enquanto o app 0.16 o recusava inteiro. Um guia público
         # cujo exemplo o app atual recusa ensina errado.
-        assert ler(zip_.read('mod.json').decode()).api == VERSAO_DA_API
+        #
+        # **A 7 é alargamento, e não ruptura** (a 0.17). O app 0.17 executa a
+        # 7 e a 6, e o 0.16, ainda em circulação, só a 6: o exemplo que roda
+        # nos dois é o da 6, e **continua na 6 de propósito**, mesmo com o
+        # guia da API 7 já escrito. A API oferecida é a 7; o exemplo é a
+        # compatibilidade intencional.
+        #
+        # O indexador não tem um `APIS_POR_LINHA` próprio. Este é o do SEELE
+        # (`seele_proto::mods::APIS_POR_LINHA`), e a conferência de que ele não
+        # se afastou do indexador está logo abaixo: a união das linhas tem de
+        # ser o `APIS_ACEITAS`, e o teto, a `VERSAO_DA_API`.
+        apis_por_linha = {'2': (7, 6), '1': (6,), '0.15': (5, 4, 3)}
+        assert set().union(*apis_por_linha.values()) == set(APIS_ACEITAS)
+        assert max(max(v) for v in apis_por_linha.values()) == VERSAO_DA_API
+        api = ler(zip_.read('mod.json').decode()).api
+        assert api == 6
+        assert api in apis_por_linha['1'] and api in apis_por_linha['2']
     fonte = SOURCE.read_text()
     for nome in ('SeeleUI.superficies.criar', 'SeeleUI.contribuicoes.registrar', 'SeeleUI.retrato',
                  'mundo.tema', 'mundo.avisar', 'api-too-old', 'tema-sem-metade-de-servidor'):

@@ -438,12 +438,25 @@ arquivo aprende que alguém buscou o arquivo.
 
 ## As APIs aceitas e o histórico publicado
 
-O indexador oferece a **API 6** (`VERSAO_DA_API`, espelho de `MOD_API_VERSION`
-do SEELE) e aceita para **novos pacotes** a união das linhas que o launcher
-roda: `APIS_ACEITAS = (6, 5, 4, 3)`. A 6 é da linha 1 (o app 0.16, o Servidor
-1.0); a 5, a 4 e a 3 são da linha 0.15, e quem hospeda pelo Servidor 0.15
-instala do mesmo catálogo. Cada app escolhe a versão mais nova que ele executa.
-API abaixo da 3 é recusada como `api-too-old`; acima da 6, como `api-too-new`.
+O indexador oferece a **API 7** (`VERSAO_DA_API`, espelho de `MOD_API_VERSION`
+do SEELE 0.17) e aceita para **novos pacotes** a união das linhas que o launcher
+roda: `APIS_ACEITAS = (7, 6, 5, 4, 3)`. A 7 e a 6 são da linha 2 (o app 0.17, o
+Servidor 2.0); a 6 é também a da linha 1 (o app 0.16, o Servidor 1.0); a 5, a 4
+e a 3 são da linha 0.15, e quem hospeda pelo Servidor 0.15 instala do mesmo
+catálogo. Cada app escolhe a versão mais nova que ele executa, pela `api` de
+cada versão do catálogo, que é a do `mod.json`: o app 0.16 nunca é oferecido a
+uma versão da 7. Um pacote da 6 continua aceito sem ser republicado.
+API abaixo da 3 é recusada como `api-too-old`; acima da 7, como `api-too-new`.
+
+A chave `permissoes` (API 7) é a lista de `{acao, nome, todos}` que o SEELE lê
+como `PermissaoDeclarada`: até 8, ação `[a-z0-9-]` de 1 a 32 bytes sem `-` nas
+pontas, nome não vazio de até 48 bytes sem caractere de controle, sem ação
+repetida, `todos` falso sem a chave. Uma lista não vazia abaixo da 7 sai
+`permissoes-pedem-api-nova`; uma que reprova nessas regras, `permissoes-invalidas`;
+chave desconhecida, tipo errado ou chave repetida numa entrada, `malformed`. A
+chave abaixo da 7, mesmo vazia, é `malformed`: o app 0.16 recusaria o pacote.
+O vetor `api-do-indexador.json` do SEELE sai de `python3 -m
+ferramentas.api_do_indexador --saida <arquivo>`.
 
 A chave `tema` (a porta do tema da API 6) é um booleano. Ela é recusada abaixo
 da API 6, porque a linha 0.15 não a conhece e não instalaria o pacote, e
@@ -454,7 +467,7 @@ O catálogo continua append-only. O gerador conserva uma versão antiga apenas
 quando ID, versão e hash dos bytes materializados já constam no catálogo
 anterior. Essa exceção é de preservação histórica, não de compatibilidade com o
 runtime atual. Uma nova versão ou bytes substituídos não recebem a exceção.
-O catálogo gerado anuncia `api_oferecida: 6` e `apis_aceitas: [6, 5, 4, 3]`.
+O catálogo gerado anuncia `api_oferecida: 7` e `apis_aceitas: [7, 6, 5, 4, 3]`.
 
 O guia tem fonte em `docs/guia-criacao-mods.md`; gere HTML, Markdown de download e
 ZIP com `python3 -m ferramentas.gerar_guia`. A publicação deve regenerar e assinar
