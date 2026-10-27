@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>A identidade é uma por máquina (ADR 0061) · Documentação do SEELE</title>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../fontes.css"><link rel="stylesheet" href="../casca.css"><link rel="stylesheet" href="../estilo.css">
+</head>
+<body>
+<a href="#conteudo" class="pular">Pular para o conteúdo</a>
+<div class="docs">
+<nav class="docs-nav" aria-label="Documentação"><a href="../">Início</a><ul><li><span class="rotulo">Começar</span><ul><li><a href="../usar-a-0-17/">Usar o SEELE 0.17 (o guia curto)</a></li><li><a href="../novidades-0-17/">A 0.17: o que mudou e a compatibilidade</a></li></ul></li><li><span class="rotulo">Conexão, voz e vídeo</span><ul><li><a href="../webrtc/">A linha 2 fala WebRTC (ADR 0063)</a></li></ul></li><li><span class="rotulo">Identidade e permissões</span><ul><li><a href="../identidade/">A identidade é uma por máquina (ADR 0061)</a></li><li><a href="../codigo/">O código de uma pessoa (ADR 0060)</a></li><li><a href="../registro-assinado/">O registro assinado no ponto de encontro (ADR 0062)</a></li><li><a href="../cargos/">Cargos e permissões (ADR 0064)</a></li></ul></li><li><span class="rotulo">MODs</span><ul><li><a href="../api-dos-mods/">A API dos MODs (contratos congelados)</a></li></ul></li><li><span class="rotulo">Arquitetura</span><ul><li><a href="../decisoes/">As decisões de arquitetura (índice dos ADRs)</a></li></ul></li><li><span class="rotulo">Referências (históricas, escritas para a 0.16)</span><ul><li><a href="../inicio/">O SEELE: instalar, começar, compartilhar a tela (0.16)</a></li><li><a href="../windows/">Windows (0.16)</a></li><li><a href="../homebrew/">Instalar pelo Homebrew (0.16)</a></li><li><a href="../versoes-lado-a-lado/">Versões lado a lado (0.16)</a></li><li><a href="../glossario/">Glossário</a></li><li><a href="../alcance-pela-internet/">Alcançar de fora (a linha 1)</a></li><li><a href="../ponto-de-encontro/">O ponto de encontro</a></li><li><a href="../atualizacao/">Assinatura e atualização (0.16)</a></li><li><a href="../como-se-faz-um-mod/">Como se faz um MOD (por dentro)</a></li></ul></li><li><span class="rotulo">MODs</span><ul><li><a href="../mods/">Criar um MOD (o guia)</a></li><li><a href="https://mods.seele.sh/">O índice de MODs</a></li></ul></li></ul></nav>
+<main id="conteudo" class="painel"><h1>A identidade é uma por máquina (ADR 0061)</h1><aside class="painel aviso" aria-label="De onde vem esta página"><p><strong>DECISÃO ACEITA.</strong> Uma decisão de arquitetura aceita; o texto é o da decisão, com a data dela. Decisão aceita (08/10/2026).</p><p class="rotulo">Fonte: docs/adr/0061-a-identidade-e-uma-por-maquina.md · igual ao commit 5f84b7708a87 · sha256 5500225c26f4</p></aside><p>Status: <strong>aceito</strong>. Decidido por quem responde pelo projeto em 2026-10-08, em dois tempos:</p>
+<ul><li>a direção: a identidade é uma por máquina, e os dados são por linha;</li><li>a linha legada: a opção (a), e a regra dos 32 bytes.</li></ul>
+<p>A regra é <strong>condição</strong>: a 0.15.2 não sai sem ela. Data: 2026-10-08 Sobre o spec-mestre da 0.16 (<code>docs/superpowers/specs/2026-10-08-0.16-design.md</code>, §1, «O que a atualização para a 0.16 precisa fazer na primeira abertura»), e a spec da sala pessoal («Uma chave para todas as versões»). <strong>Emenda o ADR 0017 e o ADR 0046.</strong></p>
+<h3>Contexto</h3>
+<p>O ADR 0017 pôs a identidade em <code>$SEELE_HOME</code>, ou em <code>$XDG_CONFIG_HOME/seele</code>, ou em <code>~/.config/seele</code>. A identidade é uma por pasta de dados, e o <code>$SEELE_HOME</code> vem primeiro de propósito: é ele que deixa duas pessoas numa máquina, e os testes das duas pontas de uma conversa dependem disso.</p>
+<p>O ADR 0046, com a emenda das duas numerações, deu <strong>uma pasta de dados por linha</strong> de servidor (<code>dados/servidor-0.15</code>). O launcher abre cada versão com o <code>$SEELE_HOME</code> apontando para a pasta da linha dela. A primeira abertura da 0.16 <strong>copia</strong> a identidade junto com os dados da 0.15, para que a pessoa seja a mesma nas duas linhas.</p>
+<p>Isso não basta para a sala pessoal, por dois motivos:</p>
+<ul><li><strong>Com cópias, a pessoa pode virar outra.</strong> Uma linha aberta antes de a cópia</li></ul>
+<p>  existir ganha uma chave nova, e a pessoa aparece como outra nos servidores   dela (spec-mestre, §1).</p>
+<ul><li><strong>O código é a chave</strong> (ADR 0060). Uma identidade por pasta faria o código</li></ul>
+<p>  mudar com a versão aberta. Um número de telefone que muda quando se troca de   versão não é um número de telefone.</p>
+<h3>Decisão</h3>
+<ol><li><strong>A identidade é lida de uma pasta da identidade.</strong> A ordem é:</li></ol>
+<p>   <code>$SEELE_IDENTIDADE</code>, e então a do ADR 0017 (<code>$SEELE_HOME</code>,    <code>$XDG_CONFIG_HOME/seele</code>, <code>~/.config/seele</code>).</p>
+<ol><li><strong>O launcher sempre põe <code>$SEELE_IDENTIDADE</code></strong> na pasta principal desta</li></ol>
+<p>   máquina, ao abrir qualquer versão. O <code>$SEELE_HOME</code> continua apontando para a    pasta de dados da linha.</p>
+<ol><li><strong>Sem o launcher, nada muda.</strong> Um <code>$SEELE_HOME</code> sozinho continua dando duas</li></ol>
+<p>   pessoas numa máquina.</p>
+<ol><li><strong>Só a chave é da máquina.</strong> Os pins continuam com os dados de cada linha: um</li></ol>
+<p>   pino diz «este servidor é o mesmo de ontem», e os servidores de uma linha só    aparecem nela. Os pinos <code>@CÓDIGO</code> só existem na linha 1.</p>
+<ol><li><strong>A linha legada também lê <code>$SEELE_IDENTIDADE</code>, e as cópias acabam.</strong> É a</li></ol>
+<p>   opção (a) do dono: «uma por máquina» é literal, e há um arquivo só. A 0.15.2    aprende a variável, e a primeira abertura da 0.16 deixa de copiar a    <code>identity.key</code> para <code>dados/servidor-0.15</code>. O resto da cópia dos dados fica    como está.</p>
+<h3>O contrato da variável</h3>
+<p>É o que a 0.15.2, a 0.16 e o launcher seguem, e ele não muda depois de publicado.</p>
+<ul><li><strong>O nome:</strong> <code>SEELE_IDENTIDADE</code>.</li><li><strong>O valor:</strong> o caminho absoluto de uma <strong>pasta</strong>, e não do arquivo. A chave é</li></ul>
+<p>  <code>&lt;pasta&gt;/identity.key</code>, no formato do ADR 0017: 32 bytes crus, em modo <code>0600</code>,   criada nesse modo, e reportada, nunca substituída, se estiver corrompida.</p>
+<ul><li><strong>Um valor vazio vale como ausente.</strong> Sem a variável, a pasta é a de hoje:</li></ul>
+<p>  <code>$SEELE_HOME</code>, <code>$XDG_CONFIG_HOME/seele</code>, <code>~/.config/seele</code> e, por último, a   pasta de configuração da plataforma.</p>
+<ul><li><strong>Só a chave sai daí.</strong> O banco, os pins, os conhecidos, a agenda e as</li></ul>
+<p>  preferências continuam em <code>$SEELE_HOME</code>.</p>
+<ul><li><strong>O que o launcher passa</strong> é a pasta da identidade <strong>do próprio processo</strong>:</li></ul>
+<p>  - a <code>$SEELE_IDENTIDADE</code> que ele recebeu, se recebeu uma;   - senão, a pasta que o <code>config_dir</code> dele resolve: no Mac, <code>~/.config/seele</code>;     no Windows, <code>%APPDATA%\tech.datadev.seele</code>.</p>
+<p>  Assim, uma versão aberta por outra versão continua apontando para o mesmo   arquivo.</p>
+<ul><li><strong>Onde se lê, hoje.</strong> Na <code>linha/0.15</code> e na 0.16, a <code>identity.key</code> é lida em</li></ul>
+<p>  produção em dois lugares, os dois em <code>crates/seele-ffi/src/lib.rs</code>:   <code>impressao_desta_maquina</code> e o <code>connect</code>. Os dois passam a pedir a pasta da   identidade.</p>
+<h3>A condição: a 0.15.2 só assina desafios de exatamente 32 bytes</h3>
+<p>A linha legada assina com a mesma chave que a linha 1, e isso abria dois ataques:</p>
+<ul><li><strong>O que o cliente da 0.15 assina.</strong> O nonce cru que o servidor mandar, de até</li></ul>
+<p>  256 bytes (<code>linha/0.15:crates/seele-core/src/client.rs</code>, <code>signing_key.sign(&amp;nonce)</code>;   <code>MAX_PROOF_LEN = 256</code>). É o oráculo que o S2 fechou na linha 1.</p>
+<ul><li><strong>Ataque 1: entrar como a pessoa num servidor 1.0.</strong> Um servidor 0.15</li></ul>
+<p>  malicioso, visitado pela linha legada, manda como nonce a mensagem inteira do   S2: <code>rótulo ‖ impressão de X ‖ nonce de X</code>, 89 bytes. Ele repassa a assinatura   a um servidor 1.0 X, e entra em X como a pessoa. Se X for o servidor da   própria pessoa, entra como Comandante.</p>
+<ul><li><strong>Ataque 2: atender as ligações da pessoa.</strong> O mesmo servidor manda como nonce</li></ul>
+<p>  o conteúdo de um CertificateVerify do TLS 1.3: 130 bytes, que cabem nos 256.   Com isso ele se apresenta como a sala da pessoa, e o <code>ConfereCodigo</code> aceita a   chave e a assinatura.</p>
+<p><strong>A medida, decidida:</strong> todo servidor 0.15 manda exatamente 32 bytes (<code>NONCE_LEN = 32</code>, <code>linha/0.15:crates/seele-server/src/session.rs</code>). A 0.15.2 <strong>só assina desafios de exatamente 32 bytes</strong>, e continua falando com todo servidor 0.15 de verdade. Nenhum domínio que a chave assina na linha 1 cabe em 32 bytes:</p>
+<ul><li>a prova do S2 tem 89;</li><li>o CertificateVerify tem 130 ou 146;</li><li>um <code>TBSCertificate</code> tem centenas;</li><li>o <code>MORO2</code> leva o rótulo de 17 bytes e a chave de 32, e já passa de 32 antes dos outros campos.</li></ul>
+<p>Quem escreve é a frente do launcher, dona da <code>linha/0.15</code>, com o teste e a prova por reversão. <strong>A 0.15.2 não sai sem ela.</strong></p>
+<h3>Alternativas</h3>
+<ol><li>**A opção (b): a 0.15.2 fica como está, e o launcher planta a identidade da</li></ol>
+<p>   máquina em <code>dados/servidor-0.15</code>, sem nunca sobrescrever uma diferente.**    Recusada pelo dono em favor da (a). Duas cópias da mesma chave são duas    coisas que podem divergir, e a tela teria de explicar uma divergência que um    arquivo só não tem como produzir.</p>
+<ol><li><strong>Uma chave por linha, sem cópia.</strong> A pessoa seria outra em cada linha: o</li></ol>
+<p>   apelido dela nos servidores 0.15 ficaria preso à chave antiga (ADR 0017), e o    código da sala mudaria com a versão. Recusada pela decisão de 08/10.</p>
+<ol><li><strong>A cópia como está (a F6, sem este ADR).</strong> Funciona para quem tinha a 0.15</li></ol>
+<p>   antes de atualizar, e erra em quem abre uma linha antes da cópia. Ela também    não resolve a próxima linha: quando houver um Servidor 2.0, a linha 1 vai    para o depósito com uma pasta própria, e o código da pessoa mudaria.</p>
+<ol><li><strong>Mudar o <code>$SEELE_HOME</code> em vez de criar uma variável nova.</strong> Recusada: o</li></ol>
+<p>   <code>$SEELE_HOME</code> é o que separa as pastas de dados, e é o que os testes usam    para ter duas pessoas.</p>
+<h3>Consequências</h3>
+<ul><li>O código da pessoa é o mesmo em toda versão que o launcher abrir.</li><li>O risco residual que a spec de 23/09 aceitava («um build até a 0.15 rodando</li></ul>
+<p>  com a mesma <code>identity.key</code> continua assinando nonce cru, e isso só acontece   reinstalando uma versão antiga por cima») <strong>deixa de ser raro</strong>: a linha   legada é exatamente isso, e vive para sempre (ADR 0046). É por isso que a   regra dos 32 bytes é condição, e não melhoria.</p>
+<ul><li><strong>Quem faz o quê:</strong></li></ul>
+<p>  - a frente do launcher (F6): o <code>Lancamento</code> de toda versão passa     <code>SEELE_IDENTIDADE</code>, a primeira abertura da 0.16 deixa de copiar a chave, e     a 0.15.2 lê a variável e só assina desafios de 32 bytes;   - a frente da sala (F7, tarefa 4b): a 0.16 lê a pasta da identidade, e a casca     passa à FFI a pasta da identidade separada da pasta de dados.</p>
+<h3>Custo de reverter</h3>
+<p><strong>Médio.</strong> Voltar a uma chave por pasta faz a pessoa ser outra em alguma linha e muda o código dela. A regra dos 32 bytes da 0.15.2 não precisa reverter: ela não quebra servidor 0.15 nenhum.</p></main>
+</div>
+</body>
+</html>

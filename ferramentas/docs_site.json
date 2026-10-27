@@ -1,0 +1,161 @@
+{
+  "_leia": "O site docs.seele.sh: a documentação AUTORITATIVA do repositório SEELE, curada (nada de planejamento privado, quarentena, logs ou evidências). Cada página diz de onde veio (o caminho e o commit) e se é ATUAL na 0.17 ou HISTÓRICA. 'historico' = escrita antes da 0.17 e pode descrever a linha 1 (a 0.16, QUIC) e os endereços antigos. O SEELE não usa TURN. As páginas HISTÓRICAS ficam em «Referências»: nenhuma delas é o caminho de uso da 0.17 (o guia curto é).",
+  "secoes": [
+    {
+      "titulo": "Começar",
+      "paginas": [
+        {
+          "slug": "usar-a-0-17",
+          "titulo": "Usar o SEELE 0.17 (o guia curto)",
+          "fonte": "docs/usar-a-0.17.md",
+          "estado": "atual",
+          "nota": "O guia de uso desta versão: endereços, instalar, entrar, hospedar, voz e tela, MODs, alcance e identidade."
+        },
+        {
+          "slug": "novidades-0-17",
+          "titulo": "A 0.17: o que mudou e a compatibilidade",
+          "fonte": "empacotar/notas/0.17.0.md",
+          "estado": "atual",
+          "nota": "As notas da 0.17: o Servidor 2.0 (WebRTC), a 0.16 ao lado, os endereços novos e a identidade nova no navegador."
+        }
+      ]
+    },
+    {
+      "titulo": "Conexão, voz e vídeo",
+      "paginas": [
+        {
+          "slug": "webrtc",
+          "titulo": "A linha 2 fala WebRTC (ADR 0063)",
+          "fonte": "docs/adr/0063-a-linha-2-fala-webrtc.md",
+          "estado": "atual",
+          "nota": "A decisão do transporte da 0.17 (voz, vídeo e dados)."
+        }
+      ]
+    },
+    {
+      "titulo": "Identidade e permissões",
+      "paginas": [
+        {
+          "slug": "identidade",
+          "titulo": "A identidade é uma por máquina (ADR 0061)",
+          "fonte": "docs/adr/0061-a-identidade-e-uma-por-maquina.md",
+          "estado": "decisao",
+          "nota": "Decisão aceita (08/10/2026)."
+        },
+        {
+          "slug": "codigo",
+          "titulo": "O código de uma pessoa (ADR 0060)",
+          "fonte": "docs/adr/0060-o-codigo-de-uma-pessoa.md",
+          "estado": "decisao",
+          "nota": "Decisão aceita (08/10/2026)."
+        },
+        {
+          "slug": "registro-assinado",
+          "titulo": "O registro assinado no ponto de encontro (ADR 0062)",
+          "fonte": "docs/adr/0062-o-registro-assinado-no-ponto-de-encontro.md",
+          "estado": "decisao",
+          "nota": "Decisão aceita (08/10/2026)."
+        },
+        {
+          "slug": "cargos",
+          "titulo": "Cargos e permissões (ADR 0064)",
+          "fonte": "docs/adr/0064-cargos-e-permissoes.md",
+          "estado": "atual",
+          "nota": "Implementado na 0.17."
+        }
+      ]
+    },
+    {
+      "titulo": "MODs",
+      "paginas": [
+        {
+          "slug": "api-dos-mods",
+          "titulo": "A API dos MODs (contratos congelados)",
+          "fonte": "api/README.md",
+          "estado": "atual",
+          "nota": "Inclui a API 7, a da 0.17. O guia passo a passo está em «Criar um MOD»."
+        }
+      ]
+    },
+    {
+      "titulo": "Arquitetura",
+      "paginas": [
+        {
+          "slug": "decisoes",
+          "titulo": "As decisões de arquitetura (índice dos ADRs)",
+          "fonte": "docs/adr/README.md",
+          "estado": "atual",
+          "nota": "O índice; os ADRs que não estão neste site ficam no repositório."
+        }
+      ]
+    },
+    {
+      "titulo": "Referências (históricas, escritas para a 0.16)",
+      "paginas": [
+        {
+          "slug": "inicio",
+          "titulo": "O SEELE: instalar, começar, compartilhar a tela (0.16)",
+          "fonte": "README.md",
+          "estado": "historico",
+          "nota": "Escrito para a 0.16 (08/10/2026). A 0.17 muda o transporte (WebRTC, Servidor 2.0) e os endereços; para o que mudou, veja «A 0.17»."
+        },
+        {
+          "slug": "windows",
+          "titulo": "Windows (0.16)",
+          "fonte": "docs/windows.md",
+          "estado": "historico",
+          "nota": "Escrito antes da 0.17 (07/10/2026)."
+        },
+        {
+          "slug": "homebrew",
+          "titulo": "Instalar pelo Homebrew (0.16)",
+          "fonte": "docs/homebrew.md",
+          "estado": "historico",
+          "nota": "Escrito antes da 0.17 (31/08/2026)."
+        },
+        {
+          "slug": "versoes-lado-a-lado",
+          "titulo": "Versões lado a lado (0.16)",
+          "fonte": "docs/versoes-lado-a-lado.md",
+          "estado": "historico",
+          "nota": "Escrito antes da 0.17 (09/10/2026)."
+        },
+        {
+          "slug": "glossario",
+          "titulo": "Glossário",
+          "fonte": "docs/glossario.md",
+          "estado": "historico",
+          "nota": "Escrito antes da 0.17 (31/08/2026)."
+        },
+        {
+          "slug": "alcance-pela-internet",
+          "titulo": "Alcançar de fora (a linha 1)",
+          "fonte": "docs/alcance-pela-internet.md",
+          "estado": "historico",
+          "nota": "Descreve a linha 1 (a 0.16, QUIC), de 08/10/2026. A 0.17 alcança pelo WebRTC (ADR 0063)."
+        },
+        {
+          "slug": "ponto-de-encontro",
+          "titulo": "O ponto de encontro",
+          "fonte": "docs/ponto-de-encontro.md",
+          "estado": "historico",
+          "nota": "Escrito antes da 0.17 (08/10/2026); cita o endereço antigo. O ponto de encontro da 0.17 é rendzvous.seele.sh."
+        },
+        {
+          "slug": "atualizacao",
+          "titulo": "Assinatura e atualização (0.16)",
+          "fonte": "docs/assinatura-e-atualizacao.md",
+          "estado": "historico",
+          "nota": "Escrito antes da 0.17 (05/10/2026)."
+        },
+        {
+          "slug": "como-se-faz-um-mod",
+          "titulo": "Como se faz um MOD (por dentro)",
+          "fonte": "docs/como-se-faz-um-mod.md",
+          "estado": "historico",
+          "nota": "Escrito até a API 6 (20/10/2026); a API 7 está em «A API dos MODs» e no guia."
+        }
+      ]
+    }
+  ]
+}

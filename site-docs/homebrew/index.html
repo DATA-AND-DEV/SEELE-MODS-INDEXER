@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Instalar pelo Homebrew (0.16) · Documentação do SEELE</title>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../fontes.css"><link rel="stylesheet" href="../casca.css"><link rel="stylesheet" href="../estilo.css">
+</head>
+<body>
+<a href="#conteudo" class="pular">Pular para o conteúdo</a>
+<div class="docs">
+<nav class="docs-nav" aria-label="Documentação"><a href="../">Início</a><ul><li><span class="rotulo">Começar</span><ul><li><a href="../usar-a-0-17/">Usar o SEELE 0.17 (o guia curto)</a></li><li><a href="../novidades-0-17/">A 0.17: o que mudou e a compatibilidade</a></li></ul></li><li><span class="rotulo">Conexão, voz e vídeo</span><ul><li><a href="../webrtc/">A linha 2 fala WebRTC (ADR 0063)</a></li></ul></li><li><span class="rotulo">Identidade e permissões</span><ul><li><a href="../identidade/">A identidade é uma por máquina (ADR 0061)</a></li><li><a href="../codigo/">O código de uma pessoa (ADR 0060)</a></li><li><a href="../registro-assinado/">O registro assinado no ponto de encontro (ADR 0062)</a></li><li><a href="../cargos/">Cargos e permissões (ADR 0064)</a></li></ul></li><li><span class="rotulo">MODs</span><ul><li><a href="../api-dos-mods/">A API dos MODs (contratos congelados)</a></li></ul></li><li><span class="rotulo">Arquitetura</span><ul><li><a href="../decisoes/">As decisões de arquitetura (índice dos ADRs)</a></li></ul></li><li><span class="rotulo">Referências (históricas, escritas para a 0.16)</span><ul><li><a href="../inicio/">O SEELE: instalar, começar, compartilhar a tela (0.16)</a></li><li><a href="../windows/">Windows (0.16)</a></li><li><a href="../homebrew/">Instalar pelo Homebrew (0.16)</a></li><li><a href="../versoes-lado-a-lado/">Versões lado a lado (0.16)</a></li><li><a href="../glossario/">Glossário</a></li><li><a href="../alcance-pela-internet/">Alcançar de fora (a linha 1)</a></li><li><a href="../ponto-de-encontro/">O ponto de encontro</a></li><li><a href="../atualizacao/">Assinatura e atualização (0.16)</a></li><li><a href="../como-se-faz-um-mod/">Como se faz um MOD (por dentro)</a></li></ul></li><li><span class="rotulo">MODs</span><ul><li><a href="../mods/">Criar um MOD (o guia)</a></li><li><a href="https://mods.seele.sh/">O índice de MODs</a></li></ul></li></ul></nav>
+<main id="conteudo" class="painel"><h1>Instalar pelo Homebrew (0.16)</h1><aside class="painel aviso" aria-label="De onde vem esta página"><p><strong>HISTÓRICO.</strong> Escrito antes da 0.17: pode descrever a linha 1 (a 0.16, QUIC) e os endereços antigos (seele.app.br), que serão aposentados. Escrito antes da 0.17 (31/08/2026).</p><p class="rotulo">Fonte: docs/homebrew.md · igual ao commit 75f182408fe0 · sha256 933175c687cc</p></aside><h3>O que isto resolve, e o que não resolve</h3>
+<p><strong>Resolve o alerta do macOS para o <code>seeled</code>.</strong> Um binário instalado pelo <code>brew</code> não recebe o atributo <code>com.apple.quarantine</code> — é o navegador que o põe, e o <code>brew</code> não é navegador. Sem o atributo, o Gatekeeper não tem o que reclamar.</p>
+<p>Hoje o <code>install.sh</code> já contorna isso na unha, na linha 150:</p>
+<div class="codigo"><div class="codigo-topo"><span>sh</span><button type="button" class="copiar botao">Copiar código</button></div><pre tabindex="0"><code>xattr -d com.apple.quarantine &quot;$BIN/seeled&quot; 2&gt;/dev/null || true</code></pre></div>
+<p>Um contorno que funciona e que a pessoa tem de confiar que é inofensivo, num script que ela acabou de baixar da rede. Com a fórmula, ele deixa de ser necessário em vez de ser automatizado.</p>
+<p><strong>Não resolve o alerta do aplicativo gráfico.</strong> Um <code>cask</code> aplica quarentena por padrão, então o <code>.app</code> continuaria abrindo com aviso. Ali o conserto é <strong>notarização</strong> — Apple Developer Program, US$ 99/ano — e ela conserta *todos* os caminhos de instalação de uma vez, inclusive o download direto. Publicar um cask sem notarizar seria trocar um contorno por outro, com mais peças para manter.</p>
+<p><strong>Não substitui o <code>install.sh</code> no Linux nem no Windows.</strong> O Homebrew existe nos dois primeiros, e no Linux ele não traz vantagem de assinatura nenhuma — lá o problema que o <code>xattr</code> resolve não existe.</p>
+<h3>Onde a fórmula mora</h3>
+<p>Num <strong>tap</strong>, que é um repositório <code>homebrew-seele</code> da mesma organização:</p>
+<div class="codigo"><div class="codigo-topo"><span>texto</span><button type="button" class="copiar botao">Copiar código</button></div><pre tabindex="0"><code>DATA-AND-DEV/homebrew-seele
+└── Formula/
+    └── seeled.rb</code></pre></div>
+<p>E não no <code>homebrew-core</code>, que exige critérios de notoriedade — número de estrelas, idade do projeto, presença em outros gerenciadores — que este projeto ainda não atende. Um tap não tem porteiro e é o caminho normal para projeto novo.</p>
+<p>Quem instala:</p>
+<div class="codigo"><div class="codigo-topo"><span>sh</span><button type="button" class="copiar botao">Copiar código</button></div><pre tabindex="0"><code>brew tap DATA-AND-DEV/seele
+brew install seeled</code></pre></div>
+<h3>Como a fórmula é gerada</h3>
+<p><strong>Ela não é escrita à mão.</strong> Uma fórmula carrega a versão e a soma SHA256 de cada pacote, e as três mudam a cada release. Escrita à mão, ela nasce certa e fica errada no release seguinte — e erra <strong>calada</strong>: o <code>brew install</code> baixa, confere a soma, e falha com uma mensagem sobre integridade que parece adulteração e é desatualização.</p>
+<div class="codigo"><div class="codigo-topo"><span>sh</span><button type="button" class="copiar botao">Copiar código</button></div><pre tabindex="0"><code>empacotar/publicar.sh 0.7.0          # monta entrega/ e gera SHA256SUMS
+empacotar/homebrew.sh  0.7.0 &gt; seeled.rb</code></pre></div>
+<p>O <code>homebrew.sh</code> lê <code>entrega/SHA256SUMS</code>, que o <code>publicar.sh</code> acabou de gerar, e emite a fórmula. Um pacote que não foi montado — o <code>publicar.sh</code> aceita <code>--pular</code> — simplesmente não ganha bloco, o que é o estado certo para um release sem macOS.</p>
+<p>O passo que falta automatizar é o commit no tap. Ele não está no <code>publicar.sh</code> de propósito: escrever num segundo repositório a partir de um script de release é o tipo de coisa que se faz com credencial de escrita ampla, e a decisão de dar essa credencial ao release é de quem hospeda o projeto, não deste documento.</p>
+<h3>A versão, conferida</h3>
+<p>O <code>test do</code> da fórmula roda <code>seeled --versao</code> e compara com a versão que a fórmula declara. É o que a instalação promete: <strong>este</strong> binário, e não outro — um pacote da arquitetura errada não chega a executar, e um montado do commit errado responde um número que não bate.</p>
+<p>Isso só passou a ser possível quando a pendência 30 fechou. Antes, o <code>seeled</code> não tinha <code>--versao</code> e o teste se contentava com <code>--ajuda</code>, que prova que o binário roda e não prova qual build é.</p>
+<h3>O que conferir antes do primeiro tap</h3>
+<ul><li><code>brew install --build-from-source</code> <strong>não</strong> vai funcionar: a fórmula instala um</li></ul>
+<p>  binário pronto, e compilar o <code>seeled</code> da fonte arrasta <code>libopus</code> e o resto. Se   alguém quiser build da fonte, é <code>cargo build --release --bin seeled</code>, que o   próprio <code>install.sh</code> sugere quando a plataforma não tem pacote;</p>
+<ul><li><code>brew audit --strict</code> reclama de <code>license :cannot_represent</code>. É verdade e é</li></ul>
+<p>  proposital: a licença do projeto ainda não foi definida (ver o README), e   declarar uma que não foi decidida seria pior que declarar que não se sabe;</p>
+<ul><li>o tap precisa do diretório <code>Formula/</code>. Um <code>.rb</code> na raiz funciona em versões</li></ul>
+<p>  antigas do Homebrew e não é mais o caminho documentado.</p></main>
+</div>
+</body>
+</html>

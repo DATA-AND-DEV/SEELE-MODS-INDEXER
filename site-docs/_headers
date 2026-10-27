@@ -1,0 +1,8 @@
+# docs.seele.sh: páginas estáticas da documentação. Sem catálogo e sem MOD servido daqui.
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
+  Content-Security-Policy: default-src 'self'; img-src 'self' data:; style-src 'self'; font-src 'self'; script-src 'self'; connect-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'
+
+/fontes/*
+  Cache-Control: public, max-age=31536000, immutable

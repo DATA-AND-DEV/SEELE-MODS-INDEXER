@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Windows (0.16) · Documentação do SEELE</title>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../fontes.css"><link rel="stylesheet" href="../casca.css"><link rel="stylesheet" href="../estilo.css">
+</head>
+<body>
+<a href="#conteudo" class="pular">Pular para o conteúdo</a>
+<div class="docs">
+<nav class="docs-nav" aria-label="Documentação"><a href="../">Início</a><ul><li><span class="rotulo">Começar</span><ul><li><a href="../usar-a-0-17/">Usar o SEELE 0.17 (o guia curto)</a></li><li><a href="../novidades-0-17/">A 0.17: o que mudou e a compatibilidade</a></li></ul></li><li><span class="rotulo">Conexão, voz e vídeo</span><ul><li><a href="../webrtc/">A linha 2 fala WebRTC (ADR 0063)</a></li></ul></li><li><span class="rotulo">Identidade e permissões</span><ul><li><a href="../identidade/">A identidade é uma por máquina (ADR 0061)</a></li><li><a href="../codigo/">O código de uma pessoa (ADR 0060)</a></li><li><a href="../registro-assinado/">O registro assinado no ponto de encontro (ADR 0062)</a></li><li><a href="../cargos/">Cargos e permissões (ADR 0064)</a></li></ul></li><li><span class="rotulo">MODs</span><ul><li><a href="../api-dos-mods/">A API dos MODs (contratos congelados)</a></li></ul></li><li><span class="rotulo">Arquitetura</span><ul><li><a href="../decisoes/">As decisões de arquitetura (índice dos ADRs)</a></li></ul></li><li><span class="rotulo">Referências (históricas, escritas para a 0.16)</span><ul><li><a href="../inicio/">O SEELE: instalar, começar, compartilhar a tela (0.16)</a></li><li><a href="../windows/">Windows (0.16)</a></li><li><a href="../homebrew/">Instalar pelo Homebrew (0.16)</a></li><li><a href="../versoes-lado-a-lado/">Versões lado a lado (0.16)</a></li><li><a href="../glossario/">Glossário</a></li><li><a href="../alcance-pela-internet/">Alcançar de fora (a linha 1)</a></li><li><a href="../ponto-de-encontro/">O ponto de encontro</a></li><li><a href="../atualizacao/">Assinatura e atualização (0.16)</a></li><li><a href="../como-se-faz-um-mod/">Como se faz um MOD (por dentro)</a></li></ul></li><li><span class="rotulo">MODs</span><ul><li><a href="../mods/">Criar um MOD (o guia)</a></li><li><a href="https://mods.seele.sh/">O índice de MODs</a></li></ul></li></ul></nav>
+<main id="conteudo" class="painel"><h1>Windows (0.16)</h1><aside class="painel aviso" aria-label="De onde vem esta página"><p><strong>HISTÓRICO.</strong> Escrito antes da 0.17: pode descrever a linha 1 (a 0.16, QUIC) e os endereços antigos (seele.app.br), que serão aposentados. Escrito antes da 0.17 (07/10/2026).</p><p class="rotulo">Fonte: docs/windows.md · igual ao commit fec5e0c448b4 · sha256 6c4ce69721bf</p></aside><p><strong>O caminho curto:</strong> se houver um release publicado, instale o SEELE pelo <code>SEELE_&lt;versão&gt;_x64-instalador.exe</code> da aba <strong>Releases</strong> e pule direto para o passo 3. Ele traz o app e o <code>seeled.exe</code> prontos, e nenhuma das etapas de instalação abaixo é necessária — nem Rust, nem Build Tools. Quem quer só o servidor baixa o <code>seele-cli-&lt;versão&gt;-windows-x86_64.zip</code>, que traz o <code>seeled.exe</code> sozinho. O Windows vai reclamar que o arquivo não é assinado; <strong>Mais informações</strong> → <strong>Executar assim mesmo</strong>.</p>
+<p>O resto desta página é para compilar do código-fonte, que é o que você quer se for mexer no código ou se não confiar num binário baixado.</p>
+<p><strong>Pouco disto foi executado.</strong> Na 0.17, em 25 e 26/10/2026, num Windows 11 Pro real e num checkout isolado: o <code>seele-app</code> compilou (perfil dev, sem o aparelho de mentira) e 8 testes de conformidade passaram; outros 8 testes, do codec oficial, passaram só com imagens geradas; uma hora corrida (3600 s) de voz e H264 gerados, em loopback, passou, com a saída e a reconexão do servidor inteiro, o primeiro som depois de entrar de novo na voz (12 s depois) em 62 ms e 0 erros; e um smoke físico de 3 s a 48 kHz abriu os callbacks de captura e de saída, com 2496 underruns e sem erro de stream. <strong>Isso não é áudio físico aprovado</strong>, e a hora sintética não teve captura de GUI nem WASAPI. Ritmo físico de 600 s no Windows: 600 s completos, exit 0, em 60 intervalos de 10 s; só o primeiro teve falta (1056 amostras, 1 bloco inicial); dos 20 s aos 600 s, todos com falta 0 e anel cheio 0; reserva de 44 ms e 1 reposição. O aparelho a 48 kHz foi alimentado com silêncio, no compasso real: não é uma chamada completa nem latência física. Não foram exercitados a interface (WebView2), a captura de tela real, uma chamada longa com hardware nem rede com NAT ou TURN. O resto do que está aqui é derivado de ler o que cada dependência exige para compilar, e cada exigência está justificada abaixo para que você possa julgar quando algo divergir.</p>
+<p>A parte que <strong>está</strong> verificada: o binário compila e roda em macOS aarch64, dois clientes conversam por texto e voz sintética entre si, e nenhuma dependência nativa da árvore exige ferramenta que o Windows não tenha ou que os passos abaixo não instalem.</p>
+<p>Se algo falhar, o mais útil é a mensagem exata e em qual passo.</p>
+<p>---</p>
+<h3>1 · Instalar o que compila</h3>
+<p>Em <strong>cada um dos dois PCs</strong>.</p>
+<h3>1.1 Build Tools do Visual Studio</h3>
+<p>O Rust no Windows usa o linker da Microsoft, e duas dependências compilam C: o SQLite embutido do PERSISTENCE e partes da criptografia (até a 0.16, as do QUIC; na 0.17, a lista exata das dependências em C não foi conferida no Windows).</p>
+<p>Baixe <strong>Build Tools for Visual Studio</strong> em &lt;https://visualstudio.microsoft.com/downloads/&gt; (seção *Tools for Visual Studio*) e, no instalador, marque:</p>
+<ul><li><strong>Desenvolvimento para desktop com C++</strong></li><li>Dentro dele, confira que <strong>Windows 10/11 SDK</strong> está marcado</li></ul>
+<p>Cerca de 3 GB. Se você já tem o Visual Studio completo com C++, já está feito.</p>
+<h3>1.2 Rust</h3>
+<p>&lt;https://rustup.rs&gt; → baixe e rode <code>rustup-init.exe</code>. Aceite o padrão (<code>x86_64-pc-windows-msvc</code>).</p>
+<p>Feche e reabra o terminal. Confira:</p>
+<div class="codigo"><div class="codigo-topo"><span>powershell</span><button type="button" class="copiar botao">Copiar código</button></div><pre tabindex="0"><code>rustc --version</code></pre></div>
+<p>O projeto fixa a versão do toolchain e os componentes de que precisa em <code>rust-toolchain.toml</code> — o rustup instala tudo sozinho na primeira compilação, inclusive o <code>llvm-tools</code>, que o codec Opus usa para renomear símbolos.</p>
+<p><strong>O <code>llvm-tools</code> não dispensa a seção 1.3.</strong> São coisas diferentes com nomes parecidos, e a confusão custa uma compilação inteira.</p>
+<h3>1.3 LLVM</h3>
+<div class="codigo"><div class="codigo-topo"><span>powershell</span><button type="button" class="copiar botao">Copiar código</button></div><pre tabindex="0"><code>winget install LLVM.LLVM</code></pre></div>
+<p>Ou &lt;https://releases.llvm.org/&gt;. Depois <strong>feche e reabra o terminal</strong>.</p>
+<p>O codec Opus gera suas ligações com <code>bindgen</code>, que carrega <code>libclang.dll</code> em tempo de execução. O <code>llvm-tools</code> do rustup traz as ferramentas tipo binutils que renomeiam símbolos — não traz essa biblioteca.</p>
+<p>Sem ela a compilação falha assim, e falha <strong>tarde</strong>: depois de baixar 52 MB de Opus e compilá-lo inteiro com o MSBuild.</p>
+<div class="codigo"><div class="codigo-topo"><span>texto</span><button type="button" class="copiar botao">Copiar código</button></div><pre tabindex="0"><code>Unable to find libclang: &quot;couldn&#x27;t find any valid shared libraries matching:
+[&#x27;clang.dll&#x27;, &#x27;libclang.dll&#x27;], set the `LIBCLANG_PATH` environment variable…&quot;</code></pre></div>
+<p>Se instalou fora do padrão, aponte antes de compilar:</p>
+<div class="codigo"><div class="codigo-topo"><span>powershell</span><button type="button" class="copiar botao">Copiar código</button></div><pre tabindex="0"><code>$env:LIBCLANG_PATH = &#x27;D:\caminho\para\LLVM\bin&#x27;</code></pre></div>
+<p><code>empacotar\windows.ps1</code> procura sozinho nos lugares usuais — inclusive dentro do Visual Studio, se você marcou *C++ Clang tools for Windows* — e reprova na largada se não achar, em vez de deixar você descobrir depois do Opus.</p>
+<p>Isto entrou nesta lista tarde. Os runners do GitHub já vêm com LLVM, então o CI nunca precisou dizer que ele era necessário, e a lista foi escrita a partir do que o CI instalava. A mesma ausência derrubou o contêiner de empacotamento do Linux, pelo mesmo motivo.</p>
+<h3>1.4 Git</h3>
+<p>&lt;https://git-scm.com/download/win&gt;, padrões.</p>
+<p><strong>Não é necessário:</strong> CMake, NASM, Python, Node.</p>
+<p><strong>O <code>aws-lc-rs</code> voltou à árvore na 0.17</strong> (25/10/2026), pelo DTLS do transporte (<code>dimpl</code>, ADR 0063, emenda do RUSTSEC-2026-0387). O <code>aws-lc-sys</code> compila o AWS-LC em C com o MSVC do item 1.1 — nada além dele:</p>
+<ul><li><strong>NASM:</strong> dispensado. O <code>dimpl</code> liga a feature <code>prebuilt-nasm</code>, e sem NASM</li></ul>
+<p>  no <code>PATH</code> o <code>aws-lc-sys</code> usa os objetos pré-montados que traz. Se houver um   NASM instalado, ele é usado; <code>AWS_LC_SYS_PREBUILT_NASM=0</code> obriga o NASM.</p>
+<ul><li><strong>CMake:</strong> não é exigido. Com as ligações pré-geradas do</li></ul>
+<p>  <code>x86_64-pc-windows-msvc</code>, o <code>aws-lc-sys</code> 0.46 compila pelo <code>cc</code>.</p>
+<p>O TLS do <code>rustls</code> (os MODs e o atualizador) continua só no provider <code>ring</code>, que é o que o código instala em tempo de execução.</p>
+<p><strong>Já vem no Windows 10 (1803+) e 11:</strong> <code>curl</code>, <code>tar</code> e <code>certutil</code>. O build do Opus usa os três para baixar e conferir a biblioteca pré-compilada. Numa máquina muito antiga, é o primeiro lugar a olhar se o build falhar.</p>
+<p>---</p>
+<h3>2 · Compilar</h3>
+<p><strong>Clone perto da raiz do disco.</strong> <code>C:\SEELE</code> serve; <code>C:\Users\voce\Downloads\SEELE</code> não.</p>
+<p>O Windows corta caminho em 260 caracteres por padrão, e a árvore de dependências do Tauri é funda: <code>target\release\build\&lt;crate&gt;-&lt;hash&gt;\out\...</code> some com uns cento e poucos sozinho. Passar do limite <strong>não</strong> dá um erro sobre caminho — dá este, que aponta para o lugar errado:</p>
+<div class="codigo"><div class="codigo-topo"><span>texto</span><button type="button" class="copiar botao">Copiar código</button></div><pre tabindex="0"><code>error[E0463]: can&#x27;t find crate for `tauri`</code></pre></div>
+<p>O crate está no <code>Cargo.lock</code>, é dependência comum e sem condicional de plataforma, e a mensagem faz procurar em tudo isso antes de desconfiar da pasta. Foi encontrado assim: a mesma árvore compilava no macOS e falhava aqui, e mover de <code>Downloads</code> para <code>C:\SEELE</code> resolveu sem mais nada.</p>
+<p>Quem quiser manter caminhos longos pode ligar o suporte a eles no Windows 10 1607+ (<code>LongPathsEnabled</code> na política de sistema de arquivos), mas nem toda ferramenta da cadeia o respeita. Clonar perto da raiz é a resposta que não depende disso.</p>
+<p>Nos dois PCs:</p>
+<div class="codigo"><div class="codigo-topo"><span>powershell</span><button type="button" class="copiar botao">Copiar código</button></div><pre tabindex="0"><code>git clone &lt;url-do-repo&gt; C:\SEELE
+cd C:\SEELE
+cargo build --release --bin seeled
+cargo build --release -p seele-app</code></pre></div>
+<p>A primeira compilação demora — dez a vinte minutos é normal, e o Opus baixa uma biblioteca pré-compilada no meio do caminho.</p>
+<p>O cliente é o app (<code>seele-app</code>), e os dois PCs precisam dele: o PC A hospeda e também conversa.</p>
+<p>O Tauri usa o <strong>WebView2</strong>, que já vem no Windows 11 e na maioria dos Windows 10 atualizados. Se reclamar, o runtime está em &lt;https://developer.microsoft.com/microsoft-edge/webview2/&gt;.</p>
+<p>---</p>
+<h3>3 · Liberar a porta no firewall</h3>
+<p><strong>O passo que mais provavelmente vai faltar.</strong> A porta 8383 é <strong>UDP</strong>, porque o transporte é WebRTC desde a 0.17 (e era QUIC até a 0.16) — e a regra que se escreve de cabeça é sempre TCP.</p>
+<p>Só no PC que vai rodar o servidor. PowerShell <strong>como administrador</strong>:</p>
+<div class="codigo"><div class="codigo-topo"><span>powershell</span><button type="button" class="copiar botao">Copiar código</button></div><pre tabindex="0"><code>New-NetFirewallRule -DisplayName &quot;SEELE&quot; -Direction Inbound `
+  -Protocol UDP -LocalPort 8383 -Action Allow</code></pre></div>
+<p>Se ao rodar o <code>seeled</code> o Windows perguntar, aceite também — mas ele costuma perguntar só para TCP, e é por isso que a regra acima é explícita.</p>
+<p>---</p>
+<h3>4 · Subir o servidor</h3>
+<p>No <strong>PC A</strong>:</p>
+<div class="codigo"><div class="codigo-topo"><span>powershell</span><button type="button" class="copiar botao">Copiar código</button></div><pre tabindex="0"><code>.\target\release\seeled.exe 0.0.0.0:8383</code></pre></div>
+<p>Ele imprime, entre outras coisas:</p>
+<div class="codigo"><div class="codigo-topo"><span>texto</span><button type="button" class="copiar botao">Copiar código</button></div><pre tabindex="0"><code>na outra máquina, cole no SEELE:
+  seele://192.168.x.x:8383?fp=50217d68c6…   (na mesma rede)
+
+certificate fingerprint: 50217d68c6...</code></pre></div>
+<p><strong>Anote a impressão digital.</strong> O link já a leva, e é o que o cliente vai fixar no primeiro contato (ADR 0003) e conferir depois.</p>
+<p>Se a linha &quot;na outra máquina&quot; não aparecer, o servidor não achou um endereço de rede. Confira com <code>ipconfig</code>.</p>
+<p>O <code>seeled</code> cria o <code>seele.db</code> na pasta onde foi executado. Para começar do zero, pare o servidor e apague o arquivo.</p>
+<p>---</p>
+<h3>5 · Conectar os dois</h3>
+<p>Nos dois PCs, abra o app (<code>.\target\release\seele-app.exe</code>, ou o SEELE instalado) e escolha o apelido no perfil, no rodapé da entrada — <strong>apelidos diferentes</strong> nos dois. Depois <strong>CONECTAR</strong>:</p>
+<ul><li>no <strong>PC A</strong>, digite <code>127.0.0.1:8383</code> no campo de baixo e <strong>ENTRAR</strong>;</li><li>no <strong>PC B</strong>, cole o link que o <code>seeled</code> imprimiu e <strong>ENTRAR</strong>.</li></ul>
+<p>No PC B, que entrou pelo link, a sessão abre dizendo <code>PRIMEIRO CONTATO VERIFICADO — O CONVITE CONFIRMOU A CHAVE</code>: o app conferiu a impressão do link sozinho. No PC A, que entrou pelo endereço cru, a frase é <code>PRIMEIRO CONTATO — CHAVE FIXADA</code>, com uma impressão digital. Confira contra a do passo 4. Se conferir, é aquele servidor.</p>
+<p>Dois apps com o mesmo <code>$SEELE_HOME</code> são <strong>a mesma pessoa</strong> — o servidor vincula o apelido à identidade que o reivindicou primeiro. No mesmo PC, para ser uma segunda pessoa:</p>
+<div class="codigo"><div class="codigo-topo"><span>powershell</span><button type="button" class="copiar botao">Copiar código</button></div><pre tabindex="0"><code>$env:SEELE_HOME=&quot;$HOME\.seele-outro&quot;
+.\target\release\seele-app.exe</code></pre></div>
+<p>---</p>
+<h3>6 · Usar</h3>
+<p>Aperte <code>?</code> — a ajuda abre de qualquer tela, com as palavras e as teclas que existem.</p>
+<p><strong>Falar:</strong> entre na sala de voz e segure <strong>ESPAÇO</strong>. É o modo TECLA; CONFIGURAÇÕES, em «COMO O MICROFONE ABRE», troca por VOZ ou ABERTO. A janela relata a soltura da tecla, então segurar funciona também no Windows, sem a trava que os terminais pediam (ADR 0016).</p>
+<p><strong>Use fones nos dois lados.</strong> Não há cancelamento de eco neste produto, e sem fones haverá realimentação.</p>
+<p>Antes de testar voz, prove o texto: se uma mensagem não atravessa, o áudio também não vai.</p>
+<p>---</p>
+<h3>7 · Deixar que o Mac empacote aqui, por SSH</h3>
+<p>Esta seção não é para usar o SEELE: é para <strong>produzir</strong> o instalador do Windows sem o GitHub Actions. O Tauri não cross-compila — o empacotador NSIS e o WebView2 precisam de Windows de verdade —, então o <code>empacotar/publicar.sh</code> do Mac monta o macOS e o Linux lá e vem buscar o Windows aqui.</p>
+<p>Quem faz isso é o <strong>OpenSSH Server</strong>, que o Windows 10 e o 11 já trazem como recurso opcional. Ele vem <strong>desligado de fábrica</strong>; sem ligá-lo, o script do Mac não tem como chegar aqui e para no começo dizendo isso.</p>
+<h3>7.1 Ligar o servidor</h3>
+<p>PowerShell <strong>como administrador</strong>:</p>
+<div class="codigo"><div class="codigo-topo"><span>powershell</span><button type="button" class="copiar botao">Copiar código</button></div><pre tabindex="0"><code>Add-WindowsCapability -Online -Name OpenSSH.Daemon~~~~0.0.1.0
+Set-Service -Name sshd -StartupType Automatic
+Start-Service sshd</code></pre></div>
+<p>A primeira linha baixa o recurso da Microsoft; as outras duas o põem no ar agora e nas próximas vezes que a máquina ligar. O instalador cria sozinho a regra de firewall para a porta 22 — confira, porque numa máquina com firewall de terceiro ela não aparece:</p>
+<div class="codigo"><div class="codigo-topo"><span>powershell</span><button type="button" class="copiar botao">Copiar código</button></div><pre tabindex="0"><code>Get-NetFirewallRule -Name *ssh* | Format-Table Name, Enabled, Direction</code></pre></div>
+<h3>7.2 Deixar a chave do Mac entrar</h3>
+<p>No <strong>Mac</strong>, se ainda não houver uma:</p>
+<div class="codigo"><div class="codigo-topo"><span>sh</span><button type="button" class="copiar botao">Copiar código</button></div><pre tabindex="0"><code>ssh-keygen -t ed25519          # se ~/.ssh/id_ed25519.pub não existir
+cat ~/.ssh/id_ed25519.pub      # é esta linha que vai para o Windows</code></pre></div>
+<p><strong>Aqui está a pegadinha que custa mais tempo nesta página.</strong> O OpenSSH do Windows lê a chave de dois lugares diferentes conforme a conta, e para uma conta de administrador <strong>não é</strong> a pasta do usuário:</p>
+<div class="tabela" tabindex="0" role="region" aria-label="Tabela de referência"><table><thead><tr><th scope="col">a conta é…</th><th scope="col">o arquivo é</th></tr></thead><tbody><tr><td>comum</td><td><code>C:\Users\&lt;você&gt;\.ssh\authorized_keys</code></td></tr><tr><td><strong>administrador</strong></td><td><code>C:\ProgramData\ssh\administrators_authorized_keys</code></td></tr></tbody></table></div>
+<p>Quase toda conta pessoal de Windows é administradora, então quase sempre é o segundo. E ele exige permissões estreitas — com permissão folgada o <code>sshd</code> <strong>ignora o arquivo em silêncio</strong>, que é o pior modo de falhar que existe:</p>
+<div class="codigo"><div class="codigo-topo"><span>powershell</span><button type="button" class="copiar botao">Copiar código</button></div><pre tabindex="0"><code>$arquivo = &quot;$env:ProgramData\ssh\administrators_authorized_keys&quot;
+Add-Content $arquivo &quot;cole-aqui-a-linha-do-Mac&quot;
+icacls $arquivo /inheritance:r /grant &quot;*S-1-5-32-544:F&quot; /grant &quot;*S-1-5-18:F&quot;</code></pre></div>
+<p>Os dois identificadores são o grupo de administradores (<code>S-1-5-32-544</code>) e o SISTEMA (<code>S-1-5-18</code>), e eles valem em qualquer Windows do mundo. <strong>Não use os nomes</strong> <code>Administrators</code> e <code>SYSTEM</code>: eles só existem no Windows em inglês, e num Windows em português a mesma linha responde «não foi feito mapeamento entre os nomes de conta e as identificações de segurança» — que é o erro certo dado de um jeito que não parece ter nada a ver com idioma. Foi assim que ele apareceu.</p>
+<p>Do Mac, confira antes de qualquer outra coisa:</p>
+<div class="codigo"><div class="codigo-topo"><span>sh</span><button type="button" class="copiar botao">Copiar código</button></div><pre tabindex="0"><code>ssh usuario@maquina-windows powershell -Command &quot;echo ok&quot;</code></pre></div>
+<p>Se isso imprimir <code>ok</code>, o resto funciona.</p>
+<h3>7.3 O shell padrão é o <code>cmd</code>, e isso importa</h3>
+<p>O OpenSSH do Windows entrega uma sessão de <strong><code>cmd</code></strong>, não de PowerShell. Quem esquece disso manda uma linha de PowerShell por SSH e recebe erros que não fazem sentido, porque as aspas foram comidas por outro interpretador no caminho.</p>
+<p>O <code>empacotar/publicar.sh</code> não depende de o shell padrão ser um ou outro: ele manda o PowerShell em <code>-EncodedCommand</code>, que é base64 de UTF-16LE — sem aspas, sem acento, sem <code>&amp;</code>, sem nada que o <code>cmd</code> possa interpretar. Você não precisa trocar o shell padrão da máquina, e é melhor não trocar: mudar isso muda o comportamento de todo mundo que entra por SSH aqui.</p>
+<h3>7.4 O repositório, e o que fica desta máquina</h3>
+<p>O script espera um clone em <code>C:\SEELE</code> (ou onde <code>--repo-windows</code> disser), <strong>no mesmo commit</strong> do Mac — ele confere antes de compilar, porque três pacotes de códigos diferentes são três releases com o mesmo número:</p>
+<div class="codigo"><div class="codigo-topo"><span>powershell</span><button type="button" class="copiar botao">Copiar código</button></div><pre tabindex="0"><code>git -C C:\SEELE fetch --all
+git -C C:\SEELE checkout &lt;o commit que o Mac disser&gt;</code></pre></div>
+<p>E a chave de assinatura do projeto <strong>não fica aqui</strong>. Ela vive no Mac e atravessa pela entrada padrão do SSH a cada empacotamento, dentro do canal cifrado: não é gravada em disco nesta máquina e não aparece em linha de comando nenhuma — no Windows a linha de comando de um processo é legível por outros processos, e o <code>sshd</code> com <code>LogLevel VERBOSE</code> a escreveria no log de eventos. Uma chave que existe em dois discos é uma chave com duas chances de vazar, e esta é a que deixa assinar atualização para todo SEELE instalado.</p>
+<p>---</p>
+<h3>Quando der errado</h3>
+<div class="tabela" tabindex="0" role="region" aria-label="Tabela de referência"><table><thead><tr><th scope="col">sintoma</th><th scope="col">causa mais provável</th></tr></thead><tbody><tr><td><code>link.exe not found</code></td><td>Build Tools sem &quot;Desktop com C++&quot; (passo 1.1)</td></tr><tr><td>SSH pede senha e a chave está no lugar</td><td>conta de administrador lê <code>C:\ProgramData\ssh\administrators_authorized_keys</code>, não a pasta do usuário (passo 7.2)</td></tr><tr><td>SSH entra e o <code>cargo</code> &quot;não existe&quot;</td><td>o Rust foi instalado noutra conta: ele precisa estar no PATH de quem atende o SSH (passo 7.4)</td></tr><tr><td>Erro no build do <code>shiguredo_opus</code></td><td><code>curl</code>/<code>tar</code> ausentes, ou sem saída para a internet</td></tr><tr><td><code>llvm-nm</code> não encontrado</td><td><code>rustup component add llvm-tools</code></td></tr><tr><td>O app não passa da conexão</td><td>firewall — a regra é <strong>UDP</strong></td></tr><tr><td><code>nickname belongs to a different identity</code></td><td>apelido já pertence a outra identidade; troque de apelido ou de <code>$SEELE_HOME</code></td></tr><tr><td>Voz com eco horrível</td><td>alguém está sem fones</td></tr><tr><td>A chave mudou e você não mudou nada</td><td>apagou o <code>seele.db</code>? O servidor gera certificado novo. Apague <code>%USERPROFILE%\.config\seele\pins</code></td></tr></tbody></table></div>
+<p>---</p>
+<h3>Depois que funcionar</h3>
+<p><code>docs/teste-duas-maquinas.md</code> é o roteiro de validação de verdade: soak de dez minutos, perda induzida de 5%, latência boca-a-ouvido, e o checklist de plataforma que fecha M1.15. É o que este projeto ainda não tem e só você pode produzir.</p></main>
+</div>
+</body>
+</html>

@@ -1,0 +1,164 @@
+[
+ {
+  "slug": "usar-a-0-17",
+  "fonte": "docs/usar-a-0.17.md",
+  "commit_base": "fec5e0c448b4bf836c604b73e03062a075effb63",
+  "situacao": "igual",
+  "estado": "atual",
+  "sha256": "5275cd328fa5c3d29f9b8155f1b52c88fa545fa050aed17507329c73f970a3ca",
+  "condicoes_abertas": []
+ },
+ {
+  "slug": "novidades-0-17",
+  "fonte": "empacotar/notas/0.17.0.md",
+  "commit_base": "fec5e0c448b4bf836c604b73e03062a075effb63",
+  "situacao": "igual",
+  "estado": "atual",
+  "sha256": "36ef4060da45cad50b954a58086fac57beda083d17ae4f92dd002dbaa0c6cde0",
+  "condicoes_abertas": []
+ },
+ {
+  "slug": "webrtc",
+  "fonte": "docs/adr/0063-a-linha-2-fala-webrtc.md",
+  "commit_base": "fec5e0c448b4bf836c604b73e03062a075effb63",
+  "situacao": "igual",
+  "estado": "atual",
+  "sha256": "560c3054dea9bdab72b0e7fc45f065eae240e40900e63271a051519508f45eb4",
+  "condicoes_abertas": []
+ },
+ {
+  "slug": "identidade",
+  "fonte": "docs/adr/0061-a-identidade-e-uma-por-maquina.md",
+  "commit_base": "5f84b7708a8786b82ad20853c772256640d2f983",
+  "situacao": "igual",
+  "estado": "decisao",
+  "sha256": "5500225c26f459da79b7b23187c613a33f7f44b3f25fc4dc527ef22fe357f0b0",
+  "condicoes_abertas": []
+ },
+ {
+  "slug": "codigo",
+  "fonte": "docs/adr/0060-o-codigo-de-uma-pessoa.md",
+  "commit_base": "d763e9e952b54cec5a86fcd2eb18543ab54dbe5a",
+  "situacao": "igual",
+  "estado": "decisao",
+  "sha256": "9a904a741766289233703a51edca828acab85b03fb53704551b5341efa251fd2",
+  "condicoes_abertas": []
+ },
+ {
+  "slug": "registro-assinado",
+  "fonte": "docs/adr/0062-o-registro-assinado-no-ponto-de-encontro.md",
+  "commit_base": "04181a99c4ae9a3bd91f7f246ac541d39cb47076",
+  "situacao": "igual",
+  "estado": "decisao",
+  "sha256": "a2ea2e0d1b221c6a1883c7816239a294407b9c155fbaba19806ac1566c9f195a",
+  "condicoes_abertas": []
+ },
+ {
+  "slug": "cargos",
+  "fonte": "docs/adr/0064-cargos-e-permissoes.md",
+  "commit_base": "fec5e0c448b4bf836c604b73e03062a075effb63",
+  "situacao": "igual",
+  "estado": "atual",
+  "sha256": "592107ad29f3d176a2171e7191b2c07d84e1055685cfba265680e9efd6595568",
+  "condicoes_abertas": []
+ },
+ {
+  "slug": "api-dos-mods",
+  "fonte": "api/README.md",
+  "commit_base": "fec5e0c448b4bf836c604b73e03062a075effb63",
+  "situacao": "igual",
+  "estado": "atual",
+  "sha256": "459447dd0585f71fa895baa9c7961544466b7111e650a2b2a67c69570f915499",
+  "condicoes_abertas": []
+ },
+ {
+  "slug": "decisoes",
+  "fonte": "docs/adr/README.md",
+  "commit_base": "fec5e0c448b4bf836c604b73e03062a075effb63",
+  "situacao": "igual",
+  "estado": "atual",
+  "sha256": "3442f06f5eb5438de60482300f47663264274d2f8b58b5e1530ec73167623ec1",
+  "condicoes_abertas": []
+ },
+ {
+  "slug": "inicio",
+  "fonte": "README.md",
+  "commit_base": "fec5e0c448b4bf836c604b73e03062a075effb63",
+  "situacao": "igual",
+  "estado": "historico",
+  "sha256": "da785281ddde10eedc235558cb9d18ab45e299f0211fc999cc90b37be9b4fb78",
+  "condicoes_abertas": []
+ },
+ {
+  "slug": "windows",
+  "fonte": "docs/windows.md",
+  "commit_base": "fec5e0c448b4bf836c604b73e03062a075effb63",
+  "situacao": "igual",
+  "estado": "historico",
+  "sha256": "6c4ce69721bfc6c847e972dac5b61c490df60f2aaac04067cd8d42030464bf07",
+  "condicoes_abertas": []
+ },
+ {
+  "slug": "homebrew",
+  "fonte": "docs/homebrew.md",
+  "commit_base": "75f182408fe03577684317b8a8cbca242ceed2e7",
+  "situacao": "igual",
+  "estado": "historico",
+  "sha256": "933175c687cc23fa0810a1b29c20c56000a2630af43e41e68acbb1c1de059ee4",
+  "condicoes_abertas": []
+ },
+ {
+  "slug": "versoes-lado-a-lado",
+  "fonte": "docs/versoes-lado-a-lado.md",
+  "commit_base": "fec5e0c448b4bf836c604b73e03062a075effb63",
+  "situacao": "igual",
+  "estado": "historico",
+  "sha256": "4d3c096805e3f73f91c5d4561ae0518be8dd332d8eef06465b471c46bfd8aa93",
+  "condicoes_abertas": []
+ },
+ {
+  "slug": "glossario",
+  "fonte": "docs/glossario.md",
+  "commit_base": "d0c3750175b70b3c7feafecea0463b228177679b",
+  "situacao": "igual",
+  "estado": "historico",
+  "sha256": "c3c2aa2341d1b444882a58e8449a09503ecfd0d705e6378e9bea6512683c423d",
+  "condicoes_abertas": []
+ },
+ {
+  "slug": "alcance-pela-internet",
+  "fonte": "docs/alcance-pela-internet.md",
+  "commit_base": "fec5e0c448b4bf836c604b73e03062a075effb63",
+  "situacao": "igual",
+  "estado": "historico",
+  "sha256": "d487aae985ffa1ee2cdc92a8e14e0563885ee6bcbd019f796159e50b997fcfa3",
+  "condicoes_abertas": []
+ },
+ {
+  "slug": "ponto-de-encontro",
+  "fonte": "docs/ponto-de-encontro.md",
+  "commit_base": "fec5e0c448b4bf836c604b73e03062a075effb63",
+  "situacao": "igual",
+  "estado": "historico",
+  "sha256": "281a6b2b3440b4175c3e64ac21a688d864f21e8a412b5b6185fef66e722fce18",
+  "condicoes_abertas": []
+ },
+ {
+  "slug": "atualizacao",
+  "fonte": "docs/assinatura-e-atualizacao.md",
+  "commit_base": "57ea9b95a5641dc1761a295f1e523653872f734c",
+  "situacao": "igual",
+  "estado": "historico",
+  "sha256": "6f314ed9015a7ac2186afadaba86d7fcf5a75a4d7946ecb66cde539c706823a6",
+  "condicoes_abertas": []
+ },
+ {
+  "slug": "como-se-faz-um-mod",
+  "fonte": "docs/como-se-faz-um-mod.md",
+  "commit_base": "fec5e0c448b4bf836c604b73e03062a075effb63",
+  "situacao": "igual",
+  "estado": "historico",
+  "sha256": "8fd119693713ef1f4964cc06a3f62c10285d3205177db0cfb44e0f02ba7e1d80",
+  "condicoes_abertas": []
+ }
+]

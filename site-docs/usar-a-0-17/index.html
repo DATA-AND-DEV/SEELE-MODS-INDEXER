@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Usar o SEELE 0.17 (o guia curto) · Documentação do SEELE</title>
+<link rel="icon" href="../favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../fontes.css"><link rel="stylesheet" href="../casca.css"><link rel="stylesheet" href="../estilo.css">
+</head>
+<body>
+<a href="#conteudo" class="pular">Pular para o conteúdo</a>
+<div class="docs">
+<nav class="docs-nav" aria-label="Documentação"><a href="../">Início</a><ul><li><span class="rotulo">Começar</span><ul><li><a href="../usar-a-0-17/">Usar o SEELE 0.17 (o guia curto)</a></li><li><a href="../novidades-0-17/">A 0.17: o que mudou e a compatibilidade</a></li></ul></li><li><span class="rotulo">Conexão, voz e vídeo</span><ul><li><a href="../webrtc/">A linha 2 fala WebRTC (ADR 0063)</a></li></ul></li><li><span class="rotulo">Identidade e permissões</span><ul><li><a href="../identidade/">A identidade é uma por máquina (ADR 0061)</a></li><li><a href="../codigo/">O código de uma pessoa (ADR 0060)</a></li><li><a href="../registro-assinado/">O registro assinado no ponto de encontro (ADR 0062)</a></li><li><a href="../cargos/">Cargos e permissões (ADR 0064)</a></li></ul></li><li><span class="rotulo">MODs</span><ul><li><a href="../api-dos-mods/">A API dos MODs (contratos congelados)</a></li></ul></li><li><span class="rotulo">Arquitetura</span><ul><li><a href="../decisoes/">As decisões de arquitetura (índice dos ADRs)</a></li></ul></li><li><span class="rotulo">Referências (históricas, escritas para a 0.16)</span><ul><li><a href="../inicio/">O SEELE: instalar, começar, compartilhar a tela (0.16)</a></li><li><a href="../windows/">Windows (0.16)</a></li><li><a href="../homebrew/">Instalar pelo Homebrew (0.16)</a></li><li><a href="../versoes-lado-a-lado/">Versões lado a lado (0.16)</a></li><li><a href="../glossario/">Glossário</a></li><li><a href="../alcance-pela-internet/">Alcançar de fora (a linha 1)</a></li><li><a href="../ponto-de-encontro/">O ponto de encontro</a></li><li><a href="../atualizacao/">Assinatura e atualização (0.16)</a></li><li><a href="../como-se-faz-um-mod/">Como se faz um MOD (por dentro)</a></li></ul></li><li><span class="rotulo">MODs</span><ul><li><a href="../mods/">Criar um MOD (o guia)</a></li><li><a href="https://mods.seele.sh/">O índice de MODs</a></li></ul></li></ul></nav>
+<main id="conteudo" class="painel"><h1>Usar o SEELE 0.17 (o guia curto)</h1><aside class="painel aviso" aria-label="De onde vem esta página"><p><strong>ATUAL NA 0.17.</strong> Descreve a 0.17. O guia de uso desta versão: endereços, instalar, entrar, hospedar, voz e tela, MODs, alcance e identidade.</p><p class="rotulo">Fonte: docs/usar-a-0.17.md · igual ao commit fec5e0c448b4 · sha256 5275cd328fa5</p></aside><p>O guia curto da versão 0.17: o que fazer, e o que esperar. O que mudou em detalhe, e o que ainda não foi medido, está nas notas da 0.17 (empacotar/notas/0.17.0.md). As páginas marcadas HISTÓRICAS na documentação descrevem a 0.16 e não são o caminho desta versão.</p>
+<h3>Os endereços</h3>
+<div class="tabela" tabindex="0" role="region" aria-label="Tabela de referência"><table><thead><tr><th scope="col">Para quê</th><th scope="col">Onde</th></tr></thead><tbody><tr><td>o SEELE no navegador (e no celular)</td><td>https://seele.sh</td></tr><tr><td>o site e os downloads do app</td><td>https://get.seele.sh</td></tr><tr><td>a documentação</td><td>https://docs.seele.sh</td></tr><tr><td>o índice de MODs</td><td>https://mods.seele.sh</td></tr><tr><td>o ponto de encontro (o app e a página falam com ele sozinhos)</td><td>rendzvous.seele.sh</td></tr></tbody></table></div>
+<p>O domínio antigo (seele.app.br) será desligado. Um convite antigo colado no app ainda diz o servidor e o ponto de encontro.</p>
+<h3>Instalar</h3>
+<ul><li><strong>No computador</strong>: baixe o app em https://get.seele.sh. Ao atualizar de uma 0.16, a 0.17 guarda os dados da 0.16 ao lado e abre a</li></ul>
+<p>  0.16 numa janela própria quando um link ou um servidor da 0.16 pedir.</p>
+<ul><li><strong>No navegador</strong>: abra https://seele.sh. No celular, numa aba, a página pede para ser instalada antes de entrar (Compartilhar,</li></ul>
+<p>  Adicionar à Tela de Início) e aberta pelo ícone, porque a identidade nasce onde você entra.</p>
+<ul><li><strong>Ficam no app do computador</strong>, e não no navegador: hospedar, a portaria e os convites, instalar e ligar MODs, ligar e receber</li></ul>
+<p>  ligações pelo código, moderar, criar salas e canais, e abrir outras versões lado a lado.</p>
+<h3>Entrar num servidor</h3>
+<ol><li>Receba um convite (um link) de quem hospeda.</li><li>No app ou na página, COLAR UM LINK, conferir o servidor, escolher o apelido e ENTRAR.</li><li>A 0.17 fala o <strong>Servidor 2.0</strong> (WebRTC). Um servidor da 0.16 (Servidor 1.0) abre pela 0.16 guardada ao lado; a 0.16 não entra num</li></ol>
+<p>   servidor da 0.17.</p>
+<h3>Hospedar</h3>
+<ul><li>No app, HOSPEDAR AQUI. O Servidor 2.0 é o padrão; o Servidor 1.0 e o 0.15 também podem ser escolhidos.</li><li>Um servidor antigo passa pela tela ANTES DE HOSPEDAR: nada nos dados muda até o botão do fim, que faz uma cópia de segurança</li></ul>
+<p>  verificada, converte os dados e só então sobe o servidor.</p>
+<ul><li>O dono é quem hospeda, pela chave da máquina; os cargos dizem o que cada pessoa pode fazer.</li></ul>
+<h3>Voz e tela</h3>
+<ul><li>Dá para estar em vários servidores ao mesmo tempo; o <strong>microfone vai para um de cada vez</strong>, o da sala de voz em que você entrou.</li><li>Sem fone, o som do alto-falante pode voltar pelo microfone: use fone. Se o navegador só abrir o microfone sem o cancelamento de</li></ul>
+<p>  eco, a sala diz isso.</p>
+<ul><li>Se o microfone parar durante a sala, a sala diz SEM ÁUDIO; para voltar, saia e entre de novo.</li><li>O navegador do celular não compartilha a tela: compartilhar é pelo SEELE no computador, e a tela de quem compartilha aparece na</li></ul>
+<p>  chamada.</p>
+<h3>MODs</h3>
+<ul><li>Um servidor 2.0 roda MODs da API 6 e da API 7. A API 7 é a da 0.17 (com as ações declaradas pelo MOD).</li><li><strong>Quem hospeda decide</strong> quais MODs o servidor tem: instalar, ligar, desligar e aplicar MODs no servidor é pelo app no computador.</li><li><strong>Quem entra recebe o MOD do servidor.</strong> No app e no navegador, a parte do MOD que roda na sua tela chega do servidor, e só depois de</li></ul>
+<p>  você aceitar o conjunto de MODs daquele servidor (o aceite fica guardado para aquele servidor). No navegador, os pacotes recebidos   ficam guardados no próprio navegador.</p>
+<ul><li>O navegador não instala, não liga e não gerencia MODs, nem o espaço dos pacotes: isso é do app no computador.</li><li>Criar um MOD: o guia em docs.seele.sh/mods/. O índice está em mods.seele.sh.</li></ul>
+<h3>Alcance pela internet</h3>
+<p>A conversa vai direto entre as máquinas: o SEELE <strong>não usa servidor de retransmissão (TURN)</strong>, e o ponto de encontro só apresenta os dois lados. Duas redes com NAT simétrico, ou uma rede que só sai por um proxy sem UDP direto, não se alcançam assim; a tela diz que o caminho não abriu.</p>
+<h3>Identidade</h3>
+<ul><li><strong>No computador</strong>, a identidade é a da máquina e continua a mesma na 0.17.</li><li><strong>No navegador</strong>, tudo o que o SEELE guarda fica preso ao endereço em que foi criado. Em seele.sh você começa do zero, e <strong>nada</strong> do</li></ul>
+<p>  endereço antigo vem junto, porque o navegador separa o armazenamento por endereço:   - a identidade (a chave) e, com ela, os cargos e os acessos;   - a lista dos servidores em que você entrou;   - os MODs aceitos de cada servidor e os pacotes de MOD guardados;   - o apelido, o retrato, as prévias, e as escolhas da voz (microfone, saída, modo, sensibilidade, redução de ruído, tecla de falar).   Não há transferência nem exportação. Quem administra cada servidor pode admitir você de novo, com um convite novo em seele.sh, e   você refaz as escolhas.</p></main>
+</div>
+</body>
+</html>
