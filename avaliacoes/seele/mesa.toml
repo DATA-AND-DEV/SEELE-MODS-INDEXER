@@ -353,3 +353,15 @@ commit = "8234cd90155ce482a6f6ea11cae9ae75adf07d16"
 nivel = "oficial"
 notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
 avaliado_em = 1793120730
+
+# 5.0.1 — delta de interface sobre 5.0.0, API 7 inalterada.
+# Abrir restaura página ocultada pelo host, sem reiniciar trilha ou fechar ficha.
+# Fonte e cliente regenerado conferidos; 3 testes focais passaram (navegação,
+# cabeçalho e fechamento real). Não substitui validação física no app nativo.
+
+[[versoes]]
+versao = "5.0.1"
+commit = "43bd55b78caebc01a99fc0d398541992e7a54798"
+nivel = "oficial"
+notas = ["roda-no-servidor", "guarda-dados-na-maquina"]
+avaliado_em = 1793127384

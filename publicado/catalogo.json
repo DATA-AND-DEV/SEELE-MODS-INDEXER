@@ -8,7 +8,7 @@
     4,
     3
   ],
-  "gerado_em": 1793121194,
+  "gerado_em": 1793127397,
   "mods": [
     {
       "id": "seele/estilo",
@@ -426,7 +426,7 @@
       "repo": "https://github.com/DATA-AND-DEV/MESA",
       "oficial": true,
       "nivel": "oficial",
-      "commit": "57ab27ad57f06056da8f750b71ef2369ffa1799f",
+      "commit": "43bd55b78caebc01a99fc0d398541992e7a54798",
       "notas": [
         "roda-no-servidor",
         "guarda-dados-na-maquina"
@@ -832,6 +832,59 @@
             "guarda-dados-na-maquina"
           ],
           "commit": "8234cd90155ce482a6f6ea11cae9ae75adf07d16"
+        },
+        {
+          "versao": "5.0.1",
+          "api": 7,
+          "publicado_em": 1793127384,
+          "hash": "ed90579eeb7e479fd8808c5187edcb8b0017fbaed3e8bef8d4d884770518aef4",
+          "alcanca": [
+            "estado da campanha no servidor",
+            "mapas e retratos de personagem, pelo volume",
+            "seletor de arquivos de quem usa",
+            "entrada na navegação do servidor",
+            "cabeçalho do canal",
+            "ações da sala de voz",
+            "palco da chamada",
+            "nomes de quem está no servidor",
+            "trilha sonora do pacote"
+          ],
+          "arquivos": [
+            "README.md",
+            "cliente/main.js",
+            "ferramentas/build.mjs",
+            "ferramentas/interface.js",
+            "ferramentas/mesa.js",
+            "ferramentas/package.mjs",
+            "ferramentas/preview.cjs",
+            "ferramentas/quickjs-check/Cargo.lock",
+            "ferramentas/quickjs-check/Cargo.toml",
+            "ferramentas/quickjs-check/smoke.js",
+            "ferramentas/quickjs-check/src/main.rs",
+            "ferramentas/retratos.cjs",
+            "ferramentas/servidor-de-desenvolvimento.rs.referencia",
+            "ferramentas/test-ui.cjs",
+            "mod.json",
+            "package-lock.json",
+            "package.json",
+            "servidor/main.js",
+            "som/combate.wav",
+            "som/exploracao.wav",
+            "som/misterio.wav",
+            "test/casca.test.cjs",
+            "test/cliente.test.cjs",
+            "test/contrato/api-v6.json",
+            "test/contrato/api-v7.json",
+            "test/laboratorio.cjs",
+            "test/mesa.test.cjs",
+            "test/redesenho.test.cjs"
+          ],
+          "nivel": "oficial",
+          "notas": [
+            "roda-no-servidor",
+            "guarda-dados-na-maquina"
+          ],
+          "commit": "43bd55b78caebc01a99fc0d398541992e7a54798"
         }
       ]
     },
