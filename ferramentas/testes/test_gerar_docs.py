@@ -53,12 +53,17 @@ def test_toda_pagina_diz_de_onde_veio_e_se_e_atual_ou_historica(tmp_path):
         assert not f['fonte'].startswith(('docs/superpowers', 'docs/evidencias', 'spikes/')) and 'incidente' not in f['fonte']
     # as seções pedidas: começar/instalar, conexão/voz/vídeo, identidade/permissões, MODs, arquitetura
     assert {s['titulo'] for s in gerar_docs.manifesto()['secoes']} >= {'Começar', 'Conexão, voz e vídeo', 'Identidade e permissões', 'MODs', 'Arquitetura'}
-    # «Começar» só tem páginas ATUAIS: nenhum passo da 0.16 é o caminho de uso; as históricas ficam em «Referências»
+    # Começar distingue o guia da 0.18; guias anteriores ficam em Referências.
     comecar = next(s for s in gerar_docs.manifesto()['secoes'] if s['titulo'] == 'Começar')
-    assert comecar['paginas'] and all(p['estado'] == 'atual' for p in comecar['paginas']), comecar
+    assert comecar['paginas'] and all(p['estado'] in ('atual', 'versao_018') for p in comecar['paginas']), comecar
     for s in gerar_docs.manifesto()['secoes']:
         if not s['titulo'].startswith('Referências'):
             assert all(p['estado'] != 'historico' for p in s['paginas']), f"página histórica fora de Referências: {s['titulo']}"
+    novo = next(p for p in gerar_docs.paginas() if p['slug'] == 'usar-a-0-18')
+    antigo = next(p for p in gerar_docs.paginas() if p['slug'] == 'usar-a-0-17')
+    assert novo['estado'] == 'versao_018' and antigo['estado'] == 'historico'
+    assert gerar_docs.manifesto()['guia_de_tarefas'] == novo['slug']
+    assert 'SEELE 0.18' in (destino / novo['slug'] / 'index.html').read_text(encoding='utf-8')
     # a proveniência: uma fonte alterada ou nova não é atribuída a um commit como se estivesse nele
     for f in fontes:
         assert f['situacao'] in ('igual', 'alterado', 'novo') and len(f['sha256']) == 64

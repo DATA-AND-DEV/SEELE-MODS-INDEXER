@@ -5,18 +5,19 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>O código de uma pessoa (ADR 0060) · Documentação do SEELE</title>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../fontes.css"><link rel="stylesheet" href="../casca.css"><link rel="stylesheet" href="../estilo.css">
+<link rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../fontes.css"><link rel="stylesheet" href="../casca.css"><link rel="stylesheet" href="../estilo.css"><link rel="stylesheet" href="../docs.css">
 </head>
 <body>
 <a href="#conteudo" class="pular">Pular para o conteúdo</a>
+<header class="cabecalho"><a class="cabecalho__marca" href="https://get.seele.sh/"><span class="cabecalho__nome">SEELE</span></a><nav class="cabecalho__nav" aria-label="Sites SEELE"><a class="cabecalho__link" href="https://get.seele.sh/">Produto</a><a class="cabecalho__link" href="https://get.seele.sh/#baixar">Downloads</a><a class="cabecalho__link" href="../" aria-current="page">Documentação</a><a class="cabecalho__link" href="https://mods.seele.sh/">MODs</a></nav><a class="cabecalho__acao" href="https://get.seele.sh/#baixar">Baixar</a></header>
 <div class="docs">
-<nav class="docs-nav" aria-label="Documentação"><a href="../">Início</a><ul><li><span class="rotulo">Começar</span><ul><li><a href="../usar-a-0-17/">Usar o SEELE 0.17 (o guia curto)</a></li><li><a href="../novidades-0-17/">A 0.17: o que mudou e a compatibilidade</a></li></ul></li><li><span class="rotulo">Conexão, voz e vídeo</span><ul><li><a href="../webrtc/">A linha 2 fala WebRTC (ADR 0063)</a></li></ul></li><li><span class="rotulo">Identidade e permissões</span><ul><li><a href="../identidade/">A identidade é uma por máquina (ADR 0061)</a></li><li><a href="../codigo/">O código de uma pessoa (ADR 0060)</a></li><li><a href="../registro-assinado/">O registro assinado no ponto de encontro (ADR 0062)</a></li><li><a href="../cargos/">Cargos e permissões (ADR 0064)</a></li></ul></li><li><span class="rotulo">MODs</span><ul><li><a href="../api-dos-mods/">A API dos MODs (contratos congelados)</a></li></ul></li><li><span class="rotulo">Arquitetura</span><ul><li><a href="../decisoes/">As decisões de arquitetura (índice dos ADRs)</a></li></ul></li><li><span class="rotulo">Referências (históricas, escritas para a 0.16)</span><ul><li><a href="../inicio/">O SEELE: instalar, começar, compartilhar a tela (0.16)</a></li><li><a href="../windows/">Windows (0.16)</a></li><li><a href="../homebrew/">Instalar pelo Homebrew (0.16)</a></li><li><a href="../versoes-lado-a-lado/">Versões lado a lado (0.16)</a></li><li><a href="../glossario/">Glossário</a></li><li><a href="../alcance-pela-internet/">Alcançar de fora (a linha 1)</a></li><li><a href="../ponto-de-encontro/">O ponto de encontro</a></li><li><a href="../atualizacao/">Assinatura e atualização (0.16)</a></li><li><a href="../como-se-faz-um-mod/">Como se faz um MOD (por dentro)</a></li></ul></li><li><span class="rotulo">MODs</span><ul><li><a href="../mods/">Criar um MOD (o guia)</a></li><li><a href="https://mods.seele.sh/">O índice de MODs</a></li></ul></li></ul></nav>
-<main id="conteudo" class="painel"><h1>O código de uma pessoa (ADR 0060)</h1><aside class="painel aviso" aria-label="De onde vem esta página"><p><strong>DECISÃO ACEITA.</strong> Uma decisão de arquitetura aceita; o texto é o da decisão, com a data dela. Decisão aceita (08/10/2026).</p><p class="rotulo">Fonte: docs/adr/0060-o-codigo-de-uma-pessoa.md · igual ao commit d763e9e952b5 · sha256 9a904a741766</p></aside><p>Status: <strong>aceito</strong>. Decidido por quem responde pelo projeto em 2026-09-23 («um código de usuário, que ele manda para um amigo»), e a forma ficou congelada no contrato de fio da 0.16 (item 12). Data: 2026-10-08 Sobre <code>docs/superpowers/specs/2026-09-23-sala-pessoal-por-codigo-design.md</code> («O código» e «Quem liga confere o código dentro do TLS»).</p>
-<h3>Contexto</h3>
+<aside class="docs-lateral"><label class="docs-busca">Buscar na documentação <input id="docs-busca" type="search" placeholder="Buscar…  /" autocomplete="off" aria-controls="busca-resultados"></label><div id="busca-resultados" role="region" aria-label="Resultados da busca" hidden><p id="busca-status" role="status" aria-live="polite"></p><ul></ul></div><details class="docs-menu" open><summary>Navegar na documentação</summary><nav class="docs-nav" aria-label="Documentação"><a href="../">Visão geral</a><div class="docs-tarefas"><span class="rotulo">Caminho rápido · 0.18</span><a href="../usar-a-0-18/#instalar">Versão e instalação</a><a href="../usar-a-0-18/#conversar-pelo-codigo">Chamar pelo código</a><a href="../usar-a-0-18/#amigos-e-contatos">Amigos e contatos</a><a href="../usar-a-0-18/#entrar-num-servidor">Entrar em um servidor</a><a href="../usar-a-0-18/#hospedar">Hospedar um espaço</a><a href="../usar-a-0-18/#voz-e-tela">Ajustar voz e tela</a></div><ul><li><span class="rotulo">Começar</span><ul><li><a href="../usar-a-0-18/">Usar o SEELE 0.18</a></li></ul></li><li><span class="rotulo">Conexão, voz e vídeo</span><ul><li><a href="../webrtc/">A linha 2 fala WebRTC (ADR 0063)</a></li></ul></li><li><span class="rotulo">Identidade e permissões</span><ul><li><a href="../identidade/">A identidade é uma por máquina (ADR 0061)</a></li><li><a href="../codigo/" aria-current="page">O código de uma pessoa (ADR 0060)</a></li><li><a href="../registro-assinado/">O registro assinado no ponto de encontro (ADR 0062)</a></li><li><a href="../cargos/">Cargos e permissões (ADR 0064)</a></li></ul></li><li><span class="rotulo">MODs</span><ul><li><a href="../api-dos-mods/">A API dos MODs (contratos congelados)</a></li></ul></li><li><span class="rotulo">Arquitetura</span><ul><li><a href="../decisoes/">As decisões de arquitetura (índice dos ADRs)</a></li></ul></li><li><details><summary>Referências (históricas, até a 0.17.3)</summary><ul><li><a href="../usar-a-0-17/">Usar o SEELE até a 0.17.3 (histórico)</a></li><li><a href="../novidades-0-17/">A 0.17: o que mudou e a compatibilidade</a></li></ul></details></li><li><details><summary>Referências (históricas, escritas para a 0.16)</summary><ul><li><a href="../inicio/">O SEELE: instalar, começar, compartilhar a tela (0.16)</a></li><li><a href="../windows/">Windows (0.16)</a></li><li><a href="../homebrew/">Instalar pelo Homebrew (0.16)</a></li><li><a href="../versoes-lado-a-lado/">Versões lado a lado (0.16)</a></li><li><a href="../glossario/">Glossário</a></li><li><a href="../alcance-pela-internet/">Alcançar de fora (a linha 1)</a></li><li><a href="../ponto-de-encontro/">O ponto de encontro</a></li><li><a href="../atualizacao/">Assinatura e atualização (0.16)</a></li><li><a href="../como-se-faz-um-mod/">Como se faz um MOD (por dentro)</a></li></ul></details></li><li><span class="rotulo">MODs</span><ul><li><a href="../mods/">Criar um MOD (o guia)</a></li><li><a href="https://mods.seele.sh/">O índice de MODs</a></li></ul></li></ul></nav></details></aside>
+<main id="conteudo" class="painel docs-artigo"><h1>O código de uma pessoa (ADR 0060)</h1><aside class="painel aviso" aria-label="De onde vem esta página"><p><strong>DECISÃO ACEITA.</strong> Uma decisão de arquitetura aceita; o texto é o da decisão, com a data dela. Decisão aceita (08/10/2026).</p><p class="rotulo">Fonte: docs/adr/0060-o-codigo-de-uma-pessoa.md · igual ao commit d763e9e952b5 · sha256 9a904a741766</p></aside><p>Status: <strong>aceito</strong>. Decidido por quem responde pelo projeto em 2026-09-23 («um código de usuário, que ele manda para um amigo»), e a forma ficou congelada no contrato de fio da 0.16 (item 12). Data: 2026-10-08 Sobre <code>docs/superpowers/specs/2026-09-23-sala-pessoal-por-codigo-design.md</code> («O código» e «Quem liga confere o código dentro do TLS»).</p>
+<h3 id="contexto">Contexto</h3>
 <p>Ligar para alguém precisa de um nome que a pessoa consiga mandar a um amigo e que continue valendo amanhã. Um endereço não serve: muda quando a pessoa troca de rede. Um link <code>seele://</code> com impressão e endereço também não: ele envelhece junto com o endereço (ADR 0047).</p>
 <p>A identidade Ed25519 da pessoa (ADR 0004 e ADR 0017) é estável e já é o que o servidor confere. O código é uma forma curta dela, que dá para ditar, colar e conferir.</p>
-<h3>Decisão</h3>
-<h3>A forma, congelada para sempre</h3>
+<h3 id="decisao">Decisão</h3>
+<h3 id="a-forma-congelada-para-sempre">A forma, congelada para sempre</h3>
 <p>Mora em <code>crates/seele-proto/src/codigo.rs</code>, que é <strong>o único lugar</strong> que deriva, formata, lê e confere um código.</p>
 <ul><li><strong>Derivação:</strong> <code>SHA-256(chave pública Ed25519, 32 bytes crus)</code>. Os primeiros</li></ul>
 <p>  75 bits viram 15 símbolos de base32 Crockford.</p>
@@ -28,34 +29,35 @@
 <p>  e <code>p…s</code> para o socket do servidor. O <code>p</code> separa as marcas da sala das marcas   <code>fp16</code> dos servidores, porque não é hexadecimal. A caixa das letras também é   formato: o ponto compara a marca byte a byte.</p>
 <ul><li><strong>Os vetores</strong> em <code>vetores-de-codigo.json</code>, conferidos por</li></ul>
 <p>  <code>crates/seele-proto/tests/vetores_de_codigo.rs</code> contra uma implementação de   referência independente, <strong>são o contrato</strong>.</p>
-<h3>Onde o código é conferido</h3>
+<h3 id="onde-o-codigo-e-conferido">Onde o código é conferido</h3>
 <p><strong>Dentro do TLS, antes do <code>Hello</code>.</strong> O <code>ConfereCodigo</code> lê a chave do certificado da sala, exige que seja Ed25519, confere o código e delega ao <code>ring</code> a prova de posse (o CertificateVerify). Uma chave que não bate vira <code>ConnectError::CodigoNaoBate</code>, e nada foi enviado. O <code>PinStore</code> por <code>host:porta</code> não é usado para código.</p>
 <p>O SNI é a constante <code>seele-sala</code>, e <strong>nunca o código</strong>: o SNI viaja legível no Initial do QUIC, e contaria para quem se está ligando.</p>
-<h3>O certificado da sala também é formato</h3>
+<h3 id="o-certificado-da-sala-tambem-e-formato">O certificado da sala também é formato</h3>
 <p>A sala apresenta um certificado Ed25519 feito da semente da <code>identity.key</code> (<code>seele_server::tls::Identity::da_semente</code>). O nome, o número de série, a validade e o SAN são fixos, e a assinatura é determinística, então o DER sai igual em toda abertura.</p>
 <p><strong>O DER é formato congelado.</strong> O dono entra na própria sala por <code>127.0.0.1:8385</code>, e o pino do TOFU é por endereço. Um DER que mudasse entre versões daria «A CHAVE MUDOU» na própria sala. O vetor da semente de zeros está em <code>crates/seele-server/tests/identidade_da_sala.rs</code>, e foi conferido fora do Rust: a chave do certificado é a da semente, e a autoassinatura confere.</p>
-<h3>Força</h3>
+<h3 id="forca">Força</h3>
 <ul><li>Achar uma chave com o mesmo código custa cerca de 2^75 gerações de chave.</li></ul>
 <p>  Contra qualquer um de N códigos no ar, custa 2^75/N.</p>
 <ul><li><strong>Depois da primeira ligação completa, a chave inteira fica pinada</strong> sob</li></ul>
 <p>  <code>@CÓDIGO</code>, no arquivo de pins. Daí em diante a conferência usa 256 bits, e uma   chave diferente com o mesmo código dá «ALGUÉM TENTOU SE PASSAR POR …».</p>
-<h3>O que a pessoa expõe</h3>
+<h3 id="o-que-a-pessoa-expoe">O que a pessoa expõe</h3>
 <ul><li>Quem tem o código vê, sem ligar, **se a pessoa está com o SEELE aberto e qual</li></ul>
 <p>  é o IP público dela**. As dicas de rede local também vão. É a natureza de ser   encontrável, e a alavanca é «não receber ligações», que desliga a sala.</p>
 <ul><li>O ponto de encontro aprende quem está online, em qual IP, e quem procura quem.</li></ul>
 <p>  Isso vai para a página de privacidade (LGPD), que é do dono.</p>
-<h3>Alternativas</h3>
+<h3 id="alternativas">Alternativas</h3>
 <ol><li><strong>Um número curto, distribuído por um servidor central.</strong> Recusada: o SEELE</li></ol>
 <p>   não tem servidor central de contas, e um registro de números seria um.</p>
 <ol><li><strong>A impressão da chave inteira, em hexadecimal (64 símbolos).</strong> Recusada:</li></ol>
 <p>   não se dita, e não tem verificador.</p>
 <ol><li><strong>Menos bits, para um código mais curto.</strong> Não foi medido. Os 75 bits são o</li></ol>
 <p>   que cabe em 15 símbolos de base32 mais um verificador, em quatro grupos de    quatro. Quem tenta se passar por alguém depois da primeira ligação esbarra    no pino de 256 bits, e não nos 75.</p>
-<h3>Consequências</h3>
+<h3 id="consequencias">Consequências</h3>
 <ul><li>Trocar ou revogar o código exige identidade nova, e fica fora da 1.0.</li><li>O código é da máquina (ADR 0061), então é o mesmo em toda versão aberta.</li><li>No celular, a 0.16 não liga pelo código: o navegador não abre UDP e perde o</li></ul>
 <p>  quarto (ADR 0057).</p>
-<h3>Custo de reverter</h3>
-<p><strong>Não reverte.</strong> Mudar a derivação, o verificador, o alfabeto, as marcas ou o DER da sala invalida todo código já distribuído, ou faz todo dono ler «A CHAVE MUDOU» na própria sala. Por isso a forma nasce congelada e com vetores.</p></main>
+<h3 id="custo-de-reverter">Custo de reverter</h3>
+<p><strong>Não reverte.</strong> Mudar a derivação, o verificador, o alfabeto, as marcas ou o DER da sala invalida todo código já distribuído, ou faz todo dono ler «A CHAVE MUDOU» na própria sala. Por isso a forma nasce congelada e com vetores.</p></main><aside class="docs-sumario"><details open><summary>Nesta página</summary><nav id="docs-sumario" aria-label="Nesta página"></nav></details></aside>
 </div>
+<script type="module" src="../docs.js"></script>
 </body>
 </html>

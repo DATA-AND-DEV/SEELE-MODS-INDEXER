@@ -248,3 +248,12 @@
 .rodape__link:hover {
   color: var(--seele-osso);
 }
+
+/* Casca pública compartilhada 0.17.4 */
+:root{--site-linha:#292D32;--site-linha-forte:#41464D;--site-texto-suave:#A1A9B3;--site-margem:clamp(20px,5vw,72px)}
+.cabecalho{height:76px;gap:40px;background:#000}.cabecalho__nome{font-size:30px}.cabecalho__sub{display:none}.cabecalho__nav{margin-left:0;gap:32px;letter-spacing:0;font-size:14px}.cabecalho__link{color:#C6D0DB}.cabecalho__acao{margin-left:auto;background:transparent;color:#F47732;border-radius:6px;padding:10px 24px;letter-spacing:0}.rodape{background:#000}.catalogo-nav{display:flex;gap:28px;margin:0 var(--site-margem);padding:20px 0;border-bottom:1px solid #41464D;overflow:auto;white-space:nowrap}.catalogo-nav a{color:#B7C9DA}.catalogo-nav a[aria-current]{color:#F47732}.catalogo-intro{padding:36px var(--site-margem) 24px}.catalogo-intro h1{font-size:48px;font-weight:500}.catalogo-intro>p{color:#B7C9DA}.catalogo-intro .cabecalho__busca{max-width:700px;margin:24px 0 12px;height:48px;border-radius:6px;border-color:#41464D}.catalogo-intro .cabecalho__busca input{font-size:14px}.catalogo-ajuda{font-size:12px}
+@media(max-width:960px){.cabecalho{height:auto;padding-top:16px;gap:16px}.cabecalho__nav{order:3;flex:0 0 calc(100% + 2 * var(--site-margem));gap:24px;font-size:12px}.catalogo-intro h1{font-size:38px}.catalogo-nav{gap:24px;font-size:12px}.catalogo-intro .cabecalho__busca{min-width:0}}
+
+.catalogo-intro[hidden]{display:none}.cabecalho__nav{margin-left:0}.catalogo-lista-titulo{font:500 28px/1.2 var(--seele-display);margin:0}.guia-busca{padding:16px var(--site-margem);border-bottom:1px solid var(--site-linha)}.guia-busca .cabecalho__busca{max-width:700px;margin:0;border-radius:6px}.guia-busca input{width:100%}
+
+@media(max-width:960px){.cabecalho__nav{flex:1 1 100%;width:100%;min-width:0;margin:0;padding:12px 0;flex-wrap:wrap;overflow:visible}.catalogo-nav{flex-wrap:wrap;overflow:visible;white-space:normal;gap:8px 24px}.catalogo-nav a{display:inline-flex;align-items:center;min-height:36px}}

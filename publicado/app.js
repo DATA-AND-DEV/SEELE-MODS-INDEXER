@@ -10,7 +10,7 @@
 import { cruzarRevogacoes, filtrar, ordenar } from "./catalogo.js";
 import { CONSULTANDO, carregarRevogacoes } from "./revogacoes.js";
 import { analisar, paraHash } from "./rotas.js";
-import { desenhar, desenharAviso } from "./tela.js";
+import { desenhar, desenharAviso } from "./tela.js?v=0174";
 import { temEd25519, verificar } from "./verificar.js";
 
 const estado = {
@@ -163,6 +163,7 @@ function aoTrocarRota() {
   // por isso não alcança o vizinho. Era o que a limpeza daqui existia para
   // impedir, e ela cobrava o preço de a escolha sumir ao voltar para a lista.
   estado.tela = rota.tela;
+  document.querySelector(".catalogo-intro").hidden = rota.tela !== "catalogo";
   estado.id = rota.id;
   redesenhar();
 }

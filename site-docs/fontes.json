@@ -1,20 +1,11 @@
 [
  {
-  "slug": "usar-a-0-17",
-  "fonte": "docs/usar-a-0.17.md",
-  "commit_base": "fec5e0c448b4bf836c604b73e03062a075effb63",
+  "slug": "usar-a-0-18",
+  "fonte": "docs/usar-a-0.18.md",
+  "commit_base": "5dfe9c5938725ccf1e2c9005b7a59931ec10156c",
   "situacao": "igual",
-  "estado": "atual",
-  "sha256": "5275cd328fa5c3d29f9b8155f1b52c88fa545fa050aed17507329c73f970a3ca",
-  "condicoes_abertas": []
- },
- {
-  "slug": "novidades-0-17",
-  "fonte": "empacotar/notas/0.17.0.md",
-  "commit_base": "fec5e0c448b4bf836c604b73e03062a075effb63",
-  "situacao": "igual",
-  "estado": "atual",
-  "sha256": "36ef4060da45cad50b954a58086fac57beda083d17ae4f92dd002dbaa0c6cde0",
+  "estado": "versao_018",
+  "sha256": "9b4a7acb83229d75471c8dccd843c23798de23adf08cf8a05c814496a573214a",
   "condicoes_abertas": []
  },
  {
@@ -65,10 +56,10 @@
  {
   "slug": "api-dos-mods",
   "fonte": "api/README.md",
-  "commit_base": "fec5e0c448b4bf836c604b73e03062a075effb63",
+  "commit_base": "eb233edbd180bdcdc0c1c00480909e6245a4bb32",
   "situacao": "igual",
   "estado": "atual",
-  "sha256": "459447dd0585f71fa895baa9c7961544466b7111e650a2b2a67c69570f915499",
+  "sha256": "e3d87a5144f4c2bdc96a8981d27520a9a310b294f775e310f04a10370a230b06",
   "condicoes_abertas": []
  },
  {
@@ -78,6 +69,24 @@
   "situacao": "igual",
   "estado": "atual",
   "sha256": "3442f06f5eb5438de60482300f47663264274d2f8b58b5e1530ec73167623ec1",
+  "condicoes_abertas": []
+ },
+ {
+  "slug": "usar-a-0-17",
+  "fonte": "docs/usar-a-0.17.md",
+  "commit_base": "944924e4ba53ca02c1047ff0e2ef7e73bb5df042",
+  "situacao": "igual",
+  "estado": "historico",
+  "sha256": "2928b308fd24af1e5ac9f83cd18be1879ff0fcfe9d0d244e14fe42305ee7436a",
+  "condicoes_abertas": []
+ },
+ {
+  "slug": "novidades-0-17",
+  "fonte": "empacotar/notas/0.17.0.md",
+  "commit_base": "fec5e0c448b4bf836c604b73e03062a075effb63",
+  "situacao": "igual",
+  "estado": "historico",
+  "sha256": "36ef4060da45cad50b954a58086fac57beda083d17ae4f92dd002dbaa0c6cde0",
   "condicoes_abertas": []
  },
  {
@@ -155,10 +164,10 @@
  {
   "slug": "como-se-faz-um-mod",
   "fonte": "docs/como-se-faz-um-mod.md",
-  "commit_base": "fec5e0c448b4bf836c604b73e03062a075effb63",
+  "commit_base": "5dfe9c5938725ccf1e2c9005b7a59931ec10156c",
   "situacao": "igual",
   "estado": "historico",
-  "sha256": "8fd119693713ef1f4964cc06a3f62c10285d3205177db0cfb44e0f02ba7e1d80",
+  "sha256": "03c8b24b62eddf926702989d0cc5f32ebf6c1b566212760cf2d3d743cc1bcf25",
   "condicoes_abertas": []
  }
 ]

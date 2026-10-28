@@ -5,16 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Assinatura e atualização (0.16) · Documentação do SEELE</title>
 <link rel="icon" href="../favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../fontes.css"><link rel="stylesheet" href="../casca.css"><link rel="stylesheet" href="../estilo.css">
+<link rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../fontes.css"><link rel="stylesheet" href="../casca.css"><link rel="stylesheet" href="../estilo.css"><link rel="stylesheet" href="../docs.css">
 </head>
 <body>
 <a href="#conteudo" class="pular">Pular para o conteúdo</a>
+<header class="cabecalho"><a class="cabecalho__marca" href="https://get.seele.sh/"><span class="cabecalho__nome">SEELE</span></a><nav class="cabecalho__nav" aria-label="Sites SEELE"><a class="cabecalho__link" href="https://get.seele.sh/">Produto</a><a class="cabecalho__link" href="https://get.seele.sh/#baixar">Downloads</a><a class="cabecalho__link" href="../" aria-current="page">Documentação</a><a class="cabecalho__link" href="https://mods.seele.sh/">MODs</a></nav><a class="cabecalho__acao" href="https://get.seele.sh/#baixar">Baixar</a></header>
 <div class="docs">
-<nav class="docs-nav" aria-label="Documentação"><a href="../">Início</a><ul><li><span class="rotulo">Começar</span><ul><li><a href="../usar-a-0-17/">Usar o SEELE 0.17 (o guia curto)</a></li><li><a href="../novidades-0-17/">A 0.17: o que mudou e a compatibilidade</a></li></ul></li><li><span class="rotulo">Conexão, voz e vídeo</span><ul><li><a href="../webrtc/">A linha 2 fala WebRTC (ADR 0063)</a></li></ul></li><li><span class="rotulo">Identidade e permissões</span><ul><li><a href="../identidade/">A identidade é uma por máquina (ADR 0061)</a></li><li><a href="../codigo/">O código de uma pessoa (ADR 0060)</a></li><li><a href="../registro-assinado/">O registro assinado no ponto de encontro (ADR 0062)</a></li><li><a href="../cargos/">Cargos e permissões (ADR 0064)</a></li></ul></li><li><span class="rotulo">MODs</span><ul><li><a href="../api-dos-mods/">A API dos MODs (contratos congelados)</a></li></ul></li><li><span class="rotulo">Arquitetura</span><ul><li><a href="../decisoes/">As decisões de arquitetura (índice dos ADRs)</a></li></ul></li><li><span class="rotulo">Referências (históricas, escritas para a 0.16)</span><ul><li><a href="../inicio/">O SEELE: instalar, começar, compartilhar a tela (0.16)</a></li><li><a href="../windows/">Windows (0.16)</a></li><li><a href="../homebrew/">Instalar pelo Homebrew (0.16)</a></li><li><a href="../versoes-lado-a-lado/">Versões lado a lado (0.16)</a></li><li><a href="../glossario/">Glossário</a></li><li><a href="../alcance-pela-internet/">Alcançar de fora (a linha 1)</a></li><li><a href="../ponto-de-encontro/">O ponto de encontro</a></li><li><a href="../atualizacao/">Assinatura e atualização (0.16)</a></li><li><a href="../como-se-faz-um-mod/">Como se faz um MOD (por dentro)</a></li></ul></li><li><span class="rotulo">MODs</span><ul><li><a href="../mods/">Criar um MOD (o guia)</a></li><li><a href="https://mods.seele.sh/">O índice de MODs</a></li></ul></li></ul></nav>
-<main id="conteudo" class="painel"><h1>Assinatura e atualização (0.16)</h1><aside class="painel aviso" aria-label="De onde vem esta página"><p><strong>HISTÓRICO.</strong> Escrito antes da 0.17: pode descrever a linha 1 (a 0.16, QUIC) e os endereços antigos (seele.app.br), que serão aposentados. Escrito antes da 0.17 (05/10/2026).</p><p class="rotulo">Fonte: docs/assinatura-e-atualizacao.md · igual ao commit 57ea9b95a564 · sha256 6f314ed9015a</p></aside><p>Este documento é para uma pessoa, uma vez. Nada aqui se faz duas vezes, e é por isso que está escrito: quem fizer isso não vai lembrar dos detalhes daqui a seis meses, e quem herdar o projeto nunca os soube.</p>
+<aside class="docs-lateral"><label class="docs-busca">Buscar na documentação <input id="docs-busca" type="search" placeholder="Buscar…  /" autocomplete="off" aria-controls="busca-resultados"></label><div id="busca-resultados" role="region" aria-label="Resultados da busca" hidden><p id="busca-status" role="status" aria-live="polite"></p><ul></ul></div><details class="docs-menu" open><summary>Navegar na documentação</summary><nav class="docs-nav" aria-label="Documentação"><a href="../">Visão geral</a><div class="docs-tarefas"><span class="rotulo">Caminho rápido · 0.18</span><a href="../usar-a-0-18/#instalar">Versão e instalação</a><a href="../usar-a-0-18/#conversar-pelo-codigo">Chamar pelo código</a><a href="../usar-a-0-18/#amigos-e-contatos">Amigos e contatos</a><a href="../usar-a-0-18/#entrar-num-servidor">Entrar em um servidor</a><a href="../usar-a-0-18/#hospedar">Hospedar um espaço</a><a href="../usar-a-0-18/#voz-e-tela">Ajustar voz e tela</a></div><ul><li><span class="rotulo">Começar</span><ul><li><a href="../usar-a-0-18/">Usar o SEELE 0.18</a></li></ul></li><li><span class="rotulo">Conexão, voz e vídeo</span><ul><li><a href="../webrtc/">A linha 2 fala WebRTC (ADR 0063)</a></li></ul></li><li><span class="rotulo">Identidade e permissões</span><ul><li><a href="../identidade/">A identidade é uma por máquina (ADR 0061)</a></li><li><a href="../codigo/">O código de uma pessoa (ADR 0060)</a></li><li><a href="../registro-assinado/">O registro assinado no ponto de encontro (ADR 0062)</a></li><li><a href="../cargos/">Cargos e permissões (ADR 0064)</a></li></ul></li><li><span class="rotulo">MODs</span><ul><li><a href="../api-dos-mods/">A API dos MODs (contratos congelados)</a></li></ul></li><li><span class="rotulo">Arquitetura</span><ul><li><a href="../decisoes/">As decisões de arquitetura (índice dos ADRs)</a></li></ul></li><li><details><summary>Referências (históricas, até a 0.17.3)</summary><ul><li><a href="../usar-a-0-17/">Usar o SEELE até a 0.17.3 (histórico)</a></li><li><a href="../novidades-0-17/">A 0.17: o que mudou e a compatibilidade</a></li></ul></details></li><li><details><summary>Referências (históricas, escritas para a 0.16)</summary><ul><li><a href="../inicio/">O SEELE: instalar, começar, compartilhar a tela (0.16)</a></li><li><a href="../windows/">Windows (0.16)</a></li><li><a href="../homebrew/">Instalar pelo Homebrew (0.16)</a></li><li><a href="../versoes-lado-a-lado/">Versões lado a lado (0.16)</a></li><li><a href="../glossario/">Glossário</a></li><li><a href="../alcance-pela-internet/">Alcançar de fora (a linha 1)</a></li><li><a href="../ponto-de-encontro/">O ponto de encontro</a></li><li><a href="../atualizacao/" aria-current="page">Assinatura e atualização (0.16)</a></li><li><a href="../como-se-faz-um-mod/">Como se faz um MOD (por dentro)</a></li></ul></details></li><li><span class="rotulo">MODs</span><ul><li><a href="../mods/">Criar um MOD (o guia)</a></li><li><a href="https://mods.seele.sh/">O índice de MODs</a></li></ul></li></ul></nav></details></aside>
+<main id="conteudo" class="painel docs-artigo"><h1>Assinatura e atualização (0.16)</h1><aside class="painel aviso" aria-label="De onde vem esta página"><p><strong>HISTÓRICO.</strong> Registro de uma versão anterior. Confira a versão e a nota desta página antes de aplicar os passos à versão que você usa. Escrito antes da 0.17 (05/10/2026).</p><p class="rotulo">Fonte: docs/assinatura-e-atualizacao.md · igual ao commit 57ea9b95a564 · sha256 6f314ed9015a</p></aside><p>Este documento é para uma pessoa, uma vez. Nada aqui se faz duas vezes, e é por isso que está escrito: quem fizer isso não vai lembrar dos detalhes daqui a seis meses, e quem herdar o projeto nunca os soube.</p>
 <p><strong>Tudo o que está aqui é opcional.</strong> Enquanto nada disto for feito, o repositório compila, o <code>release.yml</code> roda, e a página de release sai como sempre saiu: um instalador por sistema, para baixar à mão, com os avisos do sistema operacional que as <code>NOTAS-DE-RELEASE.md</code> explicam. O que falta sem isto é o botão de atualizar e o silêncio do SmartScreen.</p>
 <p>---</p>
-<h3>O que o botão de atualizar diz quando não dá, e por quê</h3>
+<h3 id="o-que-o-botao-de-atualizar-diz-quando-nao-da-e-por-que">O que o botão de atualizar diz quando não dá, e por quê</h3>
 <p>São sete respostas possíveis, e na tela cada uma é <strong>uma frase</strong> — o estado, e o que fazer. O porquê fica aqui, porque ele não muda o que a pessoa faz e cabia mal embaixo de um botão.</p>
 <p>Duas delas mandam <strong>não</strong> tentar de novo, e as duas são as que mais custam se alguém insistir:</p>
 <div class="tabela" tabindex="0" role="region" aria-label="Tabela de referência"><table><thead><tr><th scope="col">A tela diz</th><th scope="col">O que houve</th><th scope="col">Por que não adianta insistir</th></tr></thead><tbody><tr><td>«este SEELE saiu sem chave de atualização»</td><td>Este executável foi compilado antes de a chave do projeto existir, ou saiu do código-fonte na sua máquina</td><td>Não há chave dentro dele para conferir pacote nenhum. Não é defeito, e nenhuma versão futura conserta <strong>este</strong> binário: baixe o instalador novo da página de releases</td></tr><tr><td>«o pacote baixado não foi assinado por este projeto»</td><td>O pacote chegou inteiro e a assinatura não é a nossa</td><td>Apertar de novo baixa o mesmo pacote da mesma origem. Baixe da página de releases, e — se o SEELE que você está atualizando veio de outro lugar — confira com quem o hospedou de onde ele veio</td></tr></tbody></table></div>
@@ -23,26 +24,26 @@
 <p><strong>A diferença entre as duas primeiras da segunda tabela é a que este projeto errou uma vez</strong>, e vale escrever: o botão dizia «a página não respondeu» sobre uma página que tinha respondido perfeitamente. Mandar conferir a conexão é mandar procurar defeito onde não há. São variantes separadas por isso.</p>
 <p><strong>Só uma das sete fala em «meia instalação»</strong>, a da troca de arquivos, e é a única em que ela poderia existir. Nas outras seis nada instalado chega a ser tocado: o pacote é baixado inteiro para a memória e a assinatura é conferida <strong>antes</strong> do primeiro arquivo. Rede que cai, download truncado, pacote adulterado — os três terminam com o app exatamente como estava, e uma frase que tranquilizasse sobre isso estaria inventando o susto que ela vem acalmar.</p>
 <p>---</p>
-<h3>São duas assinaturas, e elas não se substituem</h3>
+<h3 id="sao-duas-assinaturas-e-elas-nao-se-substituem">São duas assinaturas, e elas não se substituem</h3>
 <p>Confundir as duas é o erro que faz o trabalho todo parecer redundante.</p>
 <div class="tabela" tabindex="0" role="region" aria-label="Tabela de referência"><table><thead><tr><th scope="col"></th><th scope="col">quem confere</th><th scope="col">o que ela responde</th><th scope="col">sem ela</th></tr></thead><tbody><tr><td><strong>do sistema operacional</strong></td><td>Windows e macOS, na hora de abrir</td><td>«quem produziu este arquivo?»</td><td>o SmartScreen reclama e o Smart App Control <strong>bloqueia</strong></td></tr><tr><td><strong>do projeto</strong></td><td>o próprio SEELE, na hora de atualizar</td><td>«este pacote veio de vocês?»</td><td>o botão de atualizar não existe</td></tr></tbody></table></div>
 <p>Um instalador com assinatura Authenticode perfeita continua sendo <strong>qualquer</strong> instalador: é o <code>latest.json</code> que diz qual baixar, e é a assinatura do projeto que impede que ele aponte para outro. As duas são necessárias e nenhuma cobre o buraco da outra. ADR 0026.</p>
 <p><strong>Faça a do projeto primeiro.</strong> Ela é gratuita, leva cinco minutos, e é a que resolve a queixa que custou um teste real — as duas máquinas em versões diferentes.</p>
-<h3>E no Windows são três defesas, não uma</h3>
+<h3 id="e-no-windows-sao-tres-defesas-nao-uma">E no Windows são três defesas, não uma</h3>
 <p>Este documento dizia «SmartScreen» em todo lugar, como se fosse uma coisa só. Não é, e a diferença decide se assinar é conforto ou se é o que torna o programa instalável. A pergunta veio de quem estava pagando a conta, o que é a hora certa de ela vir.</p>
 <div class="tabela" tabindex="0" role="region" aria-label="Tabela de referência"><table><thead><tr><th scope="col"></th><th scope="col">o que faz</th><th scope="col">assinar resolve?</th></tr></thead><tbody><tr><td><strong>SmartScreen</strong></td><td>avisa: «O Windows protegeu o computador»</td><td><strong>sim</strong>, e há contorno sem assinar — *Mais informações → Executar assim mesmo*</td></tr><tr><td><strong>Smart App Control</strong></td><td><strong>impede a execução</strong>, e não oferece «executar assim mesmo»</td><td><strong>sim, e é a única saída</strong></td></tr><tr><td><strong>Defender Antivírus</strong></td><td>varre em busca de malware</td><td><strong>não.</strong> Se ele acusar, é falso positivo, e o caminho é submeter a amostra à Microsoft</td></tr></tbody></table></div>
 <p>O <strong>Smart App Control</strong> é o que mais surpreende, e foi o que apareceu no primeiro teste com máquina de outra pessoa. Ele é do Windows 11, só liga em instalação limpa, e passa um tempo em avaliação antes de se ligar sozinho — então duas máquinas iguais se comportam diferente e ninguém entende por quê. Quando está ligado não há caixa a dispensar: o programa não abre.</p>
 <p>Uma consequência prática: <strong>desligar o Smart App Control é caminho sem volta.</strong> Depois de desligado, só reinstalando o Windows para religá-lo. Não é conselho a dar a quem só queria conversar com um amigo — o que se dá é um instalador assinado.</p>
 <p>E vale dizer o que a assinatura <strong>não</strong> compra: reputação é acumulada, então um certificado novo pode continuar tomando aviso do SmartScreen nas primeiras instalações, até o serviço ver o arquivo circular. O Smart App Control é o caso em que a assinatura vale imediatamente.</p>
 <p>---</p>
-<h3>Parte 1 — a chave do projeto (grátis, cinco minutos)</h3>
+<h3 id="parte-1-a-chave-do-projeto-gratis-cinco-minutos">Parte 1 — a chave do projeto (grátis, cinco minutos)</h3>
 <p>É uma chave <code>minisign</code>. O <code>cargo tauri</code> a gera.</p>
 <div class="codigo"><div class="codigo-topo"><span>sh</span><button type="button" class="copiar botao">Copiar código</button></div><pre tabindex="0"><code>cargo install tauri-cli --version &quot;^2&quot; --locked   # se ainda não tiver
 mkdir -p ~/.tauri
 cargo tauri signer generate -w ~/.tauri/seele.key</code></pre></div>
 <p>Ele pede uma senha. <strong>Use uma</strong>, e guarde-a onde guarda as outras — o modo sem senha existe para automação e não é o seu caso. No fim ficam dois arquivos:</p>
 <ul><li><code>~/.tauri/seele.key</code> — a privada. Nunca entra no repositório.</li><li><code>~/.tauri/seele.key.pub</code> — a pública. Vai para o repositório, em texto claro.</li></ul>
-<h3>1.1 — a pública vai para o <code>tauri.conf.json</code></h3>
+<h3 id="1-1-a-publica-vai-para-o-tauri-conf-json">1.1 — a pública vai para o <code>tauri.conf.json</code></h3>
 <p>Abra <code>~/.tauri/seele.key.pub</code>. É uma única linha em base64. Cole-a em <code>apps/seele-app/tauri.conf.json</code>, no lugar da string vazia:</p>
 <div class="codigo"><div class="codigo-topo"><span>json</span><button type="button" class="copiar botao">Copiar código</button></div><pre tabindex="0"><code>  &quot;plugins&quot;: {
     &quot;updater&quot;: {
@@ -52,38 +53,38 @@ cargo tauri signer generate -w ~/.tauri/seele.key</code></pre></div>
       &quot;pubkey&quot;: &quot;COLE-A-LINHA-AQUI&quot;,</code></pre></div>
 <p><strong>Cuidado com o arquivo:</strong> ele não pode ganhar BOM. Se editar no Bloco de Notas do Windows, salve como &quot;UTF-8&quot; e não como &quot;UTF-8 com BOM&quot; — o analisador do Tauri recusa o arquivo e a mensagem que ele dá (<code>expected value at line 1 column 1</code>) não parece ter nada a ver.</p>
 <p>Comite essa mudança. A chave pública é pública; é isso que ela é.</p>
-<h3>1.2 — a privada vira segredo do repositório</h3>
+<h3 id="1-2-a-privada-vira-segredo-do-repositorio">1.2 — a privada vira segredo do repositório</h3>
 <p>Em <strong>Settings → Secrets and variables → Actions → New repository secret</strong>:</p>
 <div class="tabela" tabindex="0" role="region" aria-label="Tabela de referência"><table><thead><tr><th scope="col">segredo</th><th scope="col">conteúdo</th></tr></thead><tbody><tr><td><code>TAURI_SIGNING_PRIVATE_KEY</code></td><td>o conteúdo <strong>inteiro</strong> de <code>~/.tauri/seele.key</code>, copiado e colado</td></tr><tr><td><code>TAURI_SIGNING_PRIVATE_KEY_PASSWORD</code></td><td>a senha que você escolheu</td></tr></tbody></table></div>
 <p>O conteúdo do arquivo, e não o caminho dele: o runner não tem o seu disco.</p>
-<h3>1.3 — guarde a privada onde você não a perca</h3>
+<h3 id="1-3-guarde-a-privada-onde-voce-nao-a-perca">1.3 — guarde a privada onde você não a perca</h3>
 <p>Escrito sem rodeio, porque é a única parte irreversível deste documento:</p>
 <p><strong>Se você perder a chave privada ou a senha, ninguém que já instalou o SEELE vai conseguir atualizar de novo.</strong> Não há como rotacionar a chave para quem já está instalado: o app confere contra a chave que foi compilada dentro dele. A saída é publicar uma versão com a chave nova e pedir a cada pessoa que baixe e instale à mão — exatamente o problema que este trabalho existe para acabar.</p>
 <p>Duas cópias, em lugares que não falham juntos. Um gerenciador de senhas e um papel guardado servem.</p>
-<h3>1.4 — conferir</h3>
+<h3 id="1-4-conferir">1.4 — conferir</h3>
 <p>Rode o workflow <strong>Release</strong> pela aba Actions, com uma versão de teste (<code>0.0.1</code>, por exemplo). Nos registros do job de cada sistema você deve ver a CLI do Tauri dizendo <code>Finished 1 updater signature at:</code> e, no job <code>publicar</code>, o <code>latest.json</code> impresso inteiro. Se ele não aparecer, o passo <code>Manifesto de atualização</code> diz por quê.</p>
 <p>O rascunho fica em Releases, não publicado. <strong>Enquanto ele não for publicado à mão, nenhum app do mundo o enxerga</strong> — <code>releases/latest</code> só conta releases publicados e que não sejam pré-lançamento. É de propósito: a decisão de lançar continua sendo de uma pessoa.</p>
 <p>---</p>
-<h3>Parte 2 — assinatura do Windows (Azure Artifact Signing)</h3>
+<h3 id="parte-2-assinatura-do-windows-azure-artifact-signing">Parte 2 — assinatura do Windows (Azure Artifact Signing)</h3>
 <p>O nome mudou: o serviço se chamava <strong>Azure Trusted Signing</strong> e agora é <strong>Azure Artifact Signing</strong>. É o mesmo produto, e é o único caminho barato para uma assinatura que o SmartScreen aceite — na ordem de dez dólares por mês, sem token físico, com o certificado ficando na nuvem da Microsoft.</p>
 <p>A alternativa é um certificado OV ou EV de autoridade comum: entre 200 e 600 dólares por ano, e o EV exige um token USB que não entra num runner do GitHub.</p>
 <p><strong>Conte com alguns dias</strong>, não com uma tarde: a validação de identidade é feita por gente.</p>
-<h3>2.1 — antes de começar</h3>
+<h3 id="2-1-antes-de-comecar">2.1 — antes de começar</h3>
 <ul><li>Uma assinatura do Azure com cartão cadastrado.</li><li><strong>Identidade validável.</strong> Como pessoa física, a Microsoft pede três anos de</li></ul>
 <p>  histórico verificável (documento, endereço, presença pública). Como empresa,   pede CNPJ e um número D-U-N-S. A validação individual costuma ser a que trava.</p>
-<h3>2.2 — criar a conta de assinatura</h3>
+<h3 id="2-2-criar-a-conta-de-assinatura">2.2 — criar a conta de assinatura</h3>
 <p>No portal do Azure:</p>
 <ol><li><strong>Create a resource</strong> → procure por <strong>Trusted Signing</strong> (ou **Artifact</li></ol>
 <p>   Signing<strong>) → </strong>Create**.</p>
 <ol><li>Escolha um grupo de recursos, um nome para a conta e uma região. **Anote a</li></ol>
 <p>   região**: ela decide o endereço do serviço, que é <code>https://&lt;região&gt;.codesigning.azure.net</code>    — por exemplo <code>https://eus.codesigning.azure.net</code> para East US.</p>
 <ol><li>Plano: o <strong>Basic</strong> basta para este volume.</li></ol>
-<h3>2.3 — validar a identidade</h3>
+<h3 id="2-3-validar-a-identidade">2.3 — validar a identidade</h3>
 <p>Dentro da conta criada, <strong>Identity validations</strong> → <strong>New identity validation</strong>. Preencha exatamente como consta nos documentos: um espaço a mais no nome da empresa reprova. Envie e espere.</p>
 <p>O nome que você põe aqui é o que o Windows vai mostrar como publicador do instalador. Escolha pensando em quem vai ler o aviso.</p>
-<h3>2.4 — criar o perfil de certificado</h3>
+<h3 id="2-4-criar-o-perfil-de-certificado">2.4 — criar o perfil de certificado</h3>
 <p>Depois de a validação passar: <strong>Certificate profiles</strong> → <strong>New certificate profile</strong> → tipo <strong>Public Trust</strong>. Dê um nome e anote-o.</p>
-<h3>2.5 — criar a identidade que o CI usa</h3>
+<h3 id="2-5-criar-a-identidade-que-o-ci-usa">2.5 — criar a identidade que o CI usa</h3>
 <p>O runner precisa entrar no Azure sozinho. Isso é um <strong>app registration</strong> no Microsoft Entra ID:</p>
 <ol><li><strong>Entra ID</strong> → <strong>App registrations</strong> → <strong>New registration</strong>. Nome livre.</li></ol>
 <p>   Anote o <strong>Application (client) ID</strong> e o <strong>Directory (tenant) ID</strong>.</p>
@@ -92,14 +93,14 @@ cargo tauri signer generate -w ~/.tauri/seele.key</code></pre></div>
 <ol><li>Volte à conta de assinatura → <strong>Access control (IAM)</strong> → **Add role</li></ol>
 <p>   assignment<strong> → o papel cujo nome termina em </strong>Certificate Profile Signer**    (a Microsoft o chamava de &quot;Trusted Signing Certificate Profile Signer&quot; antes    da troca de nome do serviço) → atribua ao app registration criado.</p>
 <p>O passo 3 é o que costuma faltar: sem ele o app registration existe, autentica, e recebe &quot;acesso negado&quot; na hora de assinar.</p>
-<h3>2.6 — os seis segredos</h3>
+<h3 id="2-6-os-seis-segredos">2.6 — os seis segredos</h3>
 <p>Em <strong>Settings → Secrets and variables → Actions</strong>:</p>
 <div class="tabela" tabindex="0" role="region" aria-label="Tabela de referência"><table><thead><tr><th scope="col">segredo</th><th scope="col">onde estava</th></tr></thead><tbody><tr><td><code>AZURE_ENDPOINT</code></td><td><code>https://&lt;região&gt;.codesigning.azure.net</code>, do passo 2.2</td></tr><tr><td><code>AZURE_ARTIFACT_SIGNING_ACCOUNT</code></td><td>o nome da conta, do passo 2.2</td></tr><tr><td><code>AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE</code></td><td>o nome do perfil, do passo 2.4</td></tr><tr><td><code>AZURE_CLIENT_ID</code></td><td>Application (client) ID, do passo 2.5</td></tr><tr><td><code>AZURE_CLIENT_SECRET</code></td><td>o valor do client secret, do passo 2.5</td></tr><tr><td><code>AZURE_TENANT_ID</code></td><td>Directory (tenant) ID, do passo 2.5</td></tr></tbody></table></div>
 <p><strong>Os três primeiros juntos ou nenhum.</strong> Com apenas parte deles, o workflow avisa e sai sem assinar, em vez de quebrar no fim do build.</p>
-<h3>2.7 — o que esperar</h3>
+<h3 id="2-7-o-que-esperar">2.7 — o que esperar</h3>
 <p>Assinado, o instalador para de ser &quot;publicador desconhecido&quot;. O SmartScreen pode ainda mostrar o aviso nas primeiras semanas: ele também pesa reputação, e reputação se acumula com downloads. O que a assinatura garante é que a reputação passa a se acumular <strong>na sua identidade</strong>, em vez de recomeçar do zero a cada versão — que é a situação de hoje.</p>
 <p>---</p>
-<h3>Parte 3 — assinatura do macOS (Apple)</h3>
+<h3 id="parte-3-assinatura-do-macos-apple">Parte 3 — assinatura do macOS (Apple)</h3>
 <p>Esta parte o <code>release.yml</code> já esperava antes deste trabalho; os segredos estão lá desde então. Resumo do que preencher:</p>
 <ol><li>Conta paga no <strong>Apple Developer Program</strong> (99 dólares por ano).</li><li>Certificado <strong>Developer ID Application</strong> — criado no portal, instalado no</li></ol>
 <p>   Chaveiro, exportado como <code>.p12</code> com senha.</p>
@@ -107,9 +108,9 @@ cargo tauri signer generate -w ~/.tauri/seele.key</code></pre></div>
 <div class="tabela" tabindex="0" role="region" aria-label="Tabela de referência"><table><thead><tr><th scope="col">segredo</th><th scope="col">conteúdo</th></tr></thead><tbody><tr><td><code>APPLE_CERTIFICATE</code></td><td>o <code>.p12</code> em base64</td></tr><tr><td><code>APPLE_CERTIFICATE_PASSWORD</code></td><td>a senha da exportação</td></tr><tr><td><code>APPLE_SIGNING_IDENTITY</code></td><td><code>Developer ID Application: Nome (TEAMID)</code>, como aparece no Chaveiro</td></tr><tr><td><code>APPLE_ID</code></td><td>o e-mail da conta</td></tr><tr><td><code>APPLE_PASSWORD</code></td><td>a senha específica de app</td></tr><tr><td><code>APPLE_TEAM_ID</code></td><td>o identificador de dez caracteres</td></tr></tbody></table></div>
 <p><strong>Não remova o <code>signingIdentity: &quot;-&quot;</code> do <code>tauri.conf.json</code> achando que ele foi substituído.</strong> Ele é assinatura ad-hoc, e é o que faz a permissão de microfone grudar no macOS; o workflow o troca pela identidade de verdade quando o segredo existe, e o mantém quando não existe. Sem ele — nem ad-hoc nem real — o macOS pergunta pelo microfone a cada abertura e nunca lembra da resposta.</p>
 <p>---</p>
-<h3>Empacotar à mão, com as chaves</h3>
+<h3 id="empacotar-a-mao-com-as-chaves">Empacotar à mão, com as chaves</h3>
 <p>Quando a cota de Actions acaba — já aconteceu —, <code>empacotar/</code> faz o mesmo.</p>
-<h3>O caminho de um comando</h3>
+<h3 id="o-caminho-de-um-comando">O caminho de um comando</h3>
 <p><code>empacotar/publicar.sh</code> faz o <code>release.yml</code> inteiro a partir do Mac: os três sistemas, o manifesto, as somas e o rascunho no Releases.</p>
 <div class="codigo"><div class="codigo-topo"><span>sh</span><button type="button" class="copiar botao">Copiar código</button></div><pre tabindex="0"><code>export TAURI_SIGNING_PRIVATE_KEY=&quot;$(cat ~/.tauri/seele.key)&quot;
 export TAURI_SIGNING_PRIVATE_KEY_PASSWORD=&#x27;a senha&#x27;
@@ -121,7 +122,7 @@ export SEELE_WINDOWS_SSH=voce@windows  # docs/windows.md, seção 7
 <p>O Windows é alcançado por SSH, e <strong>a chave privada não vai para o disco de lá</strong>: ela atravessa pela entrada padrão a cada empacotamento. Ligar o OpenSSH Server naquela máquina é a seção 7 de <code>docs/windows.md</code>.</p>
 <p>Rode o <code>--conferir</code> antes de sair da frente do computador. Ele responde em segundos a pergunta que, sem ele, custa noventa minutos de Linux emulado para ser respondida: está tudo no lugar para esta rodada terminar?</p>
 <p>O que sai é um <strong>rascunho</strong>, e o que ele perde por não vir do CI está escrito na saída do script e no corpo do release: não há atestado de procedência, e não há como haver — <code>gh attestation verify</code> vai dizer que não encontrou atestado, e isso é o esperado. As <code>NOTAS-DE-RELEASE.md</code> explicam isso a quem baixa.</p>
-<h3>Os três, um de cada vez</h3>
+<h3 id="os-tres-um-de-cada-vez">Os três, um de cada vez</h3>
 <p>Para rodar cada um por conta própria — ou quando um deles falhou e só ele precisa ser refeito. Para que o pacote saia atualizável, exporte a chave antes:</p>
 <div class="codigo"><div class="codigo-topo"><span>sh</span><button type="button" class="copiar botao">Copiar código</button></div><pre tabindex="0"><code>export TAURI_SIGNING_PRIVATE_KEY=&quot;$(cat ~/.tauri/seele.key)&quot;
 export TAURI_SIGNING_PRIVATE_KEY_PASSWORD=&#x27;a senha&#x27;
@@ -137,9 +138,10 @@ $env:TAURI_SIGNING_PRIVATE_KEY_PASSWORD = &#x27;a senha&#x27;
 <p>Suba tudo o que estiver em <code>entrega/</code>, <code>latest.json</code> inclusive.</p>
 <p>A assinatura do Windows pelo Azure <strong>não</strong> acontece no caminho manual: ela depende do <code>signCommand</code> que só o workflow escreve. Um instalador feito à mão sai sem ela, e é o comportamento certo — a alternativa seria pôr a credencial do Azure na máquina de quem empacota.</p>
 <p>---</p>
-<h3>Resumo dos segredos</h3>
+<h3 id="resumo-dos-segredos">Resumo dos segredos</h3>
 <div class="tabela" tabindex="0" role="region" aria-label="Tabela de referência"><table><thead><tr><th scope="col">segredo</th><th scope="col">para quê</th><th scope="col">sem ele</th></tr></thead><tbody><tr><td><code>TAURI_SIGNING_PRIVATE_KEY</code></td><td>assina o pacote de atualização</td><td>não há botão de atualizar</td></tr><tr><td><code>TAURI_SIGNING_PRIVATE_KEY_PASSWORD</code></td><td>abre a chave acima</td><td>idem</td></tr><tr><td><code>AZURE_ENDPOINT</code></td><td>assinatura do Windows</td><td>SmartScreen reclama</td></tr><tr><td><code>AZURE_ARTIFACT_SIGNING_ACCOUNT</code></td><td>idem</td><td>idem</td></tr><tr><td><code>AZURE_ARTIFACT_SIGNING_CERTIFICATE_PROFILE</code></td><td>idem</td><td>idem</td></tr><tr><td><code>AZURE_CLIENT_ID</code></td><td>o CI entra no Azure</td><td>idem</td></tr><tr><td><code>AZURE_CLIENT_SECRET</code></td><td>idem</td><td>idem</td></tr><tr><td><code>AZURE_TENANT_ID</code></td><td>idem</td><td>idem</td></tr><tr><td><code>APPLE_CERTIFICATE</code></td><td>assinatura do macOS</td><td>Gatekeeper reclama</td></tr><tr><td><code>APPLE_CERTIFICATE_PASSWORD</code></td><td>idem</td><td>idem</td></tr><tr><td><code>APPLE_SIGNING_IDENTITY</code></td><td>idem</td><td>idem</td></tr><tr><td><code>APPLE_ID</code></td><td>notarização</td><td>idem</td></tr><tr><td><code>APPLE_PASSWORD</code></td><td>idem</td><td>idem</td></tr><tr><td><code>APPLE_TEAM_ID</code></td><td>idem</td><td>idem</td></tr></tbody></table></div>
-<p>Nenhum deles é obrigatório para o build passar. Todos entram vazios sem quebrar nada — é a mesma regra em todos, e está num passo só do <code>release.yml</code>, o «Gravar a versão e o que houver de credencial».</p></main>
+<p>Nenhum deles é obrigatório para o build passar. Todos entram vazios sem quebrar nada — é a mesma regra em todos, e está num passo só do <code>release.yml</code>, o «Gravar a versão e o que houver de credencial».</p></main><aside class="docs-sumario"><details open><summary>Nesta página</summary><nav id="docs-sumario" aria-label="Nesta página"></nav></details></aside>
 </div>
+<script type="module" src="../docs.js"></script>
 </body>
 </html>

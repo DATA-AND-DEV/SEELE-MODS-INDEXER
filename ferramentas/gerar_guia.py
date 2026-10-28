@@ -121,8 +121,12 @@ def shell():
     # só a marca da tela atual para o app.js de lá, que aqui não roda.
     header = re.sub(r'href="#/([^"]*)"', lambda m: 'href="../' + ('#/' + m[1] if m[1] else '') + '"', header)
     header = re.sub(r' data-ir="[^"]+"', '', header)
+    header = header.replace('href="../" aria-current="page">MODs', 'href="https://mods.seele.sh/" aria-current="page">MODs')
     header = header.replace('href="guia/"', 'href="./" aria-current="page"')
     header = header.replace('id="busca"', 'id="buscar-guia"').replace('buscar mods, autores, repositórios', 'buscar no guia: pedidos, arquivos, erros').replace('Buscar no catálogo', 'Buscar no guia')
+    busca = re.search(r'<label class="cabecalho__busca">.*?</label>', source, re.S)[0]
+    busca = busca.replace('id="busca"', 'id="buscar-guia"').replace('buscar mods, autores, repositórios', 'buscar no guia: pedidos, arquivos, erros').replace('Buscar no catálogo', 'Buscar no guia')
+    header += '<div class="guia-busca">' + busca + '</div>'
     footer = re.search(r'<footer\b.*?</footer>', source, re.S)[0]
     # Só os caminhos locais sobem um nível; os links absolutos (get.seele.sh) ficam.
     footer = re.sub(r'href="(?!https?:)([^"#]+)"', lambda m:'href="../'+m[1]+'"', footer)
@@ -143,7 +147,7 @@ def generate():
             prevlink = f'<a href="#{mode}/{prev[1]}">← {html.escape(prev[2])}</a>' if prev else '<span></span>'
             nextlink = f'<a href="#{mode}/{nxt[1]}">{html.escape(nxt[2])} →</a>' if nxt else '<a href="#referencia/visao">Consultar a referência →</a>' if mode=='guia' else '<a href="#guia/comecar">Voltar ao início →</a>'
             articles.append(f'<article role="tabpanel" tabindex="0" aria-labelledby="aba-{mode}-{slug}" id="artigo-{mode}-{slug}" data-mode="{mode}" data-slug="{slug}" data-title="{html.escape(title,quote=True)}"><span id="{mode}/{slug}"></span><p class="coordenada">{label} / {i+1:02d}</p><h2>{html.escape(title)}</h2>{render(body)}<nav class="proximo" aria-label="Próximos capítulos">{prevlink}{nextlink}</nav></article>')
-        panels.append(f'<section id="painel-{mode}" role="tabpanel" aria-labelledby="modo-{mode}" class="documentacao"><aside class="sumario"><p class="coordenada">{label}</p><nav role="tablist" aria-orientation="vertical" aria-label="Capítulos de {label}">{tabs}</nav></aside><div class="artigos">'+''.join(articles)+'</div></section>')
+        panels.append(f'<section id="painel-{mode}" role="tabpanel" aria-labelledby="modo-{mode}" class="documentacao"><aside class="sumario"><nav role="tablist" aria-orientation="vertical" aria-label="Capítulos de {label}">{tabs}</nav></aside><div class="artigos">'+''.join(articles)+'</div></section>')
     page = '''<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="description" content="Aprenda a criar MODs para o SEELE: guia passo a passo, API 7 e 6, superfícies, contribuições, pedidos, eventos, arquivos, permissões, exemplos e publicação.">
@@ -152,7 +156,7 @@ def generate():
 <title>SEELE MODS: como criar um MOD</title><link rel="icon" href="../favicon.ico" sizes="32x32"><link rel="icon" href="../favicon.svg" type="image/svg+xml"><link rel="apple-touch-icon" href="../apple-touch-icon.png"><link rel="stylesheet" href="../fontes.css"><link rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../casca.css"><link rel="stylesheet" href="guia.css"><link rel="stylesheet" href="../estilo.css"></head>
 <body><div class="pagina"><a class="pular" href="#conteudo">Pular para a documentação</a>
 __CABECALHO__
-<section class="painel guia-abertura" aria-labelledby="titulo-guia"><div class="guia-apresentacao"><h1 id="titulo-guia">Criar um MOD</h1><p class="cartao-resumo">Guia de criação e referência da API. Do primeiro pacote à publicação no catálogo.</p><p class="rotulo">API 7 (e 6) · Schema 1 · Revisado em 25/10/2026</p></div><div class="guia-recursos"><a class="botao" href="guia-criacao-mods.md" download>BAIXAR GUIA .MD ↓</a><a class="botao" href="exemplos/contador.zip" download>MOD DE EXEMPLO ↓</a></div></section>
+<section class="painel guia-abertura" aria-labelledby="titulo-guia"><div class="guia-apresentacao"><h1 id="titulo-guia">Criar um MOD</h1><p class="rotulo">API 7 (e 6) · Schema 1 · Revisado em 25/10/2026</p></div><div class="guia-recursos"><a class="botao" href="guia-criacao-mods.md" download>BAIXAR GUIA .MD ↓</a><a class="botao" href="exemplos/contador.zip" download>MOD DE EXEMPLO ↓</a></div></section>
 <div class="barra-consulta"><div role="tablist" aria-label="Modo de leitura" class="modos"><button type="button" role="tab" class="botao botao-forte" id="modo-guia" aria-controls="painel-guia">Guia passo a passo</button><button type="button" role="tab" class="botao" id="modo-referencia" aria-controls="painel-referencia">Referência técnica</button></div></div>
 <main class="corpo" id="conteudo" tabindex="-1"><section id="resultados" aria-label="Resultados da busca" hidden><h2>Resultados</h2><p id="contagem" role="status"></p><div id="lista-resultados"></div><button type="button" id="limpar-busca" class="botao">Limpar busca</button></section>'''+''.join(panels)+'''</main>
 <p class="status-copia" id="status-copia" role="status" aria-live="polite"></p>__RODAPE__

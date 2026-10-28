@@ -8,13 +8,13 @@
      O índice ANSI 256 ao lado de cada cor é o mesmo do seele-tokens.json e é o
      que a TUI usa ao degradar de truecolor. Calculado por vizinho mais próximo
      em CIELAB, restrito a 16–255. Contraste medido sobre --seele-negro-painel. */
-  --seele-negro-absoluto: #050403;   /* ansi 232 · fundo. nunca cinza-carvão neutro */
-  --seele-negro-painel:   #0A0806;   /* ansi 232 · superfície de painel */
-  --seele-linha:          #241F19;   /* ansi 234 · borda 1px padrão */
-  --seele-linha-forte:    #3A322A;   /* ansi 236 · borda de painel ativo / régua */
-  --seele-osso:           #EAE3CF;   /* ansi 254 · texto corrido · 15,60:1 AAA */
-  --seele-osso-apagado:   #7A7061;   /* ansi 243 · rótulo secundário ·  4,11:1 só texto grande */
-  --seele-laranja-nerv:   #F2521F;   /* ansi 202 · acento institucional ·  5,71:1 AA */
+  --seele-negro-absoluto: #000000;   /* ansi 232 · fundo. nunca cinza-carvão neutro */
+  --seele-negro-painel:   #000000;   /* ansi 232 · superfície de painel */
+  --seele-linha:          #25282C;   /* ansi 234 · borda 1px padrão */
+  --seele-linha-forte:    #41464D;   /* ansi 236 · borda de painel ativo / régua */
+  --seele-osso:           #F2F3F5;   /* ansi 254 · texto corrido · 15,60:1 AAA */
+  --seele-osso-apagado:   #A1A9B3;   /* ansi 243 · rótulo secundário ·  4,11:1 só texto grande */
+  --seele-laranja-nerv:   #F47732;   /* ansi 202 · acento institucional ·  5,71:1 AA */
   --seele-laranja-fraco:  #331704;   /* ansi 234 · preenchimento laranja */
   --seele-vermelho-alerta:#FF1A1A;   /* ansi 196 · EXCLUSIVO alerta e queda ·  5,16:1 AA */
   --seele-vermelho-fraco: #2C0508;   /* ansi 233 */
@@ -54,7 +54,7 @@
      custa de contraste"): sob o véu isto entrega 4,97:1, e dentro da faixa que
      desce, 4,81:1. Uma cor escolhida para bater 4,5:1 no vácuo chegaria à tela
      abaixo de AA nas duas condições em que a tela de fato é vista. */
-  --seele-rotulo-painel:  #908574;   /* ansi 102 · rótulo miúdo 9–10px · 5,52:1 AA */
+  --seele-rotulo-painel:  #A1A9B3;   /* ansi 102 · rótulo miúdo 9–10px · 5,52:1 AA */
 
   /* Preenchimento de bloco em carga — o polígono MAGI que ainda não acendeu.
      `#2B0F05`, e não `laranja-fraco #331704`: o comp v2 escureceu este valor
@@ -103,7 +103,7 @@
   /* ---- borda ---- */
   --seele-b: 1px;
   --seele-b-forte: 2px;
-  --seele-raio: 0;
+  --seele-raio: 6px;
   --seele-sombra: none;
 }
 

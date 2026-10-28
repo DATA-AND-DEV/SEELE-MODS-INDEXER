@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#050403">
+<meta name="theme-color" content="#000000">
 <title>SEELE MODS: o catálogo de mods da comunidade</title>
 <meta name="description"
       content="O índice de mods do SEELE: temas, painéis, sons e integrações que passaram pela avaliação, num catálogo assinado e instalável direto do app.">
@@ -18,9 +18,9 @@
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="stylesheet" href="fontes.css">
-<link rel="stylesheet" href="tokens.css">
-<link rel="stylesheet" href="casca.css">
-<link rel="stylesheet" href="estilo.css">
+<link rel="stylesheet" href="tokens.css?v=0174">
+<link rel="stylesheet" href="casca.css?v=0174">
+<link rel="stylesheet" href="estilo.css?v=0174">
 </head>
 <body>
 <div class="pagina">
@@ -29,14 +29,21 @@
     <a class="cabecalho__marca" href="#/">
       <svg viewBox="0 0 96 96" width="26" height="26" role="img" aria-label="SEELE">
         <title>SEELE</title>
-        <path d="M34 34L62 62" stroke="#EAE3CF" stroke-width="6"></path>
-        <rect x="12" y="12" width="24" height="24" fill="#F2521F"></rect>
-        <rect x="62" y="62" width="20" height="20" fill="none" stroke="#F2521F" stroke-width="6"></rect>
+        <path d="M34 34L62 62" stroke="#F2F3F5" stroke-width="6"></path>
+        <rect x="12" y="12" width="24" height="24" fill="#F47732"></rect>
+        <rect x="62" y="62" width="20" height="20" fill="none" stroke="#F47732" stroke-width="6"></rect>
       </svg>
       <span><span class="cabecalho__nome">SEELE</span> <span class="cabecalho__sub">MODS</span></span>
     </a>
 
-    <label class="cabecalho__busca">
+    <nav class="cabecalho__nav" aria-label="Sites SEELE"><a class="cabecalho__link" href="https://get.seele.sh/">Produto</a><a class="cabecalho__link" href="https://get.seele.sh/#baixar">Downloads</a><a class="cabecalho__link" href="https://docs.seele.sh/">Documentação</a><a class="cabecalho__link" href="#/" aria-current="page">MODs</a></nav>
+    <!-- O mesmo BAIXAR do site, e para o mesmo lugar: um MOD se instala pelo
+         app, e quem chega aqui sem ele precisa de um caminho até ele. -->
+    <a class="cabecalho__acao" href="https://get.seele.sh/#baixar">BAIXAR</a>
+  </header>
+
+  <nav class="catalogo-nav" aria-label="Catálogo de MODs"><a href="#/" data-ir="catalogo">Catálogo</a><a href="https://docs.seele.sh/mods/">Criar um MOD</a><a href="#/revogacoes" data-ir="revogacoes">Revogações</a><a href="#/publicar" data-ir="publicar">Publicar</a></nav>
+  <section class="catalogo-intro"><h1>MODs para o seu SEELE</h1>    <label class="cabecalho__busca">
       <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="#908574" stroke-width="1.3" aria-hidden="true">
         <circle cx="7" cy="7" r="3.6"></circle><path d="M9.7 9.7L13 13"></path>
       </svg>
@@ -44,18 +51,7 @@
              spellcheck="false" autocomplete="off" aria-label="Buscar no catálogo">
     </label>
 
-    <nav class="cabecalho__nav" aria-label="Seções">
-      <a class="cabecalho__link" href="guia/">CRIAR UM MOD</a>
-      <a class="cabecalho__link" href="#/" data-ir="catalogo">CATÁLOGO</a>
-      <a class="cabecalho__link" href="#/revogacoes" data-ir="revogacoes">REVOGAÇÕES</a>
-      <a class="cabecalho__link" href="#/publicar" data-ir="publicar">PUBLICAR</a>
-    </nav>
-
-    <!-- O mesmo BAIXAR do site, e para o mesmo lugar: um MOD se instala pelo
-         app, e quem chega aqui sem ele precisa de um caminho até ele. -->
-    <a class="cabecalho__acao" href="https://get.seele.sh/#baixar">BAIXAR</a>
-  </header>
-
+<p class="catalogo-ajuda">A instalação e a gestão são feitas no app para computador.</p></section>
   <div class="aviso" id="aviso" role="status" aria-live="polite"></div>
 
   <main class="corpo" id="corpo"></main>
@@ -64,9 +60,9 @@
     <span class="rodape__marca">
       <svg viewBox="0 0 96 96" width="22" height="22" role="img" aria-label="SEELE">
         <title>SEELE</title>
-        <path d="M34 34L62 62" stroke="#EAE3CF" stroke-width="6"></path>
-        <rect x="12" y="12" width="24" height="24" fill="#F2521F"></rect>
-        <rect x="62" y="62" width="20" height="20" fill="none" stroke="#F2521F" stroke-width="6"></rect>
+        <path d="M34 34L62 62" stroke="#F2F3F5" stroke-width="6"></path>
+        <rect x="12" y="12" width="24" height="24" fill="#F47732"></rect>
+        <rect x="62" y="62" width="20" height="20" fill="none" stroke="#F47732" stroke-width="6"></rect>
       </svg>
       <span><span class="rodape__nome">SEELE</span> <span class="rodape__sub">MODS</span></span>
     </span>
@@ -80,6 +76,6 @@
     </nav>
   </footer>
 </div>
-<script type="module" src="app.js"></script>
+<script type="module" src="app.js?v=0174"></script>
 </body>
 </html>

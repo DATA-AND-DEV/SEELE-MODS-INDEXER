@@ -16,6 +16,7 @@ import re
 import shutil
 import subprocess
 import sys
+import unicodedata
 
 from ferramentas import gerar_guia
 
@@ -23,7 +24,7 @@ RAIZ = Path(__file__).resolve().parents[1]
 SITE = RAIZ / 'site'
 INDEXADOR = 'https://mods.seele.sh'
 COMPARTILHADOS = ['casca.css', 'estilo.css', 'tokens.css', 'fontes.css', 'fontes',
-                  'favicon.ico', 'favicon.svg', 'apple-touch-icon.png']
+                  'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'docs.css', 'docs.js']
 CABECALHOS = """# docs.seele.sh: páginas estáticas da documentação. Sem catálogo e sem MOD servido daqui.
 /*
   X-Content-Type-Options: nosniff
@@ -40,14 +41,17 @@ def para_o_indexador(pagina: str) -> str:
     pagina = re.sub(r'href="\.\./#/([^"]*)"', lambda m: f'href="{INDEXADOR}/#/{m[1]}"', pagina)
     for arquivo in ('catalogo.json', 'revogacoes.json', 'chave.pub'):
         pagina = pagina.replace(f'href="../{arquivo}"', f'href="{INDEXADOR}/{arquivo}"')
+    pagina = pagina.replace('href="https://mods.seele.sh/" aria-current="page">MODs', 'href="https://mods.seele.sh/">MODs')
+    pagina = pagina.replace('href="https://docs.seele.sh/">Documentação', 'href="https://docs.seele.sh/" aria-current="page">Documentação')
     return pagina
 
 
 MANIFESTO = Path(__file__).with_name('docs_site.json')
 ESTADOS = {
     'atual': ('ATUAL NA 0.17', 'Descreve a 0.17.'),
+    'versao_018': ('SEELE 0.18', 'Guia da 0.18. Confira os downloads disponíveis e os requisitos de compatibilidade descritos nesta página.'),
     'decisao': ('DECISÃO ACEITA', 'Uma decisão de arquitetura aceita; o texto é o da decisão, com a data dela.'),
-    'historico': ('HISTÓRICO', 'Escrito antes da 0.17: pode descrever a linha 1 (a 0.16, QUIC) e os endereços antigos (seele.app.br), que serão aposentados.'),
+    'historico': ('HISTÓRICO', 'Registro de uma versão anterior. Confira a versão e a nota desta página antes de aplicar os passos à versão que você usa.'),
 }
 
 
@@ -134,10 +138,26 @@ def preparar(texto: str, fonte: str, slugs: dict[str, str]) -> str:
 
 
 def casca(titulo: str, corpo: str, raiz: str) -> str:
-    nav = ''.join(
-        f'<li><span class="rotulo">{html.escape(s["titulo"])}</span><ul>'
-        + ''.join(f'<li><a href="{raiz}{p["slug"]}/">{html.escape(p["titulo"])}</a></li>' for p in s['paginas'])
-        + '</ul></li>' for s in manifesto()['secoes'])
+    vistos = set()
+    def ancora(m):
+        nome = re.sub(r'[^a-z0-9]+', '-', unicodedata.normalize('NFKD', re.sub(r'<[^>]+>', '', m[2])).encode('ascii', 'ignore').decode().lower()).strip('-') or 'secao'
+        base = nome
+        i = 2
+        while nome in vistos:
+            nome = f'{base}-{i}'
+            i += 1
+        vistos.add(nome)
+        return f'<h{m[1]} id="{nome}">{m[2]}</h{m[1]}>'
+    corpo = re.sub(r'<h([23])>(.*?)</h\1>', ancora, corpo)
+    guia = manifesto().get('guia_de_tarefas', 'usar-a-0-17')
+    secoes = []
+    for secao in manifesto()['secoes']:
+        links = ''.join(f'<li><a href="{raiz}{p["slug"]}/"' + (' aria-current="page"' if p['titulo'] == titulo else '') + f'>{html.escape(p["titulo"])}</a></li>' for p in secao['paginas'])
+        if all(p['estado'] == 'historico' for p in secao['paginas']):
+            secoes.append(f'<li><details><summary>{html.escape(secao["titulo"])}</summary><ul>{links}</ul></details></li>')
+        else:
+            secoes.append(f'<li><span class="rotulo">{html.escape(secao["titulo"])}</span><ul>{links}</ul></li>')
+    nav = ''.join(secoes)
     return f"""<!doctype html>
 <html lang="pt-BR">
 <head>
@@ -145,14 +165,16 @@ def casca(titulo: str, corpo: str, raiz: str) -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{html.escape(titulo)} · Documentação do SEELE</title>
 <link rel="icon" href="{raiz}favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="{raiz}tokens.css"><link rel="stylesheet" href="{raiz}fontes.css"><link rel="stylesheet" href="{raiz}casca.css"><link rel="stylesheet" href="{raiz}estilo.css">
+<link rel="stylesheet" href="{raiz}tokens.css"><link rel="stylesheet" href="{raiz}fontes.css"><link rel="stylesheet" href="{raiz}casca.css"><link rel="stylesheet" href="{raiz}estilo.css"><link rel="stylesheet" href="{raiz}docs.css">
 </head>
 <body>
 <a href="#conteudo" class="pular">Pular para o conteúdo</a>
+<header class="cabecalho"><a class="cabecalho__marca" href="https://get.seele.sh/"><span class="cabecalho__nome">SEELE</span></a><nav class="cabecalho__nav" aria-label="Sites SEELE"><a class="cabecalho__link" href="https://get.seele.sh/">Produto</a><a class="cabecalho__link" href="https://get.seele.sh/#baixar">Downloads</a><a class="cabecalho__link" href="{raiz or './'}" aria-current="page">Documentação</a><a class="cabecalho__link" href="https://mods.seele.sh/">MODs</a></nav><a class="cabecalho__acao" href="https://get.seele.sh/#baixar">Baixar</a></header>
 <div class="docs">
-<nav class="docs-nav" aria-label="Documentação"><a href="{raiz}">Início</a><ul>{nav}<li><span class="rotulo">MODs</span><ul><li><a href="{raiz}mods/">Criar um MOD (o guia)</a></li><li><a href="{INDEXADOR}/">O índice de MODs</a></li></ul></li></ul></nav>
-<main id="conteudo" class="painel">{corpo}</main>
+<aside class="docs-lateral"><label class="docs-busca">Buscar na documentação <input id="docs-busca" type="search" placeholder="Buscar…  /" autocomplete="off" aria-controls="busca-resultados"></label><div id="busca-resultados" role="region" aria-label="Resultados da busca" hidden><p id="busca-status" role="status" aria-live="polite"></p><ul></ul></div><details class="docs-menu" open><summary>Navegar na documentação</summary><nav class="docs-nav" aria-label="Documentação"><a href="{raiz or './'}">Visão geral</a><div class="docs-tarefas"><span class="rotulo">Caminho rápido · 0.18</span><a href="{raiz}{guia}/#instalar">Versão e instalação</a><a href="{raiz}{guia}/#conversar-pelo-codigo">Chamar pelo código</a><a href="{raiz}{guia}/#amigos-e-contatos">Amigos e contatos</a><a href="{raiz}{guia}/#entrar-num-servidor">Entrar em um servidor</a><a href="{raiz}{guia}/#hospedar">Hospedar um espaço</a><a href="{raiz}{guia}/#voz-e-tela">Ajustar voz e tela</a></div><ul>{nav}<li><span class="rotulo">MODs</span><ul><li><a href="{raiz}mods/">Criar um MOD (o guia)</a></li><li><a href="{INDEXADOR}/">O índice de MODs</a></li></ul></li></ul></nav></details></aside>
+<main id="conteudo" class="painel docs-artigo">{corpo}</main><aside class="docs-sumario"><details open><summary>Nesta página</summary><nav id="docs-sumario" aria-label="Nesta página"></nav></details></aside>
 </div>
+<script type="module" src="{raiz}docs.js"></script>
 </body>
 </html>
 """
@@ -169,9 +191,9 @@ def pagina_inicial(pendentes: dict[str, list[str]] | None = None) -> str:
     previa = ('<aside class="painel aviso condicao" role="note"><p><strong>PRÉVIA.</strong> Há páginas com afirmações ainda não '
               'comprovadas (marcadas RASCUNHO). Esta montagem não é a de produção.</p></aside>') if pendentes else ''
     corpo = ('<h1>Documentação do SEELE</h1>' + previa +
-             '<p>O que o repositório do SEELE documenta, curado: cada página diz de onde veio e se descreve a 0.17 ou é HISTÓRICA '
-             '(escrita antes dela). Para o que mudou na 0.17, comece por «A 0.17». O SEELE não usa servidor de retransmissão (TURN).</p>'
-             + secoes)
+             '<aside class="painel aviso" role="note"><p><strong>SEELE 0.18.</strong> '
+             'O guia descreve a 0.18. Confira os downloads disponíveis e a compatibilidade entre o app, a página e o ponto de encontro. '
+             '</p></aside>' + secoes)
     return casca('Início', corpo, '')
 
 
@@ -226,6 +248,13 @@ def gerar(destino: Path, raiz_seele: Path | None = None, producao: bool = False)
         (destino / p['slug'] / 'index.html').write_text(casca(p['titulo'], corpo, '../'), encoding='utf-8')
         fontes.append({'slug': p['slug'], 'fonte': p['fonte'], 'commit_base': commit, 'situacao': situacao,
                        'estado': p['estado'], 'sha256': sha, 'condicoes_abertas': dela})
+    indice_busca = []
+    for p in lista:
+        texto = (destino / p['slug'] / 'index.html').read_text(encoding='utf-8')
+        texto = re.sub(r'<[^>]+>', ' ', texto.split('class="painel docs-artigo">', 1)[-1].split('</main>', 1)[0])
+        indice_busca.append({'url': p['slug'] + '/', 'titulo': p['titulo'], 'estado': ESTADOS[p['estado']][0], 'texto': html.unescape(re.sub(r'\s+', ' ', texto))})
+    indice_busca.append({'url': 'mods/', 'titulo': 'Criar um MOD', 'estado': 'GUIA DA API', 'texto': re.sub(r'<[^>]+>', ' ', indice.read_text(encoding='utf-8'))})
+    (destino / 'busca-indice.js').write_text('export default ' + json.dumps(indice_busca, ensure_ascii=False) + ';\n', encoding='utf-8')
     (destino / 'fontes.json').write_text(json.dumps(fontes, ensure_ascii=False, indent=1), encoding='utf-8')
     (destino / '_headers').write_text(CABECALHOS, encoding='utf-8')
     # A raiz Pages é este diretório: não herdar ./publicado do catálogo pai.

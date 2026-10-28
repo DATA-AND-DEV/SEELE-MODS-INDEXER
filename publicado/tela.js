@@ -175,7 +175,24 @@ function cartao(mod, numeroEscolhido, agora, aoAbrir) {
     elemento("span", "numero-rotulo", "PUBLICADA"),
   );
 
-  botao.append(topo, elemento("span", "cartao-resumo", mod.resumo), numeros);
+  const previa = elemento("span", "mod-previa");
+  previa.dataset.mod = mod.id.split("/").pop();
+  previa.setAttribute("aria-hidden", "true");
+  if (mod.id === "seele/estilo") {
+    previa.append(elemento("span", "previa-label", "APARÊNCIA"));
+    const cores = elemento("span", "previa-cores");
+    for (let i = 0; i < 4; i++) cores.append(elemento("i", ""));
+    previa.append(cores, elemento("span", "previa-legenda", "Tema · Cantos · Densidade · Fonte"));
+  } else if (mod.id === "seele/mesa") {
+    previa.append(elemento("span", "previa-label", "MESA"), elemento("span", "previa-tabuleiro", "○    □    △"), elemento("span", "previa-legenda", "Tabuleiro · Fichas · Iniciativa"));
+  } else if (mod.id === "seele/perfis") {
+    previa.append(elemento("span", "previa-label", "PERFIL DO SERVIDOR"), elemento("span", "previa-perfil", "Nome e biografia"), elemento("span", "previa-legenda", "Uma aparência para cada servidor"));
+  }
+  if (previa.childNodes.length) {
+    previa.append(elemento("span", "previa-aviso", "Ilustração dos recursos"));
+    botao.append(previa);
+  }
+  botao.append(topo, elemento("span", "cartao-resumo", mod.resumo), numeros, elemento("span", "cartao-detalhes", "Ver detalhes →"));
   if (dados.outraRevogada) {
     botao.append(elemento("span", "cartao-retirada", "OUTRA VERSÃO DESTE MOD FOI RETIRADA"));
   }
@@ -203,23 +220,21 @@ function telaCatalogo(estado, acoes) {
 
   const grupoOrdem = elemento("div", "grupo");
   grupoOrdem.append(elemento("span", "rotulo", "ORDENAR"));
+  const ordemSelect = elemento("select", "ordem-select");
+  ordemSelect.setAttribute("aria-label", "Ordenar catálogo");
   for (const ordem of ORDENS) {
-    const botao = elemento("button", "filtro", ordem.nome);
-    botao.type = "button";
-    botao.setAttribute("aria-pressed", String(estado.ordem === ordem.id));
-    botao.addEventListener("click", () => acoes.ordenar(ordem.id));
-    grupoOrdem.append(botao);
+    const opcao = elemento("option", null, ordem.nome);
+    opcao.value = ordem.id;
+    opcao.selected = estado.ordem === ordem.id;
+    ordemSelect.append(opcao);
   }
+  ordemSelect.addEventListener("change", () => acoes.ordenar(ordemSelect.value));
+  grupoOrdem.append(ordemSelect);
 
-  const explicacao = elemento(
-    "p",
-    "cartao-resumo",
-    "O índice não tem cadastro e não coleta nada. Ele guarda o veredito da avaliação, o commit que foi avaliado, e o número que identifica os bytes.",
-  );
-  lateral.append(grupoNivel, grupoOrdem, explicacao);
+  lateral.append(grupoNivel, grupoOrdem);
 
   const painel = elemento("div", "painel");
-  painel.append(elemento("h1", null, estado.nivel ? frase("niveis", estado.nivel) : "Mods da comunidade"));
+  painel.append(elemento("h2", "catalogo-lista-titulo", estado.nivel ? frase("niveis", estado.nivel) : "Catálogo"));
   painel.append(
     elemento(
       "span",
@@ -594,11 +609,14 @@ export function desenharAviso(no, integridade) {
   } else {
     no.append(elemento("p", null, frase("falhas", integridade.causa)));
   }
-  no.append(
+  const detalhes = elemento("details", "integridade-detalhes");
+  detalhes.append(elemento("summary", null, "O que esta conferência garante"));
+  detalhes.append(
     elemento(
       "p",
       "aviso-nota",
       "Esta conferência acontece na mesma origem que serve o catálogo, então ela pega corrupção e cache velho — não adulteração. A conferência que decide acontece dentro do app, com a chave que veio compilada nele.",
     ),
   );
+  no.append(detalhes);
 }

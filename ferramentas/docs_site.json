@@ -1,22 +1,15 @@
 {
-  "_leia": "O site docs.seele.sh: a documentação AUTORITATIVA do repositório SEELE, curada (nada de planejamento privado, quarentena, logs ou evidências). Cada página diz de onde veio (o caminho e o commit) e se é ATUAL na 0.17 ou HISTÓRICA. 'historico' = escrita antes da 0.17 e pode descrever a linha 1 (a 0.16, QUIC) e os endereços antigos. O SEELE não usa TURN. As páginas HISTÓRICAS ficam em «Referências»: nenhuma delas é o caminho de uso da 0.17 (o guia curto é).",
+  "_leia": "Documentação curada do SEELE. Estado explícito: atual, referência da 0.18, decisão aceita ou histórico. O guia 0.18 não anuncia publicação. URLs históricas são preservadas. Sem fontes de planejamento privado, pendências ou evidências.",
   "secoes": [
     {
       "titulo": "Começar",
       "paginas": [
         {
-          "slug": "usar-a-0-17",
-          "titulo": "Usar o SEELE 0.17 (o guia curto)",
-          "fonte": "docs/usar-a-0.17.md",
-          "estado": "atual",
-          "nota": "O guia de uso desta versão: endereços, instalar, entrar, hospedar, voz e tela, MODs, alcance e identidade."
-        },
-        {
-          "slug": "novidades-0-17",
-          "titulo": "A 0.17: o que mudou e a compatibilidade",
-          "fonte": "empacotar/notas/0.17.0.md",
-          "estado": "atual",
-          "nota": "As notas da 0.17: o Servidor 2.0 (WebRTC), a 0.16 ao lado, os endereços novos e a identidade nova no navegador."
+          "slug": "usar-a-0-18",
+          "titulo": "Usar o SEELE 0.18",
+          "fonte": "docs/usar-a-0.18.md",
+          "estado": "versao_018",
+          "nota": "Código e amigos no navegador e no desktop. Confira a disponibilidade e os limites no guia."
         }
       ]
     },
@@ -90,6 +83,25 @@
       ]
     },
     {
+      "titulo": "Referências (históricas, até a 0.17.3)",
+      "paginas": [
+        {
+          "slug": "usar-a-0-17",
+          "titulo": "Usar o SEELE até a 0.17.3 (histórico)",
+          "fonte": "docs/usar-a-0.17.md",
+          "estado": "historico",
+          "nota": "Guia anterior preservado. A limitação de ligações por código ao desktop descreve até a 0.17.3; veja o guia 0.18 para o fluxo novo."
+        },
+        {
+          "slug": "novidades-0-17",
+          "titulo": "A 0.17: o que mudou e a compatibilidade",
+          "fonte": "empacotar/notas/0.17.0.md",
+          "estado": "historico",
+          "nota": "Notas publicadas da 0.17.0; não descrevem o SEELE 0.18."
+        }
+      ]
+    },
+    {
       "titulo": "Referências (históricas, escritas para a 0.16)",
       "paginas": [
         {
@@ -157,5 +169,6 @@
         }
       ]
     }
-  ]
+  ],
+  "guia_de_tarefas": "usar-a-0-18"
 }
