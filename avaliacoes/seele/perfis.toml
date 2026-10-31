@@ -70,6 +70,14 @@ repo = "https://github.com/DATA-AND-DEV/PERFIS"
 titulo = "Perfis"
 resumo = "Um perfil por servidor: nome, pronomes, biografia, cor, avatar e banner — separados do seu perfil no SEELE."
 
+# **Descontinuado, e não revogado.** Na 0.19 o perfil por servidor passou a ser
+# do produto («incorporado-ao-produto»), e os servidores 0.19 recusam este MOD.
+# Mas quem está num servidor 0.18 ainda o usa, e `revogacoes.toml` bloquearia o
+# download dele — por isso o aviso mora aqui, no campo do MOD, e o pacote e o
+# hash de cada versão seguem exatamente como estavam. 1793404800 é
+# 2026-10-31T00:00:00Z.
+descontinuado = { desde = 1793404800, motivo = "incorporado-ao-produto", produto = "0.19" }
+
 [[versoes]]
 versao = "1.0.0"
 commit = "90f0859cd0211bf875a2d0cea4ee6275dff25dda"

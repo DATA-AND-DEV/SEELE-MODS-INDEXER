@@ -85,23 +85,28 @@ def montar(
         # achou». Eles não são o resumo das versões nem servem para descrever
         # uma versão escolhida — para isso existem os campos por versão acima.
         ultima = max(a.versoes, key=lambda v: v.avaliado_em)
-        mods.append(
-            {
-                "id": a.id,
-                "autor": a.autor,
-                "nome": a.nome,
-                "titulo": a.titulo,
-                "resumo": a.resumo,
-                "repo": a.repo,
-                # `oficial` é conveniência de tela e não prova. Quem prova é a
-                # assinatura — o campo mente junto com um catálogo adulterado.
-                "oficial": ultima.nivel == "oficial",
-                "nivel": ultima.nivel,
-                "commit": ultima.commit,
-                "notas": list(ultima.notas),
-                "versoes": versoes,
-            }
-        )
+        entrada = {
+            "id": a.id,
+            "autor": a.autor,
+            "nome": a.nome,
+            "titulo": a.titulo,
+            "resumo": a.resumo,
+            "repo": a.repo,
+            # `oficial` é conveniência de tela e não prova. Quem prova é a
+            # assinatura — o campo mente junto com um catálogo adulterado.
+            "oficial": ultima.nivel == "oficial",
+            "nivel": ultima.nivel,
+            "commit": ultima.commit,
+            "notas": list(ultima.notas),
+            "versoes": versoes,
+        }
+        # Campo do MOD, e só quando existe: um MOD vivo continua com a mesma
+        # forma de antes, e `conferir_append_only` (que olha só `hash` por
+        # versão) não vê diferença. Descontinuar não é revogar — nenhuma
+        # versão some, nenhum hash muda.
+        if a.descontinuado is not None:
+            entrada["descontinuado"] = dict(a.descontinuado)
+        mods.append(entrada)
 
     # `api_oferecida` não é lida pelo cliente em produção — ela existe para o
     # teste de vetor do SEELE, que compara este número com o `MOD_API_VERSION`

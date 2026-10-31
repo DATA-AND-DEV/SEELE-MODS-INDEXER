@@ -59,6 +59,31 @@ class Avaliacao:
     titulo: str
     resumo: str
     versoes: list[Versao] = field(default_factory=list)
+    # Campo do MOD, e não de versão: descontinuar não toca em nenhum byte
+    # publicado, então não mexe em hash. É também o que o separa da revogação —
+    # esta tira o download do ar, aquela só avisa.
+    descontinuado: dict | None = None
+
+
+def _descontinuado(bruto, identificador: str, listas: dict) -> dict | None:
+    """`descontinuado = { desde, motivo, produto }`, ou `None` se o MOD segue vivo.
+
+    `motivo` é identificador de lista fechada (`descontinuacoes`) pelo mesmo
+    motivo de `nota`: quem escreve a frase é `site/frases.js`, e um typo aqui
+    entraria assinado no catálogo e apareceria cru na tela."""
+    if bruto is None:
+        return None
+    if not isinstance(bruto, dict):
+        raise Recusado("descontinuado-torto", f"{identificador}: {bruto!r}")
+    desde, motivo, produto = bruto.get("desde"), bruto.get("motivo"), bruto.get("produto")
+    # `bool` é `int` em Python; `desde = true` não é uma data.
+    if not isinstance(desde, int) or isinstance(desde, bool) or desde <= 0:
+        raise Recusado("descontinuado-torto", f"{identificador}: desde={desde!r}")
+    if not isinstance(produto, str) or not produto:
+        raise Recusado("descontinuado-torto", f"{identificador}: produto={produto!r}")
+    if motivo not in listas.get("descontinuacoes", []):
+        raise Recusado("descontinuacao-desconhecida", f"{identificador}: {motivo!r}")
+    return {"desde": desde, "motivo": motivo, "produto": produto}
 
 
 def ler(caminho: Path, listas: dict) -> Avaliacao:
@@ -124,6 +149,8 @@ def ler(caminho: Path, listas: dict) -> Avaliacao:
             )
         )
 
+    descontinuado = _descontinuado(cru.get("descontinuado"), identificador, listas)
+
     return Avaliacao(
         id=identificador,
         autor=autor,
@@ -132,6 +159,7 @@ def ler(caminho: Path, listas: dict) -> Avaliacao:
         titulo=cru.get("titulo", ""),
         resumo=cru.get("resumo", ""),
         versoes=versoes,
+        descontinuado=descontinuado,
     )
 
 

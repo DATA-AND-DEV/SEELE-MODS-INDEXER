@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-import { FALHAS, MOTIVOS, NIVEIS, NOTAS, REVOGACOES, ROTULOS_DE_NIVEL, frase } from "../frases.js";
+import { DESCONTINUACOES, FALHAS, MOTIVOS, NIVEIS, NOTAS, REVOGACOES, ROTULOS_DE_NIVEL, frase } from "../frases.js";
 import { CAUSAS } from "../revogacoes.js";
 
 const LISTAS = JSON.parse(
@@ -137,4 +137,13 @@ test("nenhuma frase promete autenticidade", () => {
 test("um identificador desconhecido não devolve undefined", () => {
   // Mostrar «undefined» para quem lê é pior que mostrar o identificador.
   assert.equal(frase("motivos", "inexistente"), "inexistente");
+});
+
+test("toda descontinuação da lista fechada tem frase, e nenhuma sobra", () => {
+  for (const id of LISTAS.descontinuacoes) {
+    assert.ok(DESCONTINUACOES[id], `falta frase para a descontinuação ${id}`);
+  }
+  for (const id of Object.keys(DESCONTINUACOES)) {
+    assert.ok(LISTAS.descontinuacoes.includes(id), `frase órfã: ${id}`);
+  }
 });

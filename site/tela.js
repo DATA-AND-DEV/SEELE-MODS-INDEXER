@@ -93,6 +93,20 @@ export function linhasDaFicha(mod, versao) {
   ];
 }
 
+/**
+ * A frase do selo de descontinuação, ou `null` se o MOD segue vivo.
+ *
+ * «Descontinuado: agora faz parte do SEELE 0.19». O motivo vem de lista
+ * fechada e tem frase em `frases.js`; o produto é o que o catálogo assinado
+ * diz. Não é aviso de revogação: o MOD continua instalável para quem está num
+ * servidor da versão anterior, e a tela não o pinta como retirado.
+ */
+export function textoDaDescontinuacao(mod) {
+  const d = mod?.descontinuado;
+  if (!d) return null;
+  return `Descontinuado: ${frase("descontinuacoes", d.motivo)} ${d.produto}`.trim();
+}
+
 function selo(nivel) {
   const no = elemento("span", "selo", frase("rotulos", nivel).toUpperCase());
   no.dataset.nivel = nivel;
@@ -121,6 +135,7 @@ export function dadosDoCartao(mod, numeroEscolhido, agora) {
     versao: versao.versao,
     idade: textoDaIdade(versao.publicado_em, agora),
     nivel: versao.revogada ? "revogada" : avaliacaoDaVersao(mod, versao).nivel,
+    descontinuado: textoDaDescontinuacao(mod),
     outraRevogada: (mod.versoes ?? []).some(
       (v) => v.revogada && v.versao !== versao.versao,
     ),
@@ -192,7 +207,11 @@ function cartao(mod, numeroEscolhido, agora, aoAbrir) {
     previa.append(elemento("span", "previa-aviso", "Ilustração dos recursos"));
     botao.append(previa);
   }
-  botao.append(topo, elemento("span", "cartao-resumo", mod.resumo), numeros, elemento("span", "cartao-detalhes", "Ver detalhes →"));
+  botao.append(topo);
+  if (dados.descontinuado) {
+    botao.append(elemento("span", "selo-descontinuado", dados.descontinuado.toUpperCase()));
+  }
+  botao.append(elemento("span", "cartao-resumo", mod.resumo), numeros, elemento("span", "cartao-detalhes", "Ver detalhes →"));
   if (dados.outraRevogada) {
     botao.append(elemento("span", "cartao-retirada", "OUTRA VERSÃO DESTE MOD FOI RETIRADA"));
   }
@@ -331,6 +350,8 @@ function telaMod(estado, acoes) {
   const avaliacao = avaliacaoDaVersao(mod, versao);
   painel.append(elemento("h1", null, mod.titulo));
   painel.append(elemento("span", "resumo-da-lista", `${mod.id} · ${mod.repo}`));
+  const descontinuado = textoDaDescontinuacao(mod);
+  if (descontinuado) painel.append(elemento("p", "selo-descontinuado", descontinuado));
   painel.append(elemento("p", "cartao-resumo", mod.resumo));
 
   // A escolha vem ANTES de tudo o que ela muda: notas, ficha e arquivos falam

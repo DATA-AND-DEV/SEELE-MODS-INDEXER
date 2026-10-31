@@ -217,6 +217,16 @@ h1 {
 .selo[data-nivel="com-notas"] { color: var(--seele-sync-degradado); }
 .selo[data-nivel="revogada"] { color: var(--seele-vermelho-alerta); }
 
+/* «Descontinuado: agora faz parte do SEELE 0.19». Não é o vermelho da
+   revogação: o MOD continua instalável para quem está na versão anterior, e
+   o aviso diz que o caminho mudou, não que algo está errado. */
+.selo-descontinuado {
+  align-self: flex-start; padding: 3px var(--seele-e1);
+  font-size: 8px; letter-spacing: 0.14em;
+  color: var(--seele-sync-degradado);
+  border: var(--seele-b) solid currentColor;
+}
+
 /* O cartão diz que OUTRA versão deste MOD foi retirada — não a que ele
    anuncia. O selo por MOD dizia as duas coisas com o mesmo vermelho, e
    separá-las custou esta linha: o selo fala da versão do cartão, e esta

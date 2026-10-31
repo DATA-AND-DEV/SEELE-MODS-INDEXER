@@ -176,3 +176,50 @@ def test_repo_torto_e_recusado(tmp_path, repo):
 def test_repo_aceito_nas_formas_que_o_projeto_usa(tmp_path, repo):
     bom = BOM.replace('repo = "https://github.com/juli/seele-cinza-frio"', f'repo = "{repo}"')
     assert ler(escrever(tmp_path, bom), LISTAS).repo == repo
+
+
+DESCONTINUADO = 'descontinuado = { desde = 1793404800, motivo = "incorporado-ao-produto", produto = "0.19" }\n'
+
+
+def com_descontinuado(linha):
+    return BOM.replace("\n[[versoes]]", f"{linha}\n[[versoes]]", 1)
+
+
+def test_sem_descontinuado_o_mod_segue_vivo(tmp_path):
+    assert ler(escrever(tmp_path, BOM), LISTAS).descontinuado is None
+
+
+def test_le_o_descontinuado(tmp_path):
+    a = ler(escrever(tmp_path, com_descontinuado(DESCONTINUADO)), LISTAS)
+    assert a.descontinuado == {"desde": 1793404800, "motivo": "incorporado-ao-produto", "produto": "0.19"}
+
+
+def test_descontinuacao_fora_da_lista_e_recusada(tmp_path):
+    # Mesmo molde de `nota-desconhecida`: um typo entraria assinado no catálogo.
+    torto = com_descontinuado(DESCONTINUADO.replace("incorporado-ao-produto", "incorporado-ao-produt0"))
+    with pytest.raises(Recusado) as erro:
+        ler(escrever(tmp_path, torto), LISTAS)
+    assert erro.value.codigo == "descontinuacao-desconhecida"
+
+
+@pytest.mark.parametrize(
+    "linha",
+    [
+        'descontinuado = "sim"',
+        'descontinuado = { desde = "ontem", motivo = "incorporado-ao-produto", produto = "0.19" }',
+        'descontinuado = { desde = true, motivo = "incorporado-ao-produto", produto = "0.19" }',
+        'descontinuado = { motivo = "incorporado-ao-produto", produto = "0.19" }',
+        'descontinuado = { desde = 1793404800, motivo = "incorporado-ao-produto" }',
+    ],
+)
+def test_descontinuado_torto_e_recusado(tmp_path, linha):
+    with pytest.raises(Recusado) as erro:
+        ler(escrever(tmp_path, com_descontinuado(linha)), LISTAS)
+    assert erro.value.codigo == "descontinuado-torto"
+
+
+def test_o_perfis_real_esta_descontinuado_e_nao_revogado():
+    a = ler(RAIZ / "avaliacoes" / "seele" / "perfis.toml", LISTAS)
+    assert a.descontinuado == {"desde": 1793404800, "motivo": "incorporado-ao-produto", "produto": "0.19"}
+    # Descontinuar não é revogar: o download segue no ar para os servidores 0.18.
+    assert "seele/perfis" not in (RAIZ / "revogacoes.toml").read_text(encoding="utf-8")

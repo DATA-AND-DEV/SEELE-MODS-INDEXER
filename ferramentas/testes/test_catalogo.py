@@ -1,3 +1,5 @@
+from dataclasses import replace
+
 import pytest
 
 from ferramentas.avaliacoes import Avaliacao, Versao
@@ -293,3 +295,42 @@ def test_o_catalogo_carrega_a_api_que_este_indexador_oferece():
     e o teste de vetor do SEELE compara este número com o dele."""
     catalogo = montar([], {}, 1)
     assert catalogo["api_oferecida"] == VERSAO_DA_API
+
+
+DESCONTINUADO = {"desde": 1793404800, "motivo": "incorporado-ao-produto", "produto": "0.19"}
+
+
+def descontinuada():
+    return replace(avaliacao(), descontinuado=dict(DESCONTINUADO))
+
+
+def test_o_descontinuado_passa_para_o_mod():
+    m = montar([descontinuada()], pronta(), 1757100000)["mods"][0]
+    assert m["descontinuado"] == DESCONTINUADO
+
+
+def test_mod_vivo_nao_ganha_a_chave_descontinuado():
+    # A forma do catálogo de quem não foi descontinuado não muda.
+    m = montar([avaliacao()], pronta(), 1757100000)["mods"][0]
+    assert "descontinuado" not in m
+
+
+def test_descontinuar_nao_mexe_em_hash_nem_em_versoes():
+    vivo = montar([avaliacao()], pronta(), 1757100000)["mods"][0]
+    morto = montar([descontinuada()], pronta(), 1757100000)["mods"][0]
+    assert morto["versoes"] == vivo["versoes"]
+
+
+def test_append_only_aceita_o_mod_que_passou_a_ser_descontinuado():
+    # É campo do MOD e não de versão: o catálogo anterior, sem o campo, não
+    # pode fazer o novo ser recusado como versão sumida ou editada.
+    anterior = montar([avaliacao()], pronta(), 1757100000)
+    novo = montar([descontinuada()], pronta(), 1757200000)
+    conferir_append_only(novo, anterior)
+
+
+def test_a_copia_do_descontinuado_nao_aponta_para_a_avaliacao():
+    a = descontinuada()
+    m = montar([a], pronta(), 1757100000)["mods"][0]
+    m["descontinuado"]["produto"] = "x"
+    assert a.descontinuado["produto"] == "0.19"

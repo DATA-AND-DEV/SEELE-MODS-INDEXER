@@ -30,6 +30,18 @@ export const NOTAS = {
   "roda-no-servidor": "tem uma metade que roda na máquina de quem hospeda",
 };
 
+/**
+ * Por que um MOD foi descontinuado — que não é o mesmo que revogado.
+ *
+ * Revogar tira o download do ar e diz que há um defeito; descontinuar só diz
+ * que o MOD não é mais o caminho. A frase completa («Descontinuado: agora faz
+ * parte do SEELE 0.19») se monta em `tela.js`, com o produto que vem do
+ * catálogo — o número da versão não é frase fixa.
+ */
+export const DESCONTINUACOES = {
+  "incorporado-ao-produto": "agora faz parte do SEELE",
+};
+
 /** O que cada nível atesta — e o que ele não atesta. */
 export const NIVEIS = {
   oficial: "nosso, e nós respondemos por ele",
@@ -116,6 +128,7 @@ export const REVOGACOES = {
 const GRUPOS = {
   motivos: MOTIVOS,
   notas: NOTAS,
+  descontinuacoes: DESCONTINUACOES,
   niveis: NIVEIS,
   rotulos: ROTULOS_DE_NIVEL,
   falhas: FALHAS,

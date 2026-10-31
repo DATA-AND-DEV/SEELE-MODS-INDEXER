@@ -7,6 +7,7 @@ import {
   dadosDoCartao,
   linhasDaFicha,
   textoDaIdade,
+  textoDaDescontinuacao,
   enderecoDaSolicitacao,
 } from "../tela.js";
 import { acaoDeInstalar } from "../catalogo.js";
@@ -264,4 +265,20 @@ test("lista desempata pela versão numérica, preservando data e catálogo", () 
     assert.deepEqual(lista.filter(v => v.escolhida).map(v => v.versao), ["5.10.0"]);
     assert.equal(JSON.stringify(ordem), antes);
   }
+});
+
+test("o MOD descontinuado diz que agora faz parte do SEELE 0.19", () => {
+  const mod = { ...MOD_DE_DUAS, descontinuado: { desde: 1793404800, motivo: "incorporado-ao-produto", produto: "0.19" } };
+  assert.equal(textoDaDescontinuacao(mod), "Descontinuado: agora faz parte do SEELE 0.19");
+  assert.equal(dadosDoCartao(mod, null, AGORA).descontinuado, "Descontinuado: agora faz parte do SEELE 0.19");
+});
+
+test("o MOD vivo não tem selo de descontinuação", () => {
+  assert.equal(textoDaDescontinuacao(MOD_DE_DUAS), null);
+  assert.equal(dadosDoCartao(MOD_DE_DUAS, null, AGORA).descontinuado, null);
+});
+
+test("descontinuar não é revogar: o selo do cartão não vira «revogada»", () => {
+  const mod = { ...MOD_DE_DUAS, descontinuado: { desde: 1, motivo: "incorporado-ao-produto", produto: "0.19" } };
+  assert.equal(dadosDoCartao(mod, "2.0.0", AGORA).nivel, "oficial");
 });

@@ -14,5 +14,8 @@
     "guarda-dados-na-maquina",
     "substitui-a-interface-inteira",
     "roda-no-servidor"
+  ],
+  "descontinuacoes": [
+    "incorporado-ao-produto"
   ]
 }
