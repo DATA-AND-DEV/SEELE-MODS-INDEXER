@@ -42,6 +42,21 @@
 # Hash do conteúdo publicado (`ferramentas/hash_conteudo.py`, sobre o conjunto
 # que `ferramentas/fonte.py` tira do commit):
 # 4c608766f1815c349fa25c4841a90a69b1e2c8efad9dfe12720badba6c03ceae
+#
+# **1.0.1 — avaliação de 2026-11-01.** Só a metade de cliente mudou: a aba MODS
+# da configuração aparece apenas com a variante «Com mods» (num Vanilla ela
+# oferecia um modpack que ele não pode ter). O diff de `34d02dc` a `c8e7933` é
+# de 7 arquivos — `fonte/cliente.js` e o `cliente/main.js` montado dele, a
+# versão em `mod.json`, `package.json` e `README.md`, e dois testes. Refeito
+# sobre ele: nenhuma chamada nova de rede, `eval`, `import()` ou armazenamento
+# do navegador; manifesto aceito pelo `ferramentas/manifesto.py` (API 8, o
+# mesmo de antes); build reprodutível num clone limpo do commit (nenhum
+# `main.js` muda); `npm test` passa os 231 testes. Metade de servidor e de
+# máquina, poderes, origens e notas: iguais aos da 1.0.0.
+#
+# Hash do conteúdo da 1.0.1, tirado do GitHub pelo mesmo caminho (que reproduz
+# o `4c608766…` da 1.0.0):
+# 158f418ef99b6b1b178af83cf912afaf579fbe07bec4496c876da1cb9c2fcfd4
 
 id = "seele/multiplayer"
 repo = "https://github.com/DATA-AND-DEV/SEELE-MOD-MULTIPLAYER"
@@ -57,3 +72,12 @@ commit = "34d02dc6cc59477d14f37f8dda66c7b345918297"
 nivel = "oficial"
 notas = ["roda-no-servidor", "guarda-dados-na-maquina", "fala-com-terceiro"]
 avaliado_em = 1793497079
+
+# 1.0.1 — a aba MODS só no «Com mods». Mesma API, mesmas notas.
+
+[[versoes]]
+versao = "1.0.1"
+commit = "c8e7933eef154fcf26bc99219d293915b57e73d1"
+nivel = "oficial"
+notas = ["roda-no-servidor", "guarda-dados-na-maquina", "fala-com-terceiro"]
+avaliado_em = 1793565684
