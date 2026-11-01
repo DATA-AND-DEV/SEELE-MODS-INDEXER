@@ -61,7 +61,7 @@ def test_exemplo_zip_exato_e_manifesto_na_api_que_o_indexador_oferece():
         # (`seele_proto::mods::APIS_POR_LINHA`), e a conferência de que ele não
         # se afastou do indexador está logo abaixo: a união das linhas tem de
         # ser o `APIS_ACEITAS`, e o teto, a `VERSAO_DA_API`.
-        apis_por_linha = {'2': (7, 6), '1': (6,), '0.15': (5, 4, 3)}
+        apis_por_linha = {'2': (8, 7, 6), '1': (6,), '0.15': (5, 4, 3)}
         assert set().union(*apis_por_linha.values()) == set(APIS_ACEITAS)
         assert max(max(v) for v in apis_por_linha.values()) == VERSAO_DA_API
         api = ler(zip_.read('mod.json').decode()).api

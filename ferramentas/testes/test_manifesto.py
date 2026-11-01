@@ -334,12 +334,12 @@ def _api6(**extra) -> str:
     return json.dumps(manifesto)
 
 
-def test_o_indexador_oferece_a_7_e_aceita_a_uniao_das_linhas():
-    # A 0.17 (`APIS_POR_LINHA` do SEELE): a linha 2 com a 7 e a 6, a 1 com a 6,
-    # a 0.15 com a 5, a 4 e a 3.
+def test_o_indexador_oferece_a_8_e_aceita_a_uniao_das_linhas():
+    # A 0.19 (`APIS_POR_LINHA` do SEELE): a linha 2 com a 8, a 7 e a 6, a 1 com
+    # a 6, a 0.15 com a 5, a 4 e a 3.
     from ferramentas.manifesto import APIS_ACEITAS
-    assert VERSAO_DA_API == 7
-    assert APIS_ACEITAS == (7, 6, 5, 4, 3)
+    assert VERSAO_DA_API == 8
+    assert APIS_ACEITAS == (8, 7, 6, 5, 4, 3)
 
 
 def test_um_manifesto_da_api_6_e_lido():
@@ -493,8 +493,8 @@ def test_sem_api_e_malformed():
     assert _recusa(json.dumps(sem_api)).codigo == "malformed"
 
 
-def test_a_api_8_e_api_too_new_mesmo_com_permissoes():
-    assert _recusa(_api7(FECHAR, api=8)).codigo == "api-too-new"
+def test_a_api_9_e_api_too_new_mesmo_com_permissoes():
+    assert _recusa(_api7(FECHAR, api=VERSAO_DA_API + 1)).codigo == "api-too-new"
 
 
 def test_nove_permissoes_e_permissoes_invalidas():
@@ -597,3 +597,212 @@ def test_chave_repetida_numa_permissao_e_malformed():
     erro = _recusa(texto)
     assert erro.codigo == "malformed"
     assert "todos" in erro.detalhe
+
+
+# ------------------------------------- a API 8: plataformas, poderes e máquina
+#
+# Espelho de `seele_proto::mods::read_manifest` na 0.19 (`MOD_API_VERSION = 8`,
+# `APIS_POR_LINHA` com a linha 2 em `[8, 7, 6]`). Três chaves novas:
+# `plataformas` (`Vec<Plataforma>`, `app` | `navegador`), `poderes`
+# (`Vec<Poder>`, `porta` | `programa`) e `maquina` (`Option<String>`), cada uma
+# com a recusa nomeada que `seele_sessao::mods::refusal_name` dá.
+
+# O `mod.json` do `seele/multiplayer` 1.0.0, byte a byte, do commit que a
+# avaliação fixa (`34d02dc6cc59477d14f37f8dda66c7b345918297`, ramo `desenho-0.19`
+# de SEELE-MOD-MULTIPLAYER). O primeiro MOD da API 8.
+MULTIPLAYER_1_0_0 = """{
+  "schema": 1,
+  "id": "seele/multiplayer",
+  "version": "1.0.0",
+  "api": 8,
+  "repo": "https://github.com/DATA-AND-DEV/SEELE-MOD-MULTIPLAYER",
+  "reach": [
+    "servidores de jogo na máquina de quem aceita",
+    "baixar e rodar o servidor do jogo",
+    "túnel de jogo até localhost",
+    "entrada na navegação do servidor",
+    "nomes de quem está no servidor"
+  ],
+  "client": "cliente/main.js",
+  "server": "servidor/main.js",
+  "maquina": "maquina/main.js",
+  "plataformas": ["app"],
+  "poderes": ["porta", "programa"],
+  "permissoes": [
+    { "acao": "criar-servidor-de-jogo", "nome": "Criar um servidor de jogo", "todos": false },
+    { "acao": "configurar-servidor-de-jogo", "nome": "Configurar um servidor de jogo", "todos": false },
+    { "acao": "ligar-desligar-servidor-de-jogo", "nome": "Ligar e desligar um servidor de jogo", "todos": false },
+    { "acao": "entrar-no-jogo", "nome": "Entrar no jogo", "todos": true }
+  ]
+}
+"""
+
+ENTRAR = {"acao": "entrar-no-jogo", "nome": "Entrar no jogo", "todos": True}
+
+
+def _api8(**extra) -> str:
+    """Um manifesto da 8 com as três metades e a porta completa; `None` tira a chave."""
+    import json
+    manifesto = {"schema": 1, "id": "seele/multiplayer", "version": "1.0.0", "api": 8,
+                 "repo": "https://example.invalid/x", "client": "cliente/main.js",
+                 "server": "servidor/main.js", "maquina": "maquina/main.js",
+                 "plataformas": ["app"], "poderes": ["porta"], "permissoes": [ENTRAR]}
+    for chave, valor in extra.items():
+        if valor is _TIRAR:
+            manifesto.pop(chave, None)
+        else:
+            manifesto[chave] = valor
+    return json.dumps(manifesto)
+
+
+_TIRAR = object()
+
+# Um MOD da 8 sem nenhuma chave nova: o mínimo, que roda nas duas plataformas.
+SO_CLIENTE_DA_8 = '{"schema":1,"id":"a/b","version":"1","api":8,"repo":"r","client":"c.js"}'
+
+
+def test_o_mod_json_do_multiplayer_e_lido():
+    from ferramentas.manifesto import PermissaoDeclarada
+    m = ler(MULTIPLAYER_1_0_0)
+    assert (m.id, m.version, m.api) == ("seele/multiplayer", "1.0.0", 8)
+    assert m.plataformas == ["app"]
+    assert m.poderes == ["porta", "programa"]
+    assert m.maquina == "maquina/main.js"
+    assert (m.client, m.server) == ("cliente/main.js", "servidor/main.js")
+    assert len(m.reach) == 5
+    assert m.permissoes[-1] == PermissaoDeclarada(acao="entrar-no-jogo", nome="Entrar no jogo", todos=True)
+
+
+def test_o_mod_json_publicado_do_multiplayer_e_o_desta_suite_e_e_lido():
+    """O que `publicado/` serve é o que esta suíte testa, e não uma cópia que divergiu.
+
+    Só quando o catálogo de `publicado/` lista a versão: antes do commit assinado
+    ela não está lá, e não há o que comparar. Listada, o arquivo tem de existir."""
+    import json
+    from pathlib import Path
+    raiz = Path(__file__).resolve().parents[2] / "publicado"
+    catalogo = json.loads((raiz / "catalogo.json").read_text(encoding="utf-8"))
+    listada = any(
+        m["id"] == "seele/multiplayer" and any(v["versao"] == "1.0.0" for v in m["versoes"])
+        for m in catalogo["mods"]
+    )
+    if not listada:
+        pytest.skip("publicado/catalogo.json ainda não lista seele/multiplayer 1.0.0")
+    publicado = raiz / "mods/seele/multiplayer/1.0.0/mod.json"
+    assert publicado.read_text(encoding="utf-8") == MULTIPLAYER_1_0_0
+    assert ler(publicado.read_text(encoding="utf-8")).api == 8
+
+
+def test_a_8_sem_chave_nova_e_lida_e_roda_nas_duas():
+    m = ler(SO_CLIENTE_DA_8)
+    assert (m.plataformas, m.poderes, m.maquina) == ([], [], None)
+
+
+# Aceitos pelo Rust, e aceitos aqui: cada linha é uma forma que a 0.19 instala.
+ACEITOS_DA_8 = {
+    "a porta completa": _api8(),
+    "os dois poderes": _api8(poderes=["porta", "programa"]),
+    "só o programa, sem a permissão de entrar": _api8(poderes=["programa"], permissoes=_TIRAR),
+    "só no navegador": _api8(plataformas=["navegador"], poderes=_TIRAR, maquina=_TIRAR),
+    "nas duas, escrito": _api8(plataformas=["navegador", "app"], poderes=_TIRAR, maquina=_TIRAR),
+    "maquina nula é ausente": _api8(poderes=_TIRAR, maquina=None),
+    "só servidor e máquina": _api8(client=_TIRAR),
+    "o teto exato do reach": _api8(reach=["x" * 48] * 16),
+    "48 bytes de reach em «ç»": _api8(reach=["ç" * 24]),
+}
+
+
+@pytest.mark.parametrize("texto", ACEITOS_DA_8.values(), ids=ACEITOS_DA_8.keys())
+def test_formas_que_a_8_aceita(texto):
+    assert ler(texto).api == 8
+
+
+# Recusados pelo Rust, com o código que `refusal_name` dá. A ordem dentro de
+# cada caso é a de `read_manifest`: o primeiro que vale é o que sai.
+RECUSADOS_DA_8 = {
+    # Formas que o `serde` não desserializa.
+    "plataformas nula": (_api8(plataformas=None), "malformed"),
+    "plataformas como texto": (_api8(plataformas="app"), "malformed"),
+    "plataforma desconhecida": (_api8(plataformas=["celular"]), "malformed"),
+    "plataforma em maiúscula": (_api8(plataformas=["App"]), "malformed"),
+    "plataforma que não é texto": (_api8(plataformas=[1]), "malformed"),
+    "poderes nulo": (_api8(poderes=None), "malformed"),
+    "poderes como texto": (_api8(poderes="porta"), "malformed"),
+    "poder desconhecido": (_api8(poderes=["voar"]), "malformed"),
+    "poder em maiúscula": (_api8(poderes=["Porta"]), "malformed"),
+    "maquina como número": (_api8(maquina=1), "malformed"),
+    "maquina como lista": (_api8(maquina=["maquina/main.js"]), "malformed"),
+    "chave repetida no topo": (
+        '{"schema":1,"id":"a/b","version":"1","api":8,"repo":"r","client":"c.js",'
+        '"plataformas":["app"],"plataformas":["navegador"]}', "malformed"),
+    # As plataformas.
+    "plataformas vazias": (_api8(plataformas=[], poderes=_TIRAR, maquina=_TIRAR), "plataformas-vazias"),
+    "plataforma repetida": (_api8(plataformas=["app", "app"]), "plataforma-repetida"),
+    # Os poderes, na ordem do Rust.
+    "poderes vazios": (_api8(poderes=[]), "poderes-vazios"),
+    "poder repetido": (_api8(poderes=["porta", "porta"]), "poder-repetido"),
+    "poder sem plataformas": (_api8(plataformas=_TIRAR), "poderes-exigem-so-o-app"),
+    "poder nas duas plataformas": (_api8(plataformas=["app", "navegador"]), "poderes-exigem-so-o-app"),
+    "poder só no navegador": (_api8(plataformas=["navegador"]), "poderes-exigem-so-o-app"),
+    "maquina que sobe": (_api8(maquina="../x.js"), "maquina-fora-do-pacote"),
+    "maquina absoluta": (_api8(maquina="/etc/x.js"), "maquina-fora-do-pacote"),
+    "maquina vazia": (_api8(maquina=""), "maquina-fora-do-pacote"),
+    "maquina com barra dupla": (_api8(maquina="maquina//main.js"), "maquina-fora-do-pacote"),
+    "maquina ponto": (_api8(maquina="."), "maquina-fora-do-pacote"),
+    "maquina sem poderes": (_api8(poderes=_TIRAR), "maquina-sem-poderes"),
+    "porta sem permissão nenhuma": (_api8(permissoes=_TIRAR), "porta-sem-entrar-no-jogo"),
+    "porta com outra permissão": (
+        _api8(permissoes=[{"acao": "fechar-mesa", "nome": "Fechar"}]), "porta-sem-entrar-no-jogo"),
+    "porta sem permissão e sem máquina: a permissão primeiro": (
+        _api8(permissoes=_TIRAR, maquina=_TIRAR), "porta-sem-entrar-no-jogo"),
+    "poder sem máquina": (_api8(maquina=_TIRAR), "poderes-sem-maquina"),
+    "máquina sem servidor": (_api8(server=_TIRAR), "maquina-sem-servidor"),
+    # Os tetos do anúncio, conferidos na instalação desde a 0.17.
+    "dezessete itens de reach": (_api8(reach=["x"] * 17), "alcances-demais"),
+    "um reach de 49 bytes": (_api8(reach=["ok", "x" * 49]), "alcance-grande-demais"),
+    "um reach de 49 bytes em «ç»": (_api8(reach=["ç" * 24 + "x"]), "alcance-grande-demais"),
+}
+
+
+@pytest.mark.parametrize(
+    "texto,codigo", RECUSADOS_DA_8.values(), ids=RECUSADOS_DA_8.keys()
+)
+def test_formas_que_a_8_recusa(texto, codigo):
+    assert _recusa(texto).codigo == codigo
+
+
+# As chaves da 8 numa API anterior. O Rust recusa `plataformas` e `poderes`
+# escritos (até vazios) e `maquina` com valor pelo nome; a `"maquina": null`
+# ele deixa passar, e aqui ela é `malformed`, pelo motivo de `permissoes` abaixo
+# da 7: o app 0.17 e o 0.18 recusam o manifesto inteiro com a chave.
+CHAVES_DA_8_ABAIXO_DA_8 = {
+    "plataformas": ({"plataformas": ["app"]}, "plataformas-pedem-api-nova"),
+    "plataformas vazias": ({"plataformas": []}, "plataformas-pedem-api-nova"),
+    "poderes": ({"poderes": ["programa"]}, "poderes-pedem-api-nova"),
+    "poderes vazios": ({"poderes": []}, "poderes-pedem-api-nova"),
+    "maquina": ({"maquina": "maquina/main.js", "server": "s.js"}, "poderes-pedem-api-nova"),
+    "maquina nula": ({"maquina": None}, "malformed"),
+}
+
+
+@pytest.mark.parametrize("api", [3, 4, 5, 6, 7])
+@pytest.mark.parametrize(
+    "extra,codigo", CHAVES_DA_8_ABAIXO_DA_8.values(), ids=CHAVES_DA_8_ABAIXO_DA_8.keys()
+)
+def test_as_chaves_da_8_abaixo_da_8_sao_recusadas(api, extra, codigo):
+    import json
+    manifesto = {"schema": 1, "id": "a/b", "version": "1", "api": api, "repo": "r", "client": "c.js"}
+    manifesto.update(extra)
+    erro = _recusa(json.dumps(manifesto))
+    assert erro.codigo == codigo
+    if codigo == "malformed":
+        assert "maquina" in erro.detalhe
+
+
+def test_o_multiplayer_declarado_na_7_pede_a_8_pelas_plataformas_primeiro():
+    # A ordem do Rust: as plataformas são conferidas antes dos poderes.
+    assert _recusa(MULTIPLAYER_1_0_0.replace('"api": 8', '"api": 7')).codigo == "plataformas-pedem-api-nova"
+
+
+def test_a_api_9_e_api_too_new_mesmo_com_as_chaves_da_8():
+    assert _recusa(_api8(api=9)).codigo == "api-too-new"

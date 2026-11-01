@@ -563,8 +563,8 @@ avaliado_em = 1757000900
 
 def test_o_catalogo_publica_a_api_que_cada_mod_json_declara(mundo):
     catalogo = _catalogo_da_6_e_da_7(mundo, [{"acao": "fechar-mesa", "nome": "Fechar a mesa"}])
-    assert catalogo["api_oferecida"] == 7
-    assert catalogo["apis_aceitas"] == [7, 6, 5, 4, 3]
+    assert catalogo["api_oferecida"] == 8
+    assert catalogo["apis_aceitas"] == [8, 7, 6, 5, 4, 3]
     versoes = catalogo["mods"][0]["versoes"]
     assert [(v["versao"], v["api"]) for v in versoes] == [("2.1.0", 6), ("3.0.0", 7)]
 
@@ -585,3 +585,68 @@ def test_permissoes_invalidas_nao_entram_no_catalogo(mundo):
         _catalogo_da_6_e_da_7(mundo, [{"acao": "Fechar Mesa", "nome": "Fechar"}])
     assert erro.value.codigo == "permissoes-invalidas"
     assert not (raiz / "publicado").exists()
+
+
+# ------------------------------------------- a API 8 no catálogo, e a 0.18
+#
+# A mesma regra da 7 para a 0.16, uma linha acima: a 0.17 e a 0.18 executam a
+# `[7, 6]` (`APIS_QUE_ESTE_APLICATIVO_ACEITA` do `frases.js` delas), e a 0.19 a
+# `[8, 7, 6]`. Um MOD que publica a 8 continua com a versão da 7 para quem não
+# atualizou, e o catálogo não ganha campo nenhum que um leitor antigo exija.
+
+APIS_DO_APP_0_18 = [7, 6]
+APIS_DO_APP_0_19 = [8, 7, 6]
+
+# Os campos de versão que o `VersaoNoCatalogo` da 0.19
+# (`seele_sessao::catalogo`) lê para planejar e conferir uma instalação.
+CAMPOS_QUE_A_0_19_LE = {"versao", "api", "hash", "nivel", "notas", "alcanca", "arquivos"}
+
+
+def _catalogo_da_6_da_7_e_da_8(mundo):
+    raiz, secreta, _ = mundo
+    autor = raiz.parent / "repo-do-autor"
+    base = {"schema": 1, "id": "juli/cinza-frio", "repo": "https://github.com/juli/seele-cinza-frio",
+            "client": "cliente/main.js"}
+    da_6 = _commitar_manifesto(autor, {**base, "version": "2.1.0", "api": 6})
+    da_7 = _commitar_manifesto(autor, {**base, "version": "3.0.0", "api": 7})
+    da_8 = _commitar_manifesto(autor, {**base, "version": "4.0.0", "api": 8, "plataformas": ["app"]})
+    versoes = "".join(
+        f"""
+[[versoes]]
+versao = "{versao}"
+commit = "{commit}"
+nivel = "verificado"
+notas = []
+avaliado_em = {1757000000 + n}
+"""
+        for n, (versao, commit) in enumerate((("2.1.0", da_6), ("3.0.0", da_7), ("4.0.0", da_8)))
+    )
+    (raiz / "avaliacoes" / "juli" / "cinza-frio.toml").write_text(
+        f'id = "juli/cinza-frio"\nrepo = "{autor}"\ntitulo = "Cinza Frio"\nresumo = "Contraste alto."\n'
+        + versoes,
+        encoding="utf-8",
+    )
+    gerar(raiz, secreta, agora=1757100000)
+    return json.loads((raiz / "publicado" / "catalogo.json").read_text(encoding="utf-8"))
+
+
+def test_a_0_18_fica_com_a_7_e_a_0_19_recebe_a_8(mundo):
+    catalogo = _catalogo_da_6_da_7_e_da_8(mundo)
+    versoes = catalogo["mods"][0]["versoes"]
+    assert [(v["versao"], v["api"]) for v in versoes] == [("2.1.0", 6), ("3.0.0", 7), ("4.0.0", 8)]
+    assert _versao_para_este_app(versoes, APIS_DO_APP_0_16)["versao"] == "2.1.0"
+    assert _versao_para_este_app(versoes, APIS_DO_APP_0_18)["versao"] == "3.0.0"
+    assert _versao_para_este_app(versoes, APIS_DO_APP_0_19)["versao"] == "4.0.0"
+    # Um MOD só da 8 não tem versão nenhuma para a 0.18: a tela diz «sem versão
+    # publicada», e não oferece o que ela recusaria.
+    assert _versao_para_este_app([versoes[-1]], APIS_DO_APP_0_18) is None
+
+
+def test_a_versao_da_8_traz_o_que_a_0_19_le_e_nada_que_a_0_18_nao_conheca(mundo):
+    catalogo = _catalogo_da_6_da_7_e_da_8(mundo)
+    da_7, da_8 = catalogo["mods"][0]["versoes"][1:]
+    assert CAMPOS_QUE_A_0_19_LE <= set(da_8)
+    # A mesma forma da versão da 7: a 8 não acrescenta campo ao catálogo, e um
+    # leitor da 0.18 (sem `deny_unknown_fields`) lê as duas igual.
+    assert set(da_8) == set(da_7)
+    assert "mod.json" in da_8["arquivos"] and "cliente/main.js" in da_8["arquivos"]

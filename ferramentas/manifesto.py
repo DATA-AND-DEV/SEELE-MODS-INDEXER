@@ -18,7 +18,7 @@ from ferramentas.recusa import Recusado
 ESQUEMA_DO_MANIFESTO = 1
 
 # Espelho de `seele_proto::mods::MOD_API_VERSION`.
-VERSAO_DA_API = 7
+VERSAO_DA_API = 8
 
 # **A união das linhas**, da mais nova para a mais velha: o que
 # `seele_proto::mods::apis_de_toda_linha()` tira de `APIS_POR_LINHA`, e não
@@ -27,16 +27,21 @@ VERSAO_DA_API = 7
 # # Por que a união, e não o conjunto do app
 #
 # Desde o corte da API 6, o `APIS_ACEITAS` do produto é só o da linha dele. Na
-# 0.17 (`APIS_POR_LINHA`) são três linhas: a 2 (o app 0.17, o Servidor 2.0) com
-# a `[7, 6]`, a 1 (o app 0.16, o Servidor 1.0) com a `[6]`, e a 0.15 com as 5, 4
-# e 3, que o launcher roda ao lado. O indexador serve todas do mesmo catálogo,
-# então aceita o que alguma delas executa. Uma API fora de toda linha (a 8,
-# antes de existir) continua recusada, e uma que saiu de toda linha também.
+# 0.19 (`APIS_POR_LINHA`) são três linhas: a 2 (o app 0.17 em diante, o
+# Servidor 2.0) com a `[8, 7, 6]`, a 1 (o app 0.16, o Servidor 1.0) com a `[6]`,
+# e a 0.15 com as 5, 4 e 3, que o launcher roda ao lado. O indexador serve todas
+# do mesmo catálogo, então aceita o que alguma delas executa. Uma API fora de
+# toda linha (a 9, antes de existir) continua recusada, e uma que saiu de toda
+# linha também. **A 3 fica** porque a linha 0.15 continua na tabela da 0.19:
+# o launcher ainda roda o Servidor 0.15 ao lado, e é ele que executa as 5, 4 e 3.
 #
-# A 7 é um alargamento da 6 (o `api/v7.json` do SEELE): um pacote da 6 continua
-# aceito e continua rodando na 0.17, sem precisar ser republicado. Quem impede
-# a 0.16 de baixar um pacote da 7 é a `api` de cada versão do catálogo, que é a
-# que o `mod.json` declara (`gerar.py`), e não esta lista.
+# A 7 é um alargamento da 6 (o `api/v7.json` do SEELE), e a 8 é um alargamento
+# da 7 (o `api/v8.json`: `plataformas`, `poderes` e `maquina`): um pacote da 6
+# ou da 7 continua aceito e continua rodando na 0.19, sem precisar ser
+# republicado. Quem impede a 0.16 de baixar um pacote da 7, e a 0.17 e a 0.18 de
+# baixar um da 8, é a `api` de cada versão do catálogo, que é a que o `mod.json`
+# declara (`gerar.py`), e não esta lista: a 0.18 escolhe a última versão cuja
+# API ela executa (`[7, 6]`).
 #
 # # Por que um conjunto, e não um número
 #
@@ -57,7 +62,7 @@ VERSAO_DA_API = 7
 # Aceitar a 3 não dá à 3 o que a 4 tem: as capacidades são por versão e quem as
 # aplica é o prelúdio do executor, do lado do cliente. A 2 não volta — ela
 # executava na janela.
-APIS_ACEITAS = (7, 6, 5, 4, 3)
+APIS_ACEITAS = (8, 7, 6, 5, 4, 3)
 
 # A API em que a chave `tema` nasceu. A linha 0.15 não a conhece e a recusa
 # (`deny_unknown_fields`), e a linha 1 não executa as APIs da 0.15: um pacote
@@ -75,6 +80,29 @@ TETO_DE_PERMISSOES = 8
 TETO_DA_ACAO = 32
 TETO_DO_NOME_DA_PERMISSAO = 48
 
+# Espelhos de `seele_proto::mods::PRIMEIRA_API_COM_PLATAFORMAS` e
+# `PRIMEIRA_API_COM_PODERES`: a API em que `plataformas`, `poderes` e `maquina`
+# nasceram (a 8, da 0.19).
+API_DAS_PLATAFORMAS = 8
+API_DOS_PODERES = 8
+
+# As variantes de `seele_proto::mods::Plataforma` e `Poder`, com o
+# `rename_all = "lowercase"` de lá. Uma grafia fora daqui (`"App"`, `"web"`) é
+# uma variante que o `serde` não conhece, e o manifesto inteiro é `malformed`.
+PLATAFORMAS = ("app", "navegador")
+PODERES = ("porta", "programa")
+
+# Espelho de `seele_proto::tunel::ACAO_ENTRAR_NO_JOGO`: a permissão sem a qual o
+# poder `porta` é recusado (`Refused::PortaSemEntrarNoJogo`).
+ACAO_ENTRAR_NO_JOGO = "entrar-no-jogo"
+
+# Espelhos de `seele_proto::control::MAX_REACH_ITENS` e `MAX_REACH_LEN`: os
+# tetos do anúncio, que o `read_manifest` confere também na instalação
+# (`Refused::AlcancesDemais`, `Refused::AlcanceGrandeDemais`). O tamanho é em
+# bytes UTF-8, como o `len()` de uma `String`.
+TETO_DE_ALCANCES = 16
+TETO_DO_ALCANCE = 48
+
 # As chaves de uma `PermissaoDeclarada`, que lá também é `deny_unknown_fields`.
 # `todos` é `bool` com `#[serde(default)]`: ausente vale `false`, e `null` não
 # desserializa.
@@ -86,7 +114,7 @@ OBRIGATORIAS_DA_PERMISSAO = {"acao", "nome"}
 # chave com erro de digitação instala um MOD sem a coisa que o autor achou
 # que estava lá, e o autor nunca descobre.
 CHAVES = {"schema", "id", "version", "api", "repo", "reach", "state", "client", "server",
-          "arquivos", "tema", "permissoes"}
+          "arquivos", "tema", "permissoes", "plataformas", "poderes", "maquina"}
 OBRIGATORIAS = {"schema", "id", "version", "api", "repo"}
 
 # O tipo de cada chave, porque o `serde` do Rust valida isso na
@@ -97,13 +125,18 @@ TIPOS = {
     "schema": int, "id": str, "version": str, "api": int, "repo": str,
     "reach": list, "state": int, "client": str, "server": str, "arquivos": list,
     "tema": bool, "permissoes": list,
+    "plataformas": list, "poderes": list, "maquina": str,
 }
 
 # Os únicos campos que o Rust declara `Option<T>`. Para os demais, um `null`
 # explícito não é «ausente»: é um manifesto que o `serde` recusaria. O `tema`
 # fica de fora de propósito: lá ele é `bool` com `#[serde(default)]`, então a
 # chave ausente vale `false`, mas `"tema": null` não desserializa.
-OPCIONAIS = {"state", "client", "server"}
+#
+# `maquina` é `Option<String>` lá, e entra aqui. `plataformas` e `poderes` não:
+# são `Vec` com `#[serde(default)]`, e `null` não desserializa — o `SoPlataformas`
+# do Rust, que lê a chave como `Option`, só roda depois que o `Manifest` passou.
+OPCIONAIS = {"state", "client", "server", "maquina"}
 
 U32_MAX = 2**32 - 1
 
@@ -127,6 +160,9 @@ class Manifesto:
     server: str | None = None
     tema: bool = False
     permissoes: list["PermissaoDeclarada"] = field(default_factory=list)
+    plataformas: list[str] = field(default_factory=list)
+    poderes: list[str] = field(default_factory=list)
+    maquina: str | None = None
 
 
 @dataclass(frozen=True)
@@ -283,6 +319,12 @@ def ler(texto: str, *, historico: bool = False) -> Manifesto:
 
     if not isinstance(cru, dict):
         raise Recusado("malformed", "a raiz não é um objeto")
+    # O `serde` recusa o campo repetido num `struct` (`duplicate field`), e o
+    # `json` daqui ficaria com o último. Um `"plataformas"` escrito duas vezes
+    # seria lido de um jeito aqui e recusado lá.
+    repetidas = getattr(cru, "repetidas", frozenset())
+    if repetidas:
+        raise Recusado("malformed", "repete a chave: " + ", ".join(sorted(repetidas)))
 
     desconhecidas = set(cru) - CHAVES
     if desconhecidas:
@@ -318,6 +360,12 @@ def ler(texto: str, *, historico: bool = False) -> Manifesto:
     arquivos = cru.get("arquivos", []) or []
     if any(not isinstance(item, str) for item in arquivos):
         raise Recusado("malformed", "arquivos deveria ser uma lista de textos")
+    # `Vec<Plataforma>` e `Vec<Poder>` lá: cada item é uma variante que o
+    # `serde` conhece pelo nome em minúsculas, ou o documento não desserializa.
+    for chave, variantes in (("plataformas", PLATAFORMAS), ("poderes", PODERES)):
+        for posicao, item in enumerate(cru.get(chave, [])):
+            if not isinstance(item, str) or item not in variantes:
+                raise Recusado("malformed", f"{chave}[{posicao}] não é um de {', '.join(variantes)}: {item!r}")
     permissoes = _permissoes_do_json(cru.get("permissoes", []))
     if len(arquivos) > TETO_DE_ARQUIVOS:
         raise Recusado("malformed", f"declara {len(arquivos)} arquivos, o teto é {TETO_DE_ARQUIVOS}")
@@ -367,6 +415,76 @@ def ler(texto: str, *, historico: bool = False) -> Manifesto:
         raise Recusado("malformed", f'chave desconhecida para a API {cru["api"]}: permissoes')
     _validar_declaradas(permissoes)
 
+    # **A API 8** (`plataformas`, `poderes`, `maquina`), na ordem do Rust: as
+    # plataformas (a API, a vazia, a repetida) e então os poderes (a API, a
+    # vazia, o repetido, só o app, o caminho da máquina, a máquina sem poder, a
+    # porta sem a permissão, o poder sem máquina, a máquina sem servidor).
+    #
+    # Lá a chave é lida do texto de novo (`SoPlataformas`, `SoPoderes`) porque o
+    # `Vec` não distingue a ausente da `[]`. Aqui o dicionário cru já distingue:
+    # é `chave in cru`.
+    plataformas = cru.get("plataformas", [])
+    if "plataformas" in cru and cru["api"] < API_DAS_PLATAFORMAS:
+        raise Recusado(
+            "plataformas-pedem-api-nova",
+            f'declara plataformas com a API {cru["api"]}; plataformas pedem a API {API_DAS_PLATAFORMAS}',
+        )
+    if "plataformas" in cru and not plataformas:
+        raise Recusado("plataformas-vazias", "declara \"plataformas\": []; sem a chave, roda nas duas")
+    for posicao, plataforma in enumerate(plataformas):
+        if plataforma in plataformas[:posicao]:
+            raise Recusado("plataforma-repetida", f"plataformas[{posicao}] repete {plataforma!r}")
+
+    poderes = cru.get("poderes", [])
+    maquina = cru.get("maquina")
+    if ("poderes" in cru or maquina is not None) and cru["api"] < API_DOS_PODERES:
+        raise Recusado(
+            "poderes-pedem-api-nova",
+            f'declara poderes ou maquina com a API {cru["api"]}; poderes pedem a API {API_DOS_PODERES}',
+        )
+    # **Mais estrito que o Rust da 0.19, e de propósito**, como em `permissoes`:
+    # lá um `"maquina": null` numa API 7 passa (é `Option`, e `None` não pede
+    # poder). Mas um pacote da 7 é oferecido também ao app 0.17 e 0.18, que
+    # recusa o manifesto inteiro só por ter a chave (`deny_unknown_fields`).
+    if "maquina" in cru and cru["api"] < API_DOS_PODERES:
+        raise Recusado("malformed", f'chave desconhecida para a API {cru["api"]}: maquina')
+    if "poderes" in cru and not poderes:
+        raise Recusado("poderes-vazios", "declara \"poderes\": []; sem poder, omita a chave")
+    for posicao, poder in enumerate(poderes):
+        if poder in poderes[:posicao]:
+            raise Recusado("poder-repetido", f"poderes[{posicao}] repete {poder!r}")
+    # `plataformas_efetivas`: sem a chave, as duas — e poder só vale no app só.
+    if poderes and (plataformas or list(PLATAFORMAS)) != ["app"]:
+        raise Recusado("poderes-exigem-so-o-app", "declara poderes sem \"plataformas\": [\"app\"]")
+    if maquina is not None:
+        if not _dentro_da_pasta(maquina):
+            raise Recusado("maquina-fora-do-pacote", f"maquina sai da pasta do MOD: {maquina!r}")
+        if not poderes:
+            raise Recusado("maquina-sem-poderes", "declara maquina sem poderes")
+    if "porta" in poderes and not any(p.acao == ACAO_ENTRAR_NO_JOGO for p in permissoes):
+        raise Recusado(
+            "porta-sem-entrar-no-jogo",
+            f"declara o poder porta sem a permissão {ACAO_ENTRAR_NO_JOGO}",
+        )
+    if poderes and maquina is None:
+        raise Recusado("poderes-sem-maquina", "declara poderes sem metade de máquina")
+    if maquina is not None and cru.get("server") is None:
+        raise Recusado("maquina-sem-servidor", "declara maquina sem metade de servidor")
+
+    # Os tetos do anúncio (`control::check_anuncio`), que o Rust confere no fim
+    # do `read_manifest` desde a 0.17: um `reach` que o fio recusaria instala, e
+    # o servidor que ligasse o MOD não conseguiria anunciá-lo a ninguém.
+    reach = cru.get("reach", [])
+    if len(reach) > TETO_DE_ALCANCES:
+        raise Recusado("alcances-demais", f"declara {len(reach)} itens de reach, o teto é {TETO_DE_ALCANCES}")
+    for posicao, item in enumerate(reach):
+        tamanho = len(item.encode("utf-8", "surrogatepass"))
+        if tamanho > TETO_DO_ALCANCE:
+            raise Recusado(
+                "alcance-grande-demais",
+                f"reach[{posicao}] tem {tamanho} bytes, o teto é {TETO_DO_ALCANCE}",
+            )
+
     return Manifesto(
         schema=cru["schema"],
         id=cru["id"],
@@ -380,4 +498,7 @@ def ler(texto: str, *, historico: bool = False) -> Manifesto:
         server=cru.get("server"),
         tema=cru.get("tema", False),
         permissoes=permissoes,
+        plataformas=list(plataformas),
+        poderes=list(poderes),
+        maquina=maquina,
     )

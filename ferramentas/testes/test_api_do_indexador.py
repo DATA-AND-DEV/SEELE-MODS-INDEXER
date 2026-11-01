@@ -7,8 +7,8 @@ from ferramentas import api_do_indexador, manifesto
 
 def test_o_vetor_traz_o_que_o_catalogo_anuncia():
     vetor = api_do_indexador.vetor()
-    assert vetor["api_oferecida"] == manifesto.VERSAO_DA_API == 7
-    assert vetor["apis_aceitas"] == list(manifesto.APIS_ACEITAS) == [7, 6, 5, 4, 3]
+    assert vetor["api_oferecida"] == manifesto.VERSAO_DA_API == 8
+    assert vetor["apis_aceitas"] == list(manifesto.APIS_ACEITAS) == [8, 7, 6, 5, 4, 3]
 
 
 def test_o_vetor_segue_a_constante_e_nao_um_numero_guardado(monkeypatch):
