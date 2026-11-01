@@ -1,0 +1,58 @@
+{
+  "formatVersion": 1,
+  "game": "minecraft",
+  "versionId": "1.0.0",
+  "name": "Prova do SEELE",
+  "summary": "Fabric 1.21.4 com Fabric API e Lithium, para as provas do MOD de multiplayer.",
+  "files": [
+    {
+      "path": "mods/fabric-api-0.119.4+1.21.4.jar",
+      "hashes": {
+        "sha1": "1c7871b6af04edc8b8f0dbad12606d67f6118a11",
+        "sha512": "16b679f6a42549ca3b6bc147de710b2c8ba2d5e4661ed88df22782c05a4a5f6c1163d7b13867687ed91acde0fdfe5a5037d05662431c946865b58396284e7ee7"
+      },
+      "env": {
+        "client": "required",
+        "server": "required"
+      },
+      "downloads": [
+        "https://cdn.modrinth.com/data/P7dR8mSH/versions/p96k10UR/fabric-api-0.119.4%2B1.21.4.jar"
+      ],
+      "fileSize": 2149128
+    },
+    {
+      "path": "mods/lithium-fabric-0.15.3+mc1.21.4.jar",
+      "hashes": {
+        "sha1": "b7100505d1178b0f9a1dac4a24472ad1293b890c",
+        "sha512": "b8b541c0e968571c8972872b342e34b92573bc9210d455dc1349589f30a67a90d930dbfd99b176ab9b110350ceb53e11118378dc13a35e83a9090826627bdac0"
+      },
+      "env": {
+        "client": "optional",
+        "server": "optional"
+      },
+      "downloads": [
+        "https://cdn.modrinth.com/data/gvQqBUqZ/versions/u8pHPXJl/lithium-fabric-0.15.3%2Bmc1.21.4.jar"
+      ],
+      "fileSize": 797555
+    },
+    {
+      "path": "mods/sodium-fabric-0.6.13+mc1.21.4.jar",
+      "hashes": {
+        "sha1": "c881d2db971207c396b5629632437f1520c0c478",
+        "sha512": "2c72ca2ddfd27e29ff6c24fccdf6f3d80857bd1014c707017f96cb4a424f94918e53ba21d85f22e3c9171803f8d2c12c99ae857d38d8e85546cc65960b95a2f1"
+      },
+      "env": {
+        "client": "required",
+        "server": "unsupported"
+      },
+      "downloads": [
+        "https://cdn.modrinth.com/data/AANobbMI/versions/c3YkZvne/sodium-fabric-0.6.13%2Bmc1.21.4.jar"
+      ],
+      "fileSize": 1306799
+    }
+  ],
+  "dependencies": {
+    "minecraft": "1.21.4",
+    "fabric-loader": "0.16.14"
+  }
+}

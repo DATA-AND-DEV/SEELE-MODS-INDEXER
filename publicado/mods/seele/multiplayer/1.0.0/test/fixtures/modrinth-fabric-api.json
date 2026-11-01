@@ -1,0 +1,28 @@
+[
+ {
+  "id": "p96k10UR",
+  "project_id": "P7dR8mSH",
+  "name": "[1.21.4] Fabric API 0.119.4+1.21.4",
+  "version_number": "0.119.4+1.21.4",
+  "game_versions": [
+   "1.21.4"
+  ],
+  "loaders": [
+   "fabric"
+  ],
+  "date_published": "2025-08-08T13:22:14.841585Z",
+  "dependencies": [],
+  "files": [
+   {
+    "hashes": {
+     "sha512": "16b679f6a42549ca3b6bc147de710b2c8ba2d5e4661ed88df22782c05a4a5f6c1163d7b13867687ed91acde0fdfe5a5037d05662431c946865b58396284e7ee7",
+     "sha1": "1c7871b6af04edc8b8f0dbad12606d67f6118a11"
+    },
+    "url": "https://cdn.modrinth.com/data/P7dR8mSH/versions/p96k10UR/fabric-api-0.119.4%2B1.21.4.jar",
+    "filename": "fabric-api-0.119.4+1.21.4.jar",
+    "primary": true,
+    "size": 2149128
+   }
+  ]
+ }
+]

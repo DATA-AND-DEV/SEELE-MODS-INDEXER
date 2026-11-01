@@ -1,14 +1,15 @@
 {
   "esquema": 1,
-  "api_oferecida": 7,
+  "api_oferecida": 8,
   "apis_aceitas": [
+    8,
     7,
     6,
     5,
     4,
     3
   ],
-  "gerado_em": 1793127397,
+  "gerado_em": 1793532901,
   "mods": [
     {
       "id": "seele/estilo",
@@ -889,6 +890,131 @@
       ]
     },
     {
+      "id": "seele/multiplayer",
+      "autor": "seele",
+      "nome": "multiplayer",
+      "titulo": "Multiplayer",
+      "resumo": "Servidores de jogo na máquina de quem está no servidor, com túnel para quem joga. Só no app de computador.",
+      "repo": "https://github.com/DATA-AND-DEV/SEELE-MOD-MULTIPLAYER",
+      "oficial": true,
+      "nivel": "oficial",
+      "commit": "34d02dc6cc59477d14f37f8dda66c7b345918297",
+      "notas": [
+        "roda-no-servidor",
+        "guarda-dados-na-maquina",
+        "fala-com-terceiro"
+      ],
+      "versoes": [
+        {
+          "versao": "1.0.0",
+          "api": 8,
+          "publicado_em": 1793497079,
+          "hash": "4c608766f1815c349fa25c4841a90a69b1e2c8efad9dfe12720badba6c03ceae",
+          "alcanca": [
+            "servidores de jogo na máquina de quem aceita",
+            "baixar e rodar o servidor do jogo",
+            "túnel de jogo até localhost",
+            "entrada na navegação do servidor",
+            "nomes de quem está no servidor"
+          ],
+          "arquivos": [
+            "DECISOES.md",
+            "README.md",
+            "cliente/main.js",
+            "ferramentas/build.mjs",
+            "ferramentas/montar.cjs",
+            "ferramentas/pack-de-prova.cjs",
+            "ferramentas/package.mjs",
+            "ferramentas/plano-de-verdade.cjs",
+            "ferramentas/quickjs-check/Cargo.lock",
+            "ferramentas/quickjs-check/Cargo.toml",
+            "ferramentas/quickjs-check/src/main.rs",
+            "fonte/adaptador.js",
+            "fonte/cliente.js",
+            "fonte/comum.js",
+            "fonte/esquema.js",
+            "fonte/maquina.js",
+            "fonte/modpack.js",
+            "fonte/receita.js",
+            "fonte/servidor.js",
+            "maquina/main.js",
+            "mod.json",
+            "package.json",
+            "receitas/esquema.json",
+            "receitas/minecraft.json",
+            "servidor/main.js",
+            "test/adaptador.test.cjs",
+            "test/anfitriao.cjs",
+            "test/carregar.cjs",
+            "test/cliente-modpack.test.cjs",
+            "test/cliente-reserva.test.cjs",
+            "test/cliente-subiu.test.cjs",
+            "test/cliente.test.cjs",
+            "test/contrato/api-v8.json",
+            "test/fixtures/adoptium-17.json",
+            "test/fixtures/adoptium-21.json",
+            "test/fixtures/adoptium-25.json",
+            "test/fixtures/adoptium-8.json",
+            "test/fixtures/createlive5-default-server.properties",
+            "test/fixtures/fabric-prova.index.json",
+            "test/fixtures/fabric-prova.mrpack",
+            "test/fixtures/forge-1.20.1-47.4.28-detalhes.json",
+            "test/fixtures/forge-1.20.1-47.4.28-installer.jar.sha256",
+            "test/fixtures/forge-createlive5-server.properties",
+            "test/fixtures/forge-prova-server.properties",
+            "test/fixtures/forge-prova.index.json",
+            "test/fixtures/forge-prova.mrpack",
+            "test/fixtures/forge-unix_args.txt",
+            "test/fixtures/forge-win_args.txt",
+            "test/fixtures/modrinth-clumps-forge-1.20.1.json",
+            "test/fixtures/modrinth-clumps-neoforge-1.21.1.json",
+            "test/fixtures/modrinth-embeddium-forge-1.20.1.json",
+            "test/fixtures/modrinth-fabric-api.json",
+            "test/fixtures/modrinth-fabulously-optimized.json",
+            "test/fixtures/modrinth-ferrite-core-forge-1.20.1.json",
+            "test/fixtures/modrinth-ferrite-core-neoforge-1.21.1.json",
+            "test/fixtures/modrinth-lithium.json",
+            "test/fixtures/modrinth-prova-versoes.json",
+            "test/fixtures/modrinth-sodium-neoforge-1.21.1.json",
+            "test/fixtures/modrinth-sodium.json",
+            "test/fixtures/mojang-1.16.5.json",
+            "test/fixtures/mojang-1.20.1.json",
+            "test/fixtures/mojang-1.21.1.json",
+            "test/fixtures/mojang-1.21.4.json",
+            "test/fixtures/mojang-26.3.json",
+            "test/fixtures/mojang-version_manifest_v2.json",
+            "test/fixtures/neoforge-21.1.265-detalhes.json",
+            "test/fixtures/neoforge-21.1.265-installer.jar.sha256",
+            "test/fixtures/neoforge-prova.index.json",
+            "test/fixtures/neoforge-prova.mrpack",
+            "test/fixtures/neoforge-unix_args.txt",
+            "test/fixtures/neoforge-win_args.txt",
+            "test/janela.cjs",
+            "test/maquina-modpack.test.cjs",
+            "test/maquina.test.cjs",
+            "test/modpack.test.cjs",
+            "test/pacote.test.cjs",
+            "test/receita-esquema.test.cjs",
+            "test/receita-fixa.test.cjs",
+            "test/receita-minecraft.test.cjs",
+            "test/receita-modpack.test.cjs",
+            "test/reserva.test.cjs",
+            "test/servidor-modpack.test.cjs",
+            "test/servidor.test.cjs",
+            "test/subiu.test.cjs",
+            "test/zip.cjs"
+          ],
+          "nivel": "oficial",
+          "notas": [
+            "roda-no-servidor",
+            "guarda-dados-na-maquina",
+            "fala-com-terceiro"
+          ],
+          "commit": "34d02dc6cc59477d14f37f8dda66c7b345918297"
+        }
+      ]
+    },
+    {
       "id": "seele/perfis",
       "autor": "seele",
       "nome": "perfis",
@@ -1569,7 +1695,12 @@
           ],
           "commit": "11fb8d845fec64c4a06d0e8fd2a29962f4d7ad67"
         }
-      ]
+      ],
+      "descontinuado": {
+        "desde": 1793404800,
+        "motivo": "incorporado-ao-produto",
+        "produto": "0.19"
+      }
     }
   ]
 }

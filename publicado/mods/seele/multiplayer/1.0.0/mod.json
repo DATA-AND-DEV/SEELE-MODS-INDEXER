@@ -1,0 +1,25 @@
+{
+  "schema": 1,
+  "id": "seele/multiplayer",
+  "version": "1.0.0",
+  "api": 8,
+  "repo": "https://github.com/DATA-AND-DEV/SEELE-MOD-MULTIPLAYER",
+  "reach": [
+    "servidores de jogo na máquina de quem aceita",
+    "baixar e rodar o servidor do jogo",
+    "túnel de jogo até localhost",
+    "entrada na navegação do servidor",
+    "nomes de quem está no servidor"
+  ],
+  "client": "cliente/main.js",
+  "server": "servidor/main.js",
+  "maquina": "maquina/main.js",
+  "plataformas": ["app"],
+  "poderes": ["porta", "programa"],
+  "permissoes": [
+    { "acao": "criar-servidor-de-jogo", "nome": "Criar um servidor de jogo", "todos": false },
+    { "acao": "configurar-servidor-de-jogo", "nome": "Configurar um servidor de jogo", "todos": false },
+    { "acao": "ligar-desligar-servidor-de-jogo", "nome": "Ligar e desligar um servidor de jogo", "todos": false },
+    { "acao": "entrar-no-jogo", "nome": "Entrar no jogo", "todos": true }
+  ]
+}

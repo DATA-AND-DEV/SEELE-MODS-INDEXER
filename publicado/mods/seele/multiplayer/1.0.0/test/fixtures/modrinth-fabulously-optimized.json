@@ -1,0 +1,70 @@
+[
+ {
+  "id": "37TmHvhB",
+  "project_id": "1KVo5zza",
+  "name": "8.2.0 for 1.21.4",
+  "version_number": "8.2.0",
+  "game_versions": [
+   "1.21.4"
+  ],
+  "loaders": [
+   "fabric"
+  ],
+  "files": [
+   {
+    "hashes": {
+     "sha512": "57764c105ff999ced4c7e2069e36dcf226896fbb3df4eb82cbb2907630dbf7be31b61ba66ecbc0048b42ba3d0c715e03eed872883d32ba1eb2216fc0f0d4199d",
+     "sha1": "68226d5210fb3f80841de6160fbe4a0595a5fb11"
+    },
+    "url": "https://cdn.modrinth.com/data/1KVo5zza/versions/37TmHvhB/Fabulously.Optimized-v8.2.0.mrpack",
+    "filename": "Fabulously.Optimized-v8.2.0.mrpack",
+    "primary": true,
+    "size": 182799
+   },
+   {
+    "hashes": {
+     "sha1": "8f2ee72abf4d0b5d51125e12d7dd4d18f7275c99",
+     "sha512": "5a98a2b38ac3138c68aee4e31606a3384d66619b8a0eed7433c22d58a818b445dca20fd4c7ab6f5772be1d1048337b4f180230594a8c8c41ba3da5512e372fa6"
+    },
+    "url": "https://cdn.modrinth.com/data/1KVo5zza/versions/37TmHvhB/cosign-bundle.zip",
+    "filename": "cosign-bundle.zip",
+    "primary": false,
+    "size": 7380
+   }
+  ]
+ },
+ {
+  "id": "YGtw3YsK",
+  "project_id": "1KVo5zza",
+  "name": "⚠️ 8.1.0 for 1.21.4",
+  "version_number": "8.1.0",
+  "game_versions": [
+   "1.21.4"
+  ],
+  "loaders": [
+   "fabric"
+  ],
+  "files": [
+   {
+    "hashes": {
+     "sha512": "01e9807d31ff77380b38ff474df0f7230d5b03170f9db601596714a45e5007471869c4b008dcde0393d8b936eb4673628f02fb1d47a1b80b373d34a0fb137161",
+     "sha1": "37ba494b5c2fb9f1783ec4fc2eed270ac6582c2e"
+    },
+    "url": "https://cdn.modrinth.com/data/1KVo5zza/versions/YGtw3YsK/Fabulously.Optimized-v8.1.0.mrpack",
+    "filename": "Fabulously.Optimized-v8.1.0.mrpack",
+    "primary": true,
+    "size": 82015
+   },
+   {
+    "hashes": {
+     "sha1": "713b0caec2f077d4831fbbb10b2664fedb2e0271",
+     "sha512": "dba15b57afcbd4b8761d4bafdc5d68299e1143e67a25f2d8d3a8ac57a98dad3810d0b9d4893a345f14b32521d15e3b6c5118f37d7d120d5117fec1897693a312"
+    },
+    "url": "https://cdn.modrinth.com/data/1KVo5zza/versions/YGtw3YsK/cosign-bundle.zip",
+    "filename": "cosign-bundle.zip",
+    "primary": false,
+    "size": 6874
+   }
+  ]
+ }
+]
