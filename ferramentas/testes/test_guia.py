@@ -6,8 +6,9 @@ def test_documentation_topics_and_code_fences():
     entries = chapters()
     # 28 desde a API 6 (D-guia-1): o `referencia/api4` saiu, e entraram as
     # contribuições, os estilos, o tema do servidor e a linha do Servidor 0.15.
-    assert len(entries) == 28
-    assert len({(mode, slug) for mode, slug, _, _ in entries}) == 28
+    # 29 desde a API 8 (0.19): entrou `referencia/api8`, os servidores de jogo.
+    assert len(entries) == 29
+    assert len({(mode, slug) for mode, slug, _, _ in entries}) == 29
     assert {mode for mode, *_ in entries} == {'guia', 'referencia'}
     assert SOURCE.read_text().count('```') % 2 == 0
     for _, _, _, body in entries:
@@ -57,6 +58,9 @@ def test_exemplo_zip_exato_e_manifesto_na_api_que_o_indexador_oferece():
         # guia da API 7 já escrito. A API oferecida é a 7; o exemplo é a
         # compatibilidade intencional.
         #
+        # **A 8 também é alargamento** (a 0.19). O exemplo segue na 6 pelo
+        # mesmo motivo; o exemplo da 8 é o MULTIPLAYER, um repositório à parte.
+        #
         # O indexador não tem um `APIS_POR_LINHA` próprio. Este é o do SEELE
         # (`seele_proto::mods::APIS_POR_LINHA`), e a conferência de que ele não
         # se afastou do indexador está logo abaixo: a união das linhas tem de
@@ -69,7 +73,8 @@ def test_exemplo_zip_exato_e_manifesto_na_api_que_o_indexador_oferece():
         assert api in apis_por_linha['1'] and api in apis_por_linha['2']
     fonte = SOURCE.read_text()
     for nome in ('SeeleUI.superficies.criar', 'SeeleUI.contribuicoes.registrar', 'SeeleUI.retrato',
-                 'mundo.tema', 'mundo.avisar', 'api-too-old', 'tema-sem-metade-de-servidor'):
+                 'mundo.tema', 'mundo.avisar', 'api-too-old', 'tema-sem-metade-de-servidor',
+                 'plataformas', 'poderes', 'mundo.maquinas.pedir', 'SeeleUI.tunel.entrar'):
         assert nome in fonte, nome
 
 
@@ -99,3 +104,19 @@ def test_o_download_tira_a_etiqueta_de_todo_capitulo():
     baixado = para_download(SOURCE.read_text())
     assert not re.findall(r'^## \[', baixado, flags=re.M)
     assert len(re.findall(r'^## ', baixado, flags=re.M)) == len(chapters())
+
+
+def test_toda_recusa_da_api_8_do_leitor_esta_no_guia():
+    """O guia lista as recusas da API 8 pelo código; o leitor é quem as dá.
+
+    Uma recusa nova em `manifesto.py` que o guia não nomeia é um autor que lê
+    um código que nenhuma página explica.
+    """
+    import re
+    leitor = (SOURCE.parents[1] / 'ferramentas/manifesto.py').read_text()
+    codigos = set(re.findall(r'Recusado\(\s*"([a-z0-9-]+)"', leitor))
+    da_8 = {c for c in codigos if any(p in c for p in ('plataforma', 'poder', 'maquina', 'porta'))}
+    assert len(da_8) == 12, sorted(da_8)
+    fonte = SOURCE.read_text()
+    for codigo in sorted(da_8):
+        assert f'`{codigo}`' in fonte, codigo

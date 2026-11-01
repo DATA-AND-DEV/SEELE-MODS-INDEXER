@@ -53,17 +53,21 @@ def test_toda_pagina_diz_de_onde_veio_e_se_e_atual_ou_historica(tmp_path):
         assert not f['fonte'].startswith(('docs/superpowers', 'docs/evidencias', 'spikes/')) and 'incidente' not in f['fonte']
     # as seções pedidas: começar/instalar, conexão/voz/vídeo, identidade/permissões, MODs, arquitetura
     assert {s['titulo'] for s in gerar_docs.manifesto()['secoes']} >= {'Começar', 'Conexão, voz e vídeo', 'Identidade e permissões', 'MODs', 'Arquitetura'}
-    # Começar distingue o guia da 0.18; guias anteriores ficam em Referências.
+    # Começar distingue o guia da 0.19; guias anteriores ficam em Referências.
     comecar = next(s for s in gerar_docs.manifesto()['secoes'] if s['titulo'] == 'Começar')
-    assert comecar['paginas'] and all(p['estado'] in ('atual', 'versao_018') for p in comecar['paginas']), comecar
+    assert comecar['paginas'] and all(p['estado'] in ('atual', 'versao_019') for p in comecar['paginas']), comecar
     for s in gerar_docs.manifesto()['secoes']:
         if not s['titulo'].startswith('Referências'):
             assert all(p['estado'] != 'historico' for p in s['paginas']), f"página histórica fora de Referências: {s['titulo']}"
-    novo = next(p for p in gerar_docs.paginas() if p['slug'] == 'usar-a-0-18')
-    antigo = next(p for p in gerar_docs.paginas() if p['slug'] == 'usar-a-0-17')
-    assert novo['estado'] == 'versao_018' and antigo['estado'] == 'historico'
+    novo = next(p for p in gerar_docs.paginas() if p['slug'] == 'usar-a-0-19')
+    antigos = [p for p in gerar_docs.paginas() if p['slug'] in ('usar-a-0-18', 'usar-a-0-17')]
+    assert novo['estado'] == 'versao_019' and len(antigos) == 2 and all(p['estado'] == 'historico' for p in antigos)
     assert gerar_docs.manifesto()['guia_de_tarefas'] == novo['slug']
-    assert 'SEELE 0.18' in (destino / novo['slug'] / 'index.html').read_text(encoding='utf-8')
+    pagina = (destino / novo['slug'] / 'index.html').read_text(encoding='utf-8')
+    assert 'SEELE 0.19' in pagina
+    # o caminho rápido aponta âncoras que o guia tem de fato
+    for ancora in re.findall(r'href="\.\./usar-a-0-19/#([a-z0-9-]+)"', pagina):
+        assert f'id="{ancora}"' in pagina, ancora
     # a proveniência: uma fonte alterada ou nova não é atribuída a um commit como se estivesse nele
     for f in fontes:
         assert f['situacao'] in ('igual', 'alterado', 'novo') and len(f['sha256']) == 64

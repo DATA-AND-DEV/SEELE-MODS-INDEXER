@@ -1,6 +1,6 @@
 # Como criar MODs para o SEELE
 
-Guia prático e referência técnica. Revisão de 25/10/2026. Manifesto schema 1, API de MOD 7: a do app 0.17 e do Servidor 2.0, que também executam a 6, a do app 0.16 e do Servidor 1.0. A documentação distingue o que o produto executa, as convenções de autoria e o que não existe — e diz qual é qual.
+Guia prático e referência técnica. Revisão de 01/11/2026. Manifesto schema 1, API de MOD 8: a do app 0.19, que também executa a 7 (a dos apps 0.17 e 0.18) e a 6 (a do app 0.16 e do Servidor 1.0). Um MOD das APIs 3 a 7 continua rodando onde já rodava, sem ser republicado. A documentação distingue o que o produto executa, as convenções de autoria e o que não existe — e diz qual é qual.
 
 ## [guia:comecar] Comece por aqui
 
@@ -17,6 +17,7 @@ Você entrega uma pasta com um manifesto e pelo menos um script. O manifesto apr
 - Quer publicar? Primeiro teste a pasta exata que será distribuída; depois consulte Publique e mantenha.
 - Está corrigindo um problema? Consulte Recusas e diagnóstico. Uma instalação bem-sucedida não prova que o MOD está ligado nem executando.
 - Mantém um MOD das APIs 3, 4 ou 5? Ele roda no Servidor 0.15, e não no app 0.16: veja A linha do Servidor 0.15.
+- Quer hospedar um servidor de jogo pelo SEELE? Isso é da API 8, só no app 0.19: veja API 8: servidores de jogo, na Referência técnica.
 
 ### O que você precisa
 
@@ -298,7 +299,7 @@ Não transforme uma interação indisponível em uma alteração automática de 
 
 ## [guia:publicar] Publique e mantenha
 
-O caminho recomendado é um repositório público por MOD, com manifesto na raiz, código legível, instruções de teste e versão explícita. ESTILO, PERFIS e MESA são exemplos de projetos independentes.
+O caminho recomendado é um repositório público por MOD, com manifesto na raiz, código legível, instruções de teste e versão explícita. ESTILO, MESA e MULTIPLAYER são exemplos de projetos independentes; o PERFIS também, embora tenha sido descontinuado na 0.19.
 
 ### Antes da solicitação
 
@@ -325,7 +326,7 @@ Publicar o código no GitHub não é o mesmo que obter verificação no catálog
 
 Crie uma versão nova para conteúdo novo. Não reescreva uma versão já publicada. Atualizar o arquivo no host, atualizar o que o servidor exige e atualizar o que o participante instalou precisam resultar no mesmo hash. Uma etiqueta `1.0.0` igual nos dois lados não basta.
 
-**A API que você declara é uma versão só.** Um pacote da 7 roda no app 0.17 e no Servidor 2.0, e não roda no app 0.16. Um da 6 roda nos apps 0.16 e 0.17 e nos Servidores 1.0 e 2.0, sem ser republicado. Um das APIs 3 a 5 continua rodando no Servidor 0.15. Um pacote da API 6 serve as linhas 1 e 2 sem ser republicado. Um pacote por API só é preciso quando as APIs são incompatíveis, por exemplo para alcançar a linha 0.15 e a linha 2 ao mesmo tempo (a 5, a 4 e a 3 de um lado, a 6 ou a 7 do outro): é o que fazem os três MODs oficiais — a 4.x na API 6, a 3.x na linha legada —, e cada pacote passa pela avaliação.
+**A API que você declara é uma versão só.** Um pacote da 8 roda só no app 0.19, e não nos apps 0.16 a 0.18. Um da 7 roda nos apps 0.17, 0.18 e 0.19, e não roda no app 0.16. Um da 6 roda nos apps 0.16 a 0.19, sem ser republicado. Um das APIs 3 a 5 continua rodando no Servidor 0.15. Um pacote da API 6 serve as linhas 1 e 2 sem ser republicado. Um pacote por API só é preciso quando as APIs são incompatíveis, por exemplo para alcançar a linha 0.15 e a linha 2 ao mesmo tempo (a 5, a 4 e a 3 de um lado, a 6 ou a 7 do outro): é o que fazem os três MODs oficiais — a 4.x na API 6, a 3.x na linha legada —, e cada pacote passa pela avaliação.
 
 Planeje migrações de dados e faça backup antes de testar uma atualização sobre um mundo existente. A propriedade `state` do manifesto não executa uma migração automaticamente. Sua lógica deve reconhecer versões antigas do estado e transformá-las de maneira explícita.
 
@@ -333,7 +334,7 @@ Teste entrar com pacote antigo, entrar com pacote novo, atualizar durante uma se
 
 ## [referencia:visao] Superfície e compatibilidade
 
-O indexador oferece a API 7 (`VERSAO_DA_API`, o espelho de `MOD_API_VERSION`) e lê o manifesto de esquema 1. A ponte de pedidos entrou com o protocolo 6, o Servidor 1.0 é o protocolo 1.0 mais a API 6, e o Servidor 2.0 (app 0.17) executa a API 7 e a 6. São números diferentes: versão do manifesto, versão da API do MOD e versão do protocolo de rede. A versão do seu pacote, por exemplo `3.0.0`, é outro identificador.
+O indexador oferece a API 8 (`VERSAO_DA_API`, o espelho de `MOD_API_VERSION`) e lê o manifesto de esquema 1. A ponte de pedidos entrou com o protocolo 6, o Servidor 1.0 é o protocolo 1.0 mais a API 6, o Servidor 2.0 (apps 0.17 e 0.18) executa a API 7 e a 6, e o app 0.19, na mesma linha 2, executa a 8, a 7 e a 6. São números diferentes: versão do manifesto, versão da API do MOD e versão do protocolo de rede. A versão do seu pacote, por exemplo `3.0.0`, é outro identificador.
 
 O que está no catálogo assinado hoje, e o que já chegou na máquina de alguém, é o que as releases publicadas dizem:
 
@@ -347,17 +348,19 @@ curl -sS "https://api.github.com/repos/DATA-AND-DEV/SEELE-RELEASES/releases" | h
 
 **A 7 é um alargamento da 6, e não uma ruptura.** Ela traz a 6 inteira e acrescenta as permissões do MOD e a capacidade `acoes` (veja **As permissões e as ações**, no capítulo do manifesto). Um MOD da 6 roda no app 0.17 sem permissões e sem ser republicado. O contrário não vale: o app 0.16 não executa a 7, e por isso o catálogo só oferece à 0.16 as versões que declaram a API 6.
 
-As linhas são três, e é delas que o indexador tira o conjunto (`APIS_POR_LINHA`): a linha `2` (app 0.17, Servidor 2.0) executa a 7 e a 6; a `1` (app 0.16, Servidor 1.0) executa a 6; a `0.15` executa a 5, a 4 e a 3.
+**A 8 é um alargamento da 7, e não uma ruptura.** Ela traz a 7 inteira e acrescenta o que o manifesto declara: em que plataformas o MOD roda (`plataformas`), o que ele pode fazer na máquina (`poderes`) e uma terceira metade, a de máquina (`maquina`). As capacidades da 8 são as da 7; o que muda vem do poder declarado. Um MOD das 6 e 7 roda no app 0.19 sem ser republicado. O app 0.18 não executa a 8, e por isso o catálogo só oferece à 0.18 as versões que declaram a 7 ou a 6. O capítulo **API 8: servidores de jogo** explica as chaves e as recusas.
+
+As linhas são três, e é delas que o indexador tira o conjunto (`APIS_POR_LINHA`): a linha `2` executa a 8, a 7 e a 6 no app 0.19, e a 7 e a 6 nos apps 0.17 e 0.18 (Servidor 2.0); a `1` (app 0.16, Servidor 1.0) executa a 6; a `0.15` executa a 5, a 4 e a 3.
 
 | O que o número diz | Onde ele está | Valor nesta revisão |
 | --- | --- | --- |
-| O teto que o cliente entende | `MOD_API_VERSION` | 7 no app 0.17; 6 no app 0.16; 5 no Servidor 0.15 |
-| O conjunto que o cliente executa | `APIS_ACEITAS` | 7 e 6 no app 0.17; 6 no app 0.16; 5, 4, 3 no Servidor 0.15 |
-| O teto que o indexador publica | `api_oferecida` no catálogo | 7 |
-| O conjunto que o indexador aceita | `apis_aceitas` no catálogo | 7, 6, 5, 4, 3: a união das três linhas |
-| O que o seu pacote declara | `api` no manifesto | 7 para o app 0.17 e o Servidor 2.0; 6 para qualquer um dos apps 0.16 e 0.17 e dos Servidores 1.0 e 2.0; 3, 4 ou 5 para o Servidor 0.15 |
+| O teto que o cliente entende | `MOD_API_VERSION` | 8 no app 0.19; 7 nos apps 0.17 e 0.18; 6 no app 0.16; 5 no Servidor 0.15 |
+| O conjunto que o cliente executa | `APIS_ACEITAS` | 8, 7 e 6 no app 0.19; 7 e 6 nos apps 0.17 e 0.18; 6 no app 0.16; 5, 4, 3 no Servidor 0.15 |
+| O teto que o indexador publica | `api_oferecida` no catálogo | 8 |
+| O conjunto que o indexador aceita | `apis_aceitas` no catálogo | 8, 7, 6, 5, 4, 3: a união das três linhas |
+| O que o seu pacote declara | `api` no manifesto | 8 para o app 0.19; 7 para os apps 0.17 a 0.19; 6 para os apps 0.16 a 0.19; 3, 4 ou 5 para o Servidor 0.15 |
 
-Um pacote que pede mais do que o teto é recusado como `api-too-new`; um fora do conjunto, como `api-too-old` — no app 0.16 e no app 0.17, toda API abaixo da 6, e a tela aponta o Servidor 0.15 no launcher. O app 0.16 recusa a 7 como `api-too-new`; se o manifesto da 7 traz `permissoes`, a recusa é `malformed`, porque a 0.16 não conhece a chave. As duas recusas acontecem antes de executar qualquer código. Numa ruptura, a ordem de publicação é a dos pacotes da 6 entrarem no catálogo **antes** do aplicativo que os executa, e foi assim que os três MODs oficiais saíram na 4.0.0.
+Um pacote que pede mais do que o teto é recusado como `api-too-new`; um fora do conjunto, como `api-too-old` — no app 0.16 e no app 0.17, toda API abaixo da 6, e a tela aponta o Servidor 0.15 no launcher. O app 0.16 recusa a 7 como `api-too-new`; se o manifesto da 7 traz `permissoes`, a recusa é `malformed`, porque a 0.16 não conhece a chave. Do mesmo jeito, os apps 0.17 e 0.18 recusam a 8 como `api-too-new`, ou como `malformed` se o manifesto traz `plataformas`, `poderes` ou `maquina`. As duas recusas acontecem antes de executar qualquer código. Numa ruptura, a ordem de publicação é a dos pacotes da 6 entrarem no catálogo **antes** do aplicativo que os executa, e foi assim que os três MODs oficiais saíram na 4.0.0.
 
 ### O que a plataforma não tem não existe
 
@@ -397,6 +400,9 @@ else dizer('envie a imagem pelo app do computador');
 | Servidor | `arquivos.ler`, `escrever`, `listar`, `apagar` |
 | Servidor | `volume.esperar`, `tamanho`, `servir`, `apagar` |
 | Servidor | `mundo.buscar`, `agora`, `registrar`, `avisar`, `tema` |
+| Cliente, API 8 com o poder `porta` | `SeeleUI.tunel.entrar(nome)` e `SeeleUI.salvar({ pedido, nome, canal })`, só dentro de um clique e só no app |
+| Servidor, API 8 com `maquina` | `mundo.maquinas.pedir`, `avisar`, `dona` |
+| Máquina, API 8 | `maquina.servidor`, `oferta`, `pedir`, `aoAviso`, `aoParar`, `aoReconectar`; `maquina.porta.*` com a `porta`; `maquina.programa.*` com o `programa` |
 
 ### APIs do navegador e do servidor
 
@@ -406,7 +412,7 @@ O cliente é um script autocontido executado num **motor QuickJS do lado do apli
 
 O produto encerra o executor ao descarregar o MOD, e com ele os temporizadores, as superfícies, as contribuições, a mídia montada e os arquivos que alguém escolheu.
 
-Fontes: [o contrato da API 6](https://github.com/DATA-AND-DEV/SEELE/blob/v0.16.0/api/v6.json), [o que muda nesta versão](https://github.com/DATA-AND-DEV/SEELE/blob/v0.16.0/api/README.md).
+Fontes: [o contrato da API 6](https://github.com/DATA-AND-DEV/SEELE/blob/v0.16.0/api/v6.json), [o contrato da API 8](https://github.com/DATA-AND-DEV/SEELE/blob/b1c482ade67c8d4ac61a18ecb209cbe2b8d07e9d/api/v8.json), [o que muda em cada versão](https://github.com/DATA-AND-DEV/SEELE/blob/b1c482ade67c8d4ac61a18ecb209cbe2b8d07e9d/api/README.md).
 
 ## [referencia:manifesto] Manifesto e limites de anúncio
 
@@ -417,7 +423,7 @@ O manifesto é JSON estrito. **Chaves desconhecidas são recusadas, e é de prop
 | schema | número inteiro | Use 1 nesta revisão |
 | id | string | autor/nome; minúsculas ASCII, dígitos e hífen; uma barra |
 | version | string | Versão do autor; o core não a interpreta como SemVer |
-| api | número inteiro | 7 para o app 0.17 e o Servidor 2.0; 6 para os apps 0.16 e 0.17 e os Servidores 1.0 e 2.0; 3, 4 ou 5 para o Servidor 0.15 — inclusive em MODs somente de servidor |
+| api | número inteiro | 8 para o app 0.19; 7 para os apps 0.17 a 0.19; 6 para os apps 0.16 a 0.19; 3, 4 ou 5 para o Servidor 0.15 — inclusive em MODs somente de servidor |
 | repo | string | Repositório público do pacote |
 | reach | string[] | Opcional no parser; declare alcances úteis para quem aceita |
 | state | inteiro ou ausente | Versão declarativa dos seus dados; sem migração automática |
@@ -425,11 +431,14 @@ O manifesto é JSON estrito. **Chaves desconhecidas são recusadas, e é de prop
 | server | string ou ausente | Script de servidor relativo à raiz |
 | arquivos | string[] ou ausente | Mídia que o pacote traz, relativa à raiz; até 16, e nenhum caminho sai da pasta |
 | tema | booleano ou ausente | Da API 6 em diante: `true` abre a porta do tema do servidor (`mundo.tema`); exige `server`. `null` não vale como ausente |
-| permissoes | lista ou ausente | Só na API 7: as ações que o MOD pede ao servidor, `{ "acao", "nome", "todos" }` cada uma; veja abaixo |
+| permissoes | lista ou ausente | Da API 7 em diante: as ações que o MOD pede ao servidor, `{ "acao", "nome", "todos" }` cada uma; veja abaixo |
+| plataformas | lista ou ausente | Só na API 8: `"app"`, `"navegador"` ou as duas. Ausente quer dizer as duas; veja **API 8: servidores de jogo** |
+| poderes | lista ou ausente | Só na API 8: `"porta"`, `"programa"` ou os dois. Exige `"plataformas": ["app"]`, `maquina` e, com a `porta`, a permissão `entrar-no-jogo` |
+| maquina | string ou ausente | Só na API 8: o script da metade de máquina, relativo à raiz; exige `poderes` e `server` |
 
-Ao menos `client` ou `server` precisa existir (sem nenhum, `empty`). Uma API fora do conjunto aceito é recusada antes de executar código: acima do teto, como `api-too-new`; fora do conjunto, como `api-too-old`. O indexador aceita `7, 6, 5, 4, 3`, a união das três linhas; cada aplicativo executa só a da linha dele — o app 0.17 a 7 e a 6, o app 0.16 só a 6, e o Servidor 0.15 a 5, a 4 e a 3. Não existe compatibilidade com cliente de API 2.
+Ao menos `client` ou `server` precisa existir (sem nenhum, `empty`). Uma API fora do conjunto aceito é recusada antes de executar código: acima do teto, como `api-too-new`; fora do conjunto, como `api-too-old`. O indexador aceita `8, 7, 6, 5, 4, 3`, a união das três linhas; cada aplicativo executa só a da linha dele — o app 0.19 a 8, a 7 e a 6, os apps 0.17 e 0.18 a 7 e a 6, o app 0.16 só a 6, e o Servidor 0.15 a 5, a 4 e a 3. Não existe compatibilidade com cliente de API 2.
 
-**As permissões e as ações (API 7).** `permissoes` é uma lista como `[{ "acao": "fechar-mesa", "nome": "Fechar a mesa", "todos": false }]`. Declarar exige `"api": 7`: um manifesto da 6 com a chave é recusado como `permissoes-pedem-api-nova`, e não ignorado. A ação usa só `a-z`, `0-9` e hífen, até 32 bytes; o nome (o que a tela de cargos mostra) não é vazio, até 48 bytes; a ação não se repete; e o teto é de 8 permissões por MOD. Fora disso, `permissoes-invalidas`. A capacidade `acoes` é a última da lista da API 7: o MOD pede uma ação declarada, e o servidor confere o MOD ligado, a ação declarada e a permissão da pessoa antes de chamar a metade de servidor. A recusa volta como `acao-nao-declarada` ou `sem-permissao`. **Na janela, a chamada é `SeeleMods.acao(id, canal, acao, valor)`**, e só existe com a capacidade `acoes`. O `id` que vai é sempre o do próprio MOD, como no `request`. A resposta é a da metade de servidor, como a do `request`, e a recusa dos cargos chega como valor, `{ ok: false, recusa }`. A janela não confere nada: quem decide é o servidor.
+**As permissões e as ações (API 7).** `permissoes` é uma lista como `[{ "acao": "fechar-mesa", "nome": "Fechar a mesa", "todos": false }]`. Declarar exige `"api": 7` ou mais: um manifesto da 6 com a chave é recusado como `permissoes-pedem-api-nova`, e não ignorado. A ação usa só `a-z`, `0-9` e hífen, até 32 bytes; o nome (o que a tela de cargos mostra) não é vazio, até 48 bytes; a ação não se repete; e o teto é de 8 permissões por MOD. Fora disso, `permissoes-invalidas`. A capacidade `acoes` é a última da lista da API 7: o MOD pede uma ação declarada, e o servidor confere o MOD ligado, a ação declarada e a permissão da pessoa antes de chamar a metade de servidor. A recusa volta como `acao-nao-declarada` ou `sem-permissao`. **Na janela, a chamada é `SeeleMods.acao(id, canal, acao, valor)`**, e só existe com a capacidade `acoes`. O `id` que vai é sempre o do próprio MOD, como no `request`. A resposta é a da metade de servidor, como a do `request`, e a recusa dos cargos chega como valor, `{ ok: false, recusa }`. A janela não confere nada: quem decide é o servidor.
 
 **Na metade de servidor, a operação protegida se guarda por `contexto.acao`**, que o host escreve depois do portão dos cargos e que é `null` num `request` comum: `if (contexto.acao !== 'fechar-mesa') return recusa;`. **Nunca por `contexto.permissoes`**, que é informativo e chega também num `request` comum, e nunca pelo corpo do pedido (um `pedido.acao`, um `admin` ou um contexto escrito pelo cliente não decidem nada). O `request` comum continua valendo para as leituras, e para as mutações que outra regra já protege (o dono, o mestre da mesa, a própria pessoa). O exemplo é a fixture `apps/seele-app/testes/mod-de-acoes` do repositório do SEELE. Um MOD da 6 não declara nada disso e continua rodando, sem permissões.
 
@@ -448,7 +457,7 @@ Ao menos `client` ou `server` precisa existir (sem nenhum, `empty`). Uma API for
 | version | 32 bytes UTF-8 |
 | repo | 256 bytes UTF-8 |
 | reach: quantidade | 16 itens |
-| reach: cada item | 32 bytes UTF-8 na linha 1 (apps 0.16, Servidor 1.0); 48 na linha 2 (app 0.17, Servidor 2.0). Para servir as duas linhas, 32 |
+| reach: cada item | 32 bytes UTF-8 na linha 1 (app 0.16, Servidor 1.0); 48 na linha 2 (apps 0.17 a 0.19). Para servir as duas linhas, 32 |
 
 Esses limites são do anúncio, não apenas do parser de JSON. Um manifesto pode passar por uma etapa de leitura e falhar ao ser anunciado. Os alcances de ESTILO e PERFIS já expuseram essa diferença durante testes: uma descrição longa impediu a entrada no servidor até ser corrigida.
 
@@ -461,9 +470,132 @@ for (const alcance of manifesto.reach ?? []) {
 
 Caracteres acentuados e emoji podem ocupar mais de um byte. Não use `texto.length` como medida de UTF-8. O fragmento acima é para os seus testes, no Node: o executor do MOD não tem `Buffer` nem `TextEncoder`.
 
-`reach` informa o que o pacote declara alcançar; **é declaração, e nada a confere**. O que o MOD alcança de fato é o que a API 6 oferece. Declare a realidade, incluindo integrações externas. Não acrescente campos inventados como `permissions`, `author` ou `description` sem uma mudança oficial do schema.
+`reach` informa o que o pacote declara alcançar; **é declaração, e nada a confere**. O que o MOD alcança de fato é o que a API dele oferece. Declare a realidade, incluindo integrações externas. Não acrescente campos inventados como `permissions`, `author` ou `description` sem uma mudança oficial do schema.
 
-Fontes: [manifesto](https://github.com/DATA-AND-DEV/SEELE/blob/v0.16.0/crates/seele-proto/src/mods.rs), [o leitor do indexador](https://github.com/DATA-AND-DEV/SEELE-MODS-INDEXER/blob/main/ferramentas/manifesto.py).
+Fontes: [manifesto, na 0.19](https://github.com/DATA-AND-DEV/SEELE/blob/b1c482ade67c8d4ac61a18ecb209cbe2b8d07e9d/crates/seele-proto/src/mods.rs), [o leitor do indexador](https://github.com/DATA-AND-DEV/SEELE-MODS-INDEXER/blob/main/ferramentas/manifesto.py).
+
+## [referencia:api8] API 8: servidores de jogo
+
+A API 8 é a do app 0.19. Com ela, um MOD pode hospedar um servidor de jogo no computador de quem hospeda, com a aprovação dele. Quem aprova vê o que o MOD pede antes de aceitar, e o jogo para quando o servidor do SEELE para. Quem joga entra por uma porta local, `localhost:<porta>`, que o app abre e mostra.
+
+**Os MODs das APIs 3 a 7 continuam funcionando.** A 8 é um alargamento da 7: as capacidades por versão são as mesmas, e um MOD que não declara as chaves novas não muda nada. Um MOD das 6 e 7 roda no app 0.19 sem ser republicado, e um das 3, 4 e 5 continua no Servidor 0.15.
+
+### O que a 8 acrescenta
+
+- **Três chaves no manifesto:** `plataformas`, `poderes` e `maquina`. Todas são opcionais.
+- **Uma terceira metade, a de máquina.** Ela roda no computador que aceitou hospedar o servidor de jogo, no mesmo executor QuickJS das outras duas. Não tem tela.
+- **Dois poderes.** `porta` abre o túnel do jogo: dá `maquina.porta` à metade de máquina e `SeeleUI.tunel.entrar` e `SeeleUI.salvar` à metade de cliente. `programa` dá `maquina.programa` à metade de máquina: baixar com hash e rodar o comando aceito.
+- **`mundo.maquinas` na metade de servidor**, só para o MOD que declara `maquina`: `pedir` chama uma pessoa a hospedar, `avisar` fala com a máquina aceita e `dona` diz qual máquina roda o jogo agora. O MOD sabe o destino de cada pedido pelos momentos `MaquinaAceitou`, `MaquinaRecusou` e `MaquinaParou`.
+- **Um aceite que é do produto, e não do MOD.** A tela mostra o que vai ser baixado, de onde, o que vai rodar e com que argumentos. Antes do aceite, nada é baixado e nada roda. O aceite vale acima de qualquer cargo, inclusive o de quem administra o servidor SEELE.
+
+### O manifesto do exemplo
+
+O MULTIPLAYER 1.0.0 (`seele/multiplayer`) usa as três chaves e os dois poderes:
+
+```json
+{
+  "schema": 1,
+  "id": "seele/multiplayer",
+  "version": "1.0.0",
+  "api": 8,
+  "repo": "https://github.com/DATA-AND-DEV/SEELE-MOD-MULTIPLAYER",
+  "reach": [
+    "servidores de jogo na máquina de quem aceita",
+    "baixar e rodar o servidor do jogo",
+    "túnel de jogo até localhost",
+    "entrada na navegação do servidor",
+    "nomes de quem está no servidor"
+  ],
+  "client": "cliente/main.js",
+  "server": "servidor/main.js",
+  "maquina": "maquina/main.js",
+  "plataformas": ["app"],
+  "poderes": ["porta", "programa"],
+  "permissoes": [
+    { "acao": "criar-servidor-de-jogo", "nome": "Criar um servidor de jogo", "todos": false },
+    { "acao": "configurar-servidor-de-jogo", "nome": "Configurar um servidor de jogo", "todos": false },
+    { "acao": "ligar-desligar-servidor-de-jogo", "nome": "Ligar e desligar um servidor de jogo", "todos": false },
+    { "acao": "entrar-no-jogo", "nome": "Entrar no jogo", "todos": true }
+  ]
+}
+```
+
+### `plataformas`
+
+- Os valores são `"app"` (o app de computador) e `"navegador"`. O celular é navegador.
+- **Ausente quer dizer as duas**, como em todo MOD das 6 e 7.
+- Quem entra por uma plataforma fora da lista não executa a metade de cliente do MOD, e a tela de MODs diz que ele só funciona no app.
+
+### `poderes` e `maquina`
+
+- Os valores de `poderes` são `"porta"` e `"programa"`. Ausente quer dizer nenhum.
+- `maquina` é o caminho, dentro do pacote, do script da metade de máquina.
+- Um poder só vale com `"plataformas": ["app"]`: o navegador não abre porta na máquina.
+- A `porta` pede a permissão `entrar-no-jogo` em `permissoes`. Sem ela, ninguém poderia abrir o túnel.
+- Um poder pede a metade de máquina, a metade de máquina pede um poder, e ela pede também a metade de servidor: é a metade de servidor que chama a máquina e recebe o aceite.
+
+### As recusas, na ordem em que são conferidas
+
+O app (`read_manifest`, em `seele-proto`) e o indexador (`ferramentas/manifesto.py`) conferem na mesma ordem e param na primeira recusa. O nome é o código do indexador:
+
+1. `plataformas` numa API abaixo da 8: `plataformas-pedem-api-nova`.
+2. `"plataformas": []`: `plataformas-vazias`. Para as duas plataformas, omita a chave.
+3. A mesma plataforma duas vezes: `plataforma-repetida`, com a posição.
+4. `poderes` ou `maquina` numa API abaixo da 8: `poderes-pedem-api-nova`.
+5. `"poderes": []`: `poderes-vazios`. Sem poder, omita a chave.
+6. O mesmo poder duas vezes: `poder-repetido`, com a posição.
+7. Um poder sem `"plataformas": ["app"]`, inclusive com a chave ausente: `poderes-exigem-so-o-app`.
+8. `maquina` fora da pasta do MOD: `maquina-fora-do-pacote`.
+9. `maquina` sem `poderes`: `maquina-sem-poderes`.
+10. `porta` sem a permissão `entrar-no-jogo`: `porta-sem-entrar-no-jogo`.
+11. Um poder sem `maquina`: `poderes-sem-maquina`.
+12. `maquina` sem `server`: `maquina-sem-servidor`.
+
+Um valor que a lista não conhece, como `"App"`, `"web"` ou `"rede"`, recusa o manifesto inteiro como `malformed`. `"maquina": null` vale como ausente na API 8; abaixo dela, o indexador o recusa como `malformed`, porque os apps 0.17 e 0.18 não conhecem a chave.
+
+Os apps 0.17 e 0.18 não executam a 8. Um manifesto da 8 com `plataformas`, `poderes` ou `maquina` é recusado neles como `malformed`; sem as chaves, como `api-too-new`. O catálogo só oferece a esses apps as versões que declaram a 7 ou a 6.
+
+### As três metades
+
+**A metade de cliente** desenha o seletor e o botão de entrar. `SeeleUI.tunel.entrar(nome)` só vale dentro do ouvinte de um evento `botao`, na mesma volta, sem `await` antes. Ela resolve com a porta em `127.0.0.1`: a do jogo, ou a primeira livre das 64 seguintes. Fora de um clique, a recusa é `fora-de-um-clique`; no navegador, `so-no-app`. O MULTIPLAYER faz assim:
+
+```js
+SeeleUI.aoEvento(evento => {
+  // O túnel primeiro, sem nenhum await antes: o bilhete do clique vale só agora.
+  if (evento.nome === 'botao' && String(evento.chave).startsWith('entrar:')) {
+    entrar(String(evento.chave).slice('entrar:'.length));
+    return;
+  }
+  // ...
+});
+```
+
+O produto desenha, fora de toda superfície de MOD, uma faixa por porta aberta: o jogo, o MOD, por onde o tráfego passa e a última queda. O MOD não a desenha, não a cala e não a lê. `SeeleUI.salvar` entrega a quem joga um arquivo que a metade de servidor guardou, como o modpack, pelo diálogo de salvar do sistema. O caminho escolhido nunca volta ao MOD.
+
+**A metade de servidor** decide quem hospeda e quem pode o quê. `mundo.maquinas.pedir({ quem, servidor, papel, oferta })` mostra a oferta a `quem`, na máquina dessa pessoa. Como `mundo.avisar`, a chamada declara: o pedido só sai se a chamada terminar e o quintal gravar. Uma oferta inválida lança com o nome da regra (`oferta-invalida:<campo>`). As ações protegidas se guardam por `contexto.acao`, como na API 7.
+
+**A metade de máquina** baixa e roda o jogo:
+
+- `maquina.porta.servir({ nome, protocolo, porta })` abre a ponta do túnel. Só o túnel da oferta aceita abre; outro volta `fora-do-aceite`.
+- `maquina.programa.baixar({ url, sha1 | sha256 | sha512, tamanho, destino })` só baixa por https, com hash e tamanho declarados, e só das origens que o aceite mostrou. O arquivo só aparece no destino se o tamanho e o hash baterem.
+- `maquina.programa.rodar({ comando, argumentos, pasta })` só roda o comando e os argumentos exatos do aceite, dentro da pasta daquele servidor de jogo. O comando nunca é procurado no `PATH`.
+- O processo roda com a conta de quem aceitou, e o aceite diz isso. O que o próprio jogo baixa por conta própria não passa pelo SEELE; a oferta declara esses domínios, e o aceite os mostra.
+
+Quando a metade de máquina para — pelo dono da máquina, por revogação do aceite, porque o app fechou ou porque o MOD foi desligado, entre outros motivos —, `maquina.aoParar` ouve o motivo. Depois, o produto encerra todo processo e todo download do programa. Com um processo vivo, o app espera a despedida por até 20 s.
+
+### O que foi testado, e o que não foi
+
+Na 0.19.0, a hospedagem pela API 8 foi exercitada no app de verdade com Forge e NeoForge, no Mac e no Windows: subir, entrar, salvar, reiniciar o servidor e fechar o app com o jogo de pé. Não foram testados:
+
+- a hospedagem de jogo entre duas casas diferentes, nem um cliente Forge entrando por conta Microsoft;
+- Linux e Quilt com a API 8;
+- MODs de navegador que abrem porta.
+
+No Windows, encerrar a sessão do sistema dá ao jogo só cerca de 1 segundo para salvar antes de o Windows fechá-lo. Se o seu MOD roda um jogo, diga a quem hospeda para parar o servidor antes de sair da sessão.
+
+Não há relay. O túnel do jogo anda pela mesma ligação do SEELE: quem o SEELE não conecta, o MOD também não conecta.
+
+Fontes: [o contrato da API 8](https://github.com/DATA-AND-DEV/SEELE/blob/b1c482ade67c8d4ac61a18ecb209cbe2b8d07e9d/api/v8.json), [o que muda na API 8](https://github.com/DATA-AND-DEV/SEELE/blob/b1c482ade67c8d4ac61a18ecb209cbe2b8d07e9d/api/README.md), [o `read_manifest` da 0.19](https://github.com/DATA-AND-DEV/SEELE/blob/b1c482ade67c8d4ac61a18ecb209cbe2b8d07e9d/crates/seele-proto/src/mods.rs), [o MULTIPLAYER](https://github.com/DATA-AND-DEV/SEELE-MOD-MULTIPLAYER).
 
 ## [referencia:pedidos] Pedidos e respostas
 
@@ -1105,7 +1237,15 @@ Há três classes de falha: o pacote não carrega; o transporte não conclui; a 
 | empty | Nem `client` nem `server` | Declarar ao menos uma metade |
 | tema-sem-metade-de-servidor | `"tema": true` sem `server` | Acrescentar a metade de servidor, ou tirar a chave |
 | api-too-old | API fora do conjunto: no indexador, abaixo da 3; no app 0.16, abaixo da 6 | Portar para a 6, ou hospedar pelo Servidor 0.15 |
-| api-too-new | API pedida superior ao build | Usar um build compatível ou a API suportada |
+| api-too-new | API pedida superior ao build: a 8 nos apps 0.17 e 0.18, por exemplo | Usar um build compatível ou a API suportada |
+| plataformas-pedem-api-nova, poderes-pedem-api-nova | `plataformas`, `poderes` ou `maquina` abaixo da API 8 | Declarar `"api": 8`, ou tirar as chaves |
+| plataformas-vazias, poderes-vazios | A chave escrita com `[]` | Tirar a chave: ausente quer dizer as duas plataformas, ou nenhum poder |
+| plataforma-repetida, poder-repetido | O mesmo valor duas vezes na lista | Tirar a repetição; a mensagem diz a posição |
+| poderes-exigem-so-o-app | Poder sem `"plataformas": ["app"]` | Declarar só o app |
+| maquina-fora-do-pacote | `maquina` sai da pasta do MOD | Usar um caminho relativo, dentro do pacote |
+| maquina-sem-poderes, poderes-sem-maquina | Uma metade de máquina sem poder, ou um poder sem a metade | Declarar os dois, ou nenhum |
+| porta-sem-entrar-no-jogo | O poder `porta` sem a permissão `entrar-no-jogo` | Declarar a permissão em `permissoes` |
+| maquina-sem-servidor | `maquina` sem `server` | Acrescentar a metade de servidor |
 
 ### A lista fechada da janela
 
@@ -1271,21 +1411,26 @@ Use o canal autenticado como escopo e filtre as fichas pelo papel e pela identid
 
 [ESTILO](https://github.com/DATA-AND-DEV/ESTILO), [PERFIS](https://github.com/DATA-AND-DEV/PERFIS) e [MESA](https://github.com/DATA-AND-DEV/MESA) mantêm a lógica de servidor e os dados anteriores, e saem em duas linhas: a 4.x na API 6, a 3.x no Servidor 0.15. São projetos completos, e mais complexos que um primeiro MOD.
 
+**O PERFIS foi descontinuado na 0.19, e não revogado.** O nome, a cor e a imagem do perfil passaram a ser do SEELE; um servidor 0.19 migra os perfis do MOD e não liga mais o MOD. O catálogo continua servindo o PERFIS a quem está num servidor 0.18, e o código continua bom para ler.
+
+[MULTIPLAYER](https://github.com/DATA-AND-DEV/SEELE-MOD-MULTIPLAYER) (`seele/multiplayer`) é o primeiro MOD da API 8, com as três metades e os dois poderes. É o exemplo do capítulo **API 8: servidores de jogo**.
+
 ## [referencia:linha-015] A linha do Servidor 0.15
 
 As APIs 3, 4 e 5 continuam rodando no **Servidor 0.15**, que o launcher oferece a quem hospeda nessa linha. O indexador aceita pacotes delas, e os três MODs oficiais mantêm a 3.x ali, que ainda pode ganhar consertos.
 
-| | Servidor 2.0 (app 0.17) | Servidor 1.0 (app 0.16) | Servidor 0.15 |
+| | Linha 2 (apps 0.17 a 0.19) | Servidor 1.0 (app 0.16) | Servidor 0.15 |
 | --- | --- | --- | --- |
-| APIs executadas | 7 e 6 | 6 | 5, 4 e 3 |
+| APIs executadas | 8, 7 e 6 no app 0.19; 7 e 6 nos apps 0.17 e 0.18 | 6 | 5, 4 e 3 |
 | Desenho | Superfícies e contribuições | Superfícies e contribuições | `SeeleUI.regiao`, a faixa de 240 px, e, desde a 4, superfícies e contribuições |
 | Cartão na lista | O ponto `pessoa.cartao` | O ponto `pessoa.cartao` | `SeeleUI.cartoes` |
 | Leitura | `SeeleUI.retrato()` | `SeeleUI.retrato()` | `SeeleMods.snapshot()` |
 | Tema que todos veem | A metade de servidor, `mundo.tema` | A metade de servidor, `mundo.tema` | A janela, `SeeleUI.tema(valores)` |
 | Chave `tema` no manifesto | Aceita | Aceita | Recusada como `malformed` |
-| Chave `permissoes` e capacidade `acoes` | Só na API 7 | Recusada (`malformed`, ou `api-too-new` sem a chave) | Não existe: a linha só executa as APIs 5, 4 e 3 |
+| Chave `permissoes` e capacidade `acoes` | Da API 7 em diante | Recusada (`malformed`, ou `api-too-new` sem a chave) | Não existe: a linha só executa as APIs 5, 4 e 3 |
+| Chaves `plataformas`, `poderes` e `maquina` | Só na API 8, no app 0.19; os apps 0.17 e 0.18 a recusam (`malformed`) | Recusadas (`malformed`) | Não existem |
 
-**Um MOD de uma linha antiga não roda na outra com o mesmo pacote.** Os apps 0.16 e 0.17 recusam as APIs 3 a 5 inteiras, o Servidor 0.15 não executa a 6 nem a 7, e o app 0.16 não executa a 7. Só o pacote da 6 atravessa as linhas 1 e 2. Quem precisa da linha 0.15 e de uma das linhas 1 ou 2 mantém dois pacotes, cada um com a sua `api` (de 3 a 5 para a 0.15, 6 para a 1 e a 2), e cada um passa pela avaliação. Quem precisa só das linhas 1 e 2 publica um pacote da 6; um pacote da 7 serve só a linha 2.
+**Um MOD de uma linha antiga não roda na outra com o mesmo pacote.** Os apps 0.16 a 0.19 recusam as APIs 3 a 5 inteiras, o Servidor 0.15 não executa a 6, a 7 nem a 8, o app 0.16 não executa a 7, e os apps 0.16 a 0.18 não executam a 8. Só o pacote da 6 atravessa as linhas 1 e 2. Quem precisa da linha 0.15 e de uma das linhas 1 ou 2 mantém dois pacotes, cada um com a sua `api` (de 3 a 5 para a 0.15, 6 para a 1 e a 2), e cada um passa pela avaliação. Quem precisa só das linhas 1 e 2 publica um pacote da 6; um pacote da 7 serve só a linha 2, e um da 8 só o app 0.19.
 
 ### Portar da 5 para a 6
 
@@ -1303,11 +1448,13 @@ O guia da linha 0.15, com a região, o `snapshot`, os cartões e o tema pela jan
 
 ## [referencia:fontes] Fontes, manutenção e glossário
 
-Esta revisão foi construída a partir do contrato congelado da API 6, do guia de MODs do repositório do SEELE, do prelúdio do motor, do anfitrião dos MODs e do indexador. Quando um comentário diverge de uma função executável, o guia descreve a função. As afirmações de implementação devem ser revalidadas ao atualizar o runtime.
+Esta revisão foi construída a partir do contrato congelado da API 6, do contrato da API 8 e do `read_manifest` do commit de que saiu a 0.19.0, do MOD MULTIPLAYER 1.0.0, do guia de MODs do repositório do SEELE, do prelúdio do motor, do anfitrião dos MODs e do indexador. Quando um comentário diverge de uma função executável, o guia descreve a função. As afirmações de implementação devem ser revalidadas ao atualizar o runtime.
 
 ### Fontes primárias
 
 - [O contrato da API 6](https://github.com/DATA-AND-DEV/SEELE/blob/v0.16.0/api/v6.json)
+- [O contrato da API 8](https://github.com/DATA-AND-DEV/SEELE/blob/b1c482ade67c8d4ac61a18ecb209cbe2b8d07e9d/api/v8.json), na 0.19.0
+- [O MOD MULTIPLAYER](https://github.com/DATA-AND-DEV/SEELE-MOD-MULTIPLAYER), o exemplo da API 8
 - [O que muda para quem escreve MOD](https://github.com/DATA-AND-DEV/SEELE/blob/v0.16.0/api/README.md)
 - [Como se faz um MOD, o guia do repositório](https://github.com/DATA-AND-DEV/SEELE/blob/v0.16.0/docs/como-se-faz-um-mod.md)
 - [Manifesto e hash de conteúdo](https://github.com/DATA-AND-DEV/SEELE/blob/v0.16.0/crates/seele-proto/src/mods.rs)
@@ -1334,11 +1481,14 @@ Esta revisão foi construída a partir do contrato congelado da API 6, do guia d
 | Hash de conteúdo | A identidade calculada sobre os caminhos e os bytes do pacote |
 | Descarregamento | A parada do executor e a retirada das superfícies, contribuições, mídia e arquivos pelo produto |
 | Avaliação | A revisão de um commit e do conteúdo para publicação no catálogo |
+| Metade de máquina | Da API 8: o script que roda no computador que aceitou hospedar um servidor de jogo |
+| Poder | Da API 8: o que o MOD pode fazer na máquina além do que a API dá a todos (`porta`, `programa`) |
+| Aceite da máquina | A tela do produto, e não do MOD, em que a pessoa dona do computador aceita ou recusa o que a metade de máquina vai baixar e rodar |
 
 ### Como manter este guia
 
-Atualize a fonte Markdown, regenere a página, execute os testes do exemplo e da navegação, confira os links e abra a página em larguras diferentes. Se um novo evento ou método for implementado, inclua a assinatura, a origem dos dados, a autorização, o retorno, as recusas, os limites e um exemplo testável. **O exemplo é de uma API que o aplicativo atual executa**: numa ruptura, um exemplo aceito pelo indexador e recusado pelo aplicativo atual ensina errado. O contador continua na API 6 **de propósito**: a API oferecida é a 7, e a 6 é a compatibilidade intencional, porque roda nos apps 0.16 e 0.17 (linhas 1 e 2). Só mude o exemplo para a 7 se abrir mão da linha 1.
+Atualize a fonte Markdown, regenere a página, execute os testes do exemplo e da navegação, confira os links e abra a página em larguras diferentes. Se um novo evento ou método for implementado, inclua a assinatura, a origem dos dados, a autorização, o retorno, as recusas, os limites e um exemplo testável. **O exemplo é de uma API que o aplicativo atual executa**: numa ruptura, um exemplo aceito pelo indexador e recusado pelo aplicativo atual ensina errado. O contador continua na API 6 **de propósito**: a API oferecida é a 8, e a 6 é a compatibilidade intencional, porque roda nos apps 0.16 a 0.19 (linhas 1 e 2). Só mude o exemplo para a 7 ou a 8 se abrir mão da linha 1. O exemplo da API 8 é o MULTIPLAYER, um repositório à parte, e não um ZIP deste guia.
 
-O indexador aceita novos pacotes nas APIs 7, 6, 5, 4 e 3: a 7 e a 6, da linha do Servidor 2.0, a 6 também da linha do Servidor 1.0, e as 5, 4 e 3, da linha 0.15, porque o launcher ainda oferece aquela linha. Versões antigas já publicadas permanecem no histórico append-only apenas quando ID, versão e hash correspondem ao catálogo anterior; isso não as torna executáveis no SEELE atual. O catálogo assinado precisa ser regenerado junto da publicação, anunciando `api_oferecida: 7` e `apis_aceitas: [7, 6, 5, 4, 3]`.
+O indexador aceita novos pacotes nas APIs 8, 7, 6, 5, 4 e 3: a 8, a 7 e a 6, da linha 2, a 6 também da linha do Servidor 1.0, e as 5, 4 e 3, da linha 0.15, porque o launcher ainda oferece aquela linha. Versões antigas já publicadas permanecem no histórico append-only apenas quando ID, versão e hash correspondem ao catálogo anterior; isso não as torna executáveis no SEELE atual. O catálogo assinado precisa ser regenerado junto da publicação, anunciando `api_oferecida: 8` e `apis_aceitas: [8, 7, 6, 5, 4, 3]`.
 
 O hash não é o SHA-256 do ZIP. O algoritmo de conteúdo ordena caminhos e inclui contagem de arquivos, comprimentos dos caminhos, bytes dos caminhos, comprimentos dos conteúdos e bytes dos conteúdos, usando comprimentos inteiros de 64 bits em big-endian. Use as ferramentas oficiais e os vetores do indexador para reproduzi-lo; não crie um cálculo simplificado num script de release.

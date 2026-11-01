@@ -49,7 +49,7 @@ def para_o_indexador(pagina: str) -> str:
 MANIFESTO = Path(__file__).with_name('docs_site.json')
 ESTADOS = {
     'atual': ('ATUAL NA 0.17', 'Descreve a 0.17.'),
-    'versao_018': ('SEELE 0.18', 'Guia da 0.18. Confira os downloads disponíveis e os requisitos de compatibilidade descritos nesta página.'),
+    'versao_019': ('SEELE 0.19', 'Guia da 0.19. Confira os downloads disponíveis e os limites descritos nesta página.'),
     'decisao': ('DECISÃO ACEITA', 'Uma decisão de arquitetura aceita; o texto é o da decisão, com a data dela.'),
     'historico': ('HISTÓRICO', 'Registro de uma versão anterior. Confira a versão e a nota desta página antes de aplicar os passos à versão que você usa.'),
 }
@@ -171,7 +171,7 @@ def casca(titulo: str, corpo: str, raiz: str) -> str:
 <a href="#conteudo" class="pular">Pular para o conteúdo</a>
 <header class="cabecalho"><a class="cabecalho__marca" href="https://get.seele.sh/"><span class="cabecalho__nome">SEELE</span></a><nav class="cabecalho__nav" aria-label="Sites SEELE"><a class="cabecalho__link" href="https://get.seele.sh/">Produto</a><a class="cabecalho__link" href="https://get.seele.sh/#baixar">Downloads</a><a class="cabecalho__link" href="{raiz or './'}" aria-current="page">Documentação</a><a class="cabecalho__link" href="https://mods.seele.sh/">MODs</a></nav><a class="cabecalho__acao" href="https://get.seele.sh/#baixar">Baixar</a></header>
 <div class="docs">
-<aside class="docs-lateral"><label class="docs-busca">Buscar na documentação <input id="docs-busca" type="search" placeholder="Buscar…  /" autocomplete="off" aria-controls="busca-resultados"></label><div id="busca-resultados" role="region" aria-label="Resultados da busca" hidden><p id="busca-status" role="status" aria-live="polite"></p><ul></ul></div><details class="docs-menu" open><summary>Navegar na documentação</summary><nav class="docs-nav" aria-label="Documentação"><a href="{raiz or './'}">Visão geral</a><div class="docs-tarefas"><span class="rotulo">Caminho rápido · 0.18</span><a href="{raiz}{guia}/#instalar">Versão e instalação</a><a href="{raiz}{guia}/#conversar-pelo-codigo">Chamar pelo código</a><a href="{raiz}{guia}/#amigos-e-contatos">Amigos e contatos</a><a href="{raiz}{guia}/#entrar-num-servidor">Entrar em um servidor</a><a href="{raiz}{guia}/#hospedar">Hospedar um espaço</a><a href="{raiz}{guia}/#voz-e-tela">Ajustar voz e tela</a></div><ul>{nav}<li><span class="rotulo">MODs</span><ul><li><a href="{raiz}mods/">Criar um MOD (o guia)</a></li><li><a href="{INDEXADOR}/">O índice de MODs</a></li></ul></li></ul></nav></details></aside>
+<aside class="docs-lateral"><label class="docs-busca">Buscar na documentação <input id="docs-busca" type="search" placeholder="Buscar…  /" autocomplete="off" aria-controls="busca-resultados"></label><div id="busca-resultados" role="region" aria-label="Resultados da busca" hidden><p id="busca-status" role="status" aria-live="polite"></p><ul></ul></div><details class="docs-menu" open><summary>Navegar na documentação</summary><nav class="docs-nav" aria-label="Documentação"><a href="{raiz or './'}">Visão geral</a><div class="docs-tarefas"><span class="rotulo">Caminho rápido · 0.19</span><a href="{raiz}{guia}/#instalar">Versão e instalação</a><a href="{raiz}{guia}/#conversar-pelo-codigo">Chamar pelo código</a><a href="{raiz}{guia}/#amigos-e-contatos">Amigos e contatos</a><a href="{raiz}{guia}/#entrar-num-servidor">Entrar em um servidor</a><a href="{raiz}{guia}/#hospedar">Hospedar um espaço</a><a href="{raiz}{guia}/#voz-e-tela">Ajustar voz e tela</a><a href="{raiz}{guia}/#jogos-multiplayer-api-8">Jogos multiplayer</a></div><ul>{nav}<li><span class="rotulo">MODs</span><ul><li><a href="{raiz}mods/">Criar um MOD (o guia)</a></li><li><a href="{INDEXADOR}/">O índice de MODs</a></li></ul></li></ul></nav></details></aside>
 <main id="conteudo" class="painel docs-artigo">{corpo}</main><aside class="docs-sumario"><details open><summary>Nesta página</summary><nav id="docs-sumario" aria-label="Nesta página"></nav></details></aside>
 </div>
 <script type="module" src="{raiz}docs.js"></script>
@@ -191,8 +191,8 @@ def pagina_inicial(pendentes: dict[str, list[str]] | None = None) -> str:
     previa = ('<aside class="painel aviso condicao" role="note"><p><strong>PRÉVIA.</strong> Há páginas com afirmações ainda não '
               'comprovadas (marcadas RASCUNHO). Esta montagem não é a de produção.</p></aside>') if pendentes else ''
     corpo = ('<h1>Documentação do SEELE</h1>' + previa +
-             '<aside class="painel aviso" role="note"><p><strong>SEELE 0.18.</strong> '
-             'O guia descreve a 0.18. Confira os downloads disponíveis e a compatibilidade entre o app, a página e o ponto de encontro. '
+             '<aside class="painel aviso" role="note"><p><strong>SEELE 0.19.</strong> '
+             'O guia descreve a 0.19. Confira os downloads disponíveis e os limites de cada novidade, que o guia diz quais foram testados. '
              '</p></aside>' + secoes)
     return casca('Início', corpo, '')
 

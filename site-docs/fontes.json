@@ -1,11 +1,11 @@
 [
  {
-  "slug": "usar-a-0-18",
-  "fonte": "docs/usar-a-0.18.md",
-  "commit_base": "5dfe9c5938725ccf1e2c9005b7a59931ec10156c",
+  "slug": "usar-a-0-19",
+  "fonte": "docs/usar-a-0.19.md",
+  "commit_base": "c0ee2a1b8658a067ead0d2d42d59e0f09aac050a",
   "situacao": "igual",
-  "estado": "versao_018",
-  "sha256": "9b4a7acb83229d75471c8dccd843c23798de23adf08cf8a05c814496a573214a",
+  "estado": "versao_019",
+  "sha256": "99e79287dff2a1791ba95ae91b906b86f79c691444066108830105bdc29a8611",
   "condicoes_abertas": []
  },
  {
@@ -56,10 +56,10 @@
  {
   "slug": "api-dos-mods",
   "fonte": "api/README.md",
-  "commit_base": "eb233edbd180bdcdc0c1c00480909e6245a4bb32",
+  "commit_base": "9a7f31677371225665c55996570c88e301b3b248",
   "situacao": "igual",
   "estado": "atual",
-  "sha256": "e3d87a5144f4c2bdc96a8981d27520a9a310b294f775e310f04a10370a230b06",
+  "sha256": "a3907cb7e2c1a26c4bf7225b939f9b18919865b88d4b6f87458b266d153e4d95",
   "condicoes_abertas": []
  },
  {
@@ -69,6 +69,15 @@
   "situacao": "igual",
   "estado": "atual",
   "sha256": "3442f06f5eb5438de60482300f47663264274d2f8b58b5e1530ec73167623ec1",
+  "condicoes_abertas": []
+ },
+ {
+  "slug": "usar-a-0-18",
+  "fonte": "docs/usar-a-0.18.md",
+  "commit_base": "5dfe9c5938725ccf1e2c9005b7a59931ec10156c",
+  "situacao": "igual",
+  "estado": "historico",
+  "sha256": "9b4a7acb83229d75471c8dccd843c23798de23adf08cf8a05c814496a573214a",
   "condicoes_abertas": []
  },
  {
@@ -164,10 +173,10 @@
  {
   "slug": "como-se-faz-um-mod",
   "fonte": "docs/como-se-faz-um-mod.md",
-  "commit_base": "5dfe9c5938725ccf1e2c9005b7a59931ec10156c",
+  "commit_base": "f8fc02096bd682419ef9ba8789ca894ff2159caa",
   "situacao": "igual",
   "estado": "historico",
-  "sha256": "03c8b24b62eddf926702989d0cc5f32ebf6c1b566212760cf2d3d743cc1bcf25",
+  "sha256": "35fec7f077c1f58024f2cfda0895316e0735122b853410139fe47d18f09b6196",
   "condicoes_abertas": []
  }
 ]
