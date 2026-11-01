@@ -1,0 +1,59 @@
+# MULTIPLAYER — avaliação de 2026-10-31.
+#
+# O primeiro MOD da API 8 (SEELE 0.19): servidores de jogo (hoje, o Minecraft,
+# Vanilla e com modpack do Modrinth) na máquina de quem está no servidor SEELE,
+# com o túnel até `localhost` para quem joga. Só no app de computador
+# (`"plataformas": ["app"]`), com os poderes `porta` e `programa` e uma metade
+# de máquina (`maquina/main.js`) além das de cliente e de servidor.
+#
+# O que foi lido e rodado, para que a próxima avaliação não recomece do zero:
+#
+# - **O manifesto passa no `read_manifest` da 0.19** (`seele-proto`, ramo da
+#   API 8) e no espelho do indexador (`ferramentas/manifesto.py`), com o mesmo
+#   resultado: as quatro permissões, a `entrar-no-jogo` que a `porta` exige,
+#   `maquina` dentro do pacote e com metade de servidor, e os cinco itens de
+#   `reach` dentro dos tetos do anúncio (16 itens, 48 bytes).
+# - **Sem rede própria.** Nas três metades montadas, nenhum `fetch`,
+#   `XMLHttpRequest`, `WebSocket`, `eval`, `new Function`, `import()`,
+#   `require()`, `innerHTML`, `localStorage` ou `indexedDB`. O que é baixado
+#   (o servidor do jogo, o Java da Adoptium, os arquivos de um modpack) passa
+#   por `maquina.programa.baixar`, do produto, que recusa toda URL fora das
+#   `origens` da receita — e as origens são as que a tela de aceite mostra à
+#   pessoa dona da máquina antes de qualquer download. Daí a nota
+#   `fala-com-terceiro`: Mojang, Adoptium e o CDN do Modrinth são de fora.
+# - **A máquina de quem aceita guarda o jogo e o mundo**, e por isso
+#   `guarda-dados-na-maquina`. O aceite é na tela do produto, na máquina da
+#   pessoa, e vale acima de qualquer cargo.
+# - **A autorização é do anfitrião.** A metade de servidor confere a ação em
+#   `contexto.acao`, escrita pelo hospedeiro, e nunca o corpo do pedido.
+# - **O build é reprodutível**: `node ferramentas/build.mjs` num clone limpo do
+#   commit fixado não muda nenhum dos três `main.js`. `npm run check` passa, e
+#   `npm test` passa os 230 testes, sem rede (fixtures em `test/fixtures/`).
+#
+# O pacote leva 85 arquivos e 1,3 MiB; quase tudo é `test/fixtures/` (os
+# `.mrpack` de prova e as respostas gravadas das APIs), que não servem ao MOD.
+# Não é defeito; é peso para quem instala.
+#
+# **O que não foi feito aqui:** a leitura linha a linha das 6 mil linhas das
+# três metades, e a prova em máquina de verdade (subir um servidor de jogo,
+# entrar pelo túnel). Isto é um filtro, não uma prova: pega o óbvio, não pega o
+# caminho sutil na décima função de um arquivo limpo.
+#
+# Hash do conteúdo publicado (`ferramentas/hash_conteudo.py`, sobre o conjunto
+# que `ferramentas/fonte.py` tira do commit):
+# 4c608766f1815c349fa25c4841a90a69b1e2c8efad9dfe12720badba6c03ceae
+
+id = "seele/multiplayer"
+repo = "https://github.com/DATA-AND-DEV/SEELE-MOD-MULTIPLAYER"
+titulo = "Multiplayer"
+resumo = "Servidores de jogo na máquina de quem está no servidor, com túnel para quem joga. Só no app de computador."
+
+# 1.0.0 — API 8, só para o SEELE 0.19 em diante. A 0.18 lista o MOD sem versão
+# para instalar: ela escolhe a última versão cuja API executa (`[7, 6]`).
+
+[[versoes]]
+versao = "1.0.0"
+commit = "34d02dc6cc59477d14f37f8dda66c7b345918297"
+nivel = "oficial"
+notas = ["roda-no-servidor", "guarda-dados-na-maquina", "fala-com-terceiro"]
+avaliado_em = 1793497079
