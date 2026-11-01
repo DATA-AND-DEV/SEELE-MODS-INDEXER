@@ -1,0 +1,58 @@
+{
+  "formatVersion": 1,
+  "game": "minecraft",
+  "versionId": "1.0.0",
+  "name": "Prova do SEELE",
+  "summary": "Forge 1.20.1 com FerriteCore e Clumps, para as provas do MOD de multiplayer.",
+  "files": [
+    {
+      "path": "mods/ferritecore-6.0.1-forge.jar",
+      "hashes": {
+        "sha1": "417fb6ce8f52abf40bd9d0390371790f9576f8ba",
+        "sha512": "a1960a7c03dc32d4ccaccaf28afdd9b078758bbd62d15a91d4039a83fa9397a098e89b69591f6bd5190254d9ee97e502504154b9aec764adb8c65f000b75ba2c"
+      },
+      "env": {
+        "client": "optional",
+        "server": "optional"
+      },
+      "downloads": [
+        "https://cdn.modrinth.com/data/uXXizFIs/versions/DG5Fn9Sz/ferritecore-6.0.1-forge.jar"
+      ],
+      "fileSize": 123034
+    },
+    {
+      "path": "mods/Clumps-forge-1.20.1-12.0.0.4.jar",
+      "hashes": {
+        "sha1": "8809c7aa6c71389e9c59abfe5def52c1cb8d4f1c",
+        "sha512": "ffd8ff2438e9f9d260d3926ccdd0cccc4772c6f99f29715690aed4f6e97a76035f3aeaa78168e2a458bc4cccf521e97ebdb6e0b61c819facb04af9ebb3638383"
+      },
+      "env": {
+        "client": "required",
+        "server": "required"
+      },
+      "downloads": [
+        "https://cdn.modrinth.com/data/Wnxd13zP/versions/nAHGB5ls/Clumps-forge-1.20.1-12.0.0.4.jar"
+      ],
+      "fileSize": 20300
+    },
+    {
+      "path": "mods/embeddium-0.3.31+mc1.20.1.jar",
+      "hashes": {
+        "sha1": "bb2fa8f3e493af16af9160d049f96c614a1faf2f",
+        "sha512": "ffbf2da4685260a4d5c14c621708bd20722563f084f042d3dfb0a7b87f048e39299648c854a93939129da0d23a15a91ec628560d601e76074b08e275f6e132e9"
+      },
+      "env": {
+        "client": "required",
+        "server": "unsupported"
+      },
+      "downloads": [
+        "https://cdn.modrinth.com/data/sk9rgfiA/versions/UTbfe5d1/embeddium-0.3.31%2Bmc1.20.1.jar"
+      ],
+      "fileSize": 1320675
+    }
+  ],
+  "dependencies": {
+    "minecraft": "1.20.1",
+    "forge": "47.4.28"
+  }
+}

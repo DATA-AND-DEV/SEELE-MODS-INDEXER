@@ -1,0 +1,58 @@
+{
+  "formatVersion": 1,
+  "game": "minecraft",
+  "versionId": "1.0.0",
+  "name": "Prova do SEELE",
+  "summary": "NeoForge 1.21.1 com FerriteCore e Clumps, para as provas do MOD de multiplayer.",
+  "files": [
+    {
+      "path": "mods/ferritecore-7.0.3-neoforge.jar",
+      "hashes": {
+        "sha1": "9563692efb708b6b568df27a01ec52f6311928ef",
+        "sha512": "19af89a2075bb10a63884fa853ebf84b02c79dc3242430ecdad056fd764fdcde367a7303276b329df01b0736e2ef264c5d80c7dc92c6aebd244f556a230bb417"
+      },
+      "env": {
+        "client": "optional",
+        "server": "optional"
+      },
+      "downloads": [
+        "https://cdn.modrinth.com/data/uXXizFIs/versions/x7kQWVju/ferritecore-7.0.3-neoforge.jar"
+      ],
+      "fileSize": 121559
+    },
+    {
+      "path": "mods/Clumps-neoforge-1.21.1-19.0.0.1.jar",
+      "hashes": {
+        "sha1": "fa2576297c7bd12b28aa7070e8141792bd66da4c",
+        "sha512": "314d8d8e640d73041f27e0f3f2cad7aad8b4c77dbd7fb31700ef7760362261f77085eed5289555c725d99c3f47a114e7290cd608f39c9f0f12ef74958463bdcc"
+      },
+      "env": {
+        "client": "required",
+        "server": "required"
+      },
+      "downloads": [
+        "https://cdn.modrinth.com/data/Wnxd13zP/versions/jo7lDoK4/Clumps-neoforge-1.21.1-19.0.0.1.jar"
+      ],
+      "fileSize": 18382
+    },
+    {
+      "path": "mods/sodium-neoforge-0.8.13+mc1.21.1.jar",
+      "hashes": {
+        "sha1": "1757289be21ed18db5b0d90703fa3db1b2de5693",
+        "sha512": "4f537696af95411e9daf15795fb5fcbc49913d488a96fa912fa8f1d7db408710995e8a1461190f3cd0f8217bf9e35e9539176592428ed587ca2d7aa84450a390"
+      },
+      "env": {
+        "client": "required",
+        "server": "unsupported"
+      },
+      "downloads": [
+        "https://cdn.modrinth.com/data/AANobbMI/versions/uMOpc5uV/sodium-neoforge-0.8.13%2Bmc1.21.1.jar"
+      ],
+      "fileSize": 1292934
+    }
+  ],
+  "dependencies": {
+    "minecraft": "1.21.1",
+    "neoforge": "21.1.265"
+  }
+}
