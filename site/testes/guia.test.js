@@ -57,9 +57,10 @@ test('guia: abas e painéis têm relações únicas e todos os capítulos estão
   const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
   assert.equal(ids.length,new Set(ids).size);
   for(const m of html.matchAll(/aria-(?:controls|labelledby)="([^"]+)"/g))assert.ok(ids.includes(m[1]),m[1]);
-  // 28 desde a API 6 (D-guia-1). Este número ficou em 24 quando a API 4 trouxe
-  // o 25º capítulo, e o teste reprovou calado até a revisão seguinte.
-  assert.equal((html.match(/<article /g)||[]).length,28);
+  // 29 desde a API 8 («API 8: servidores de jogo»); eram 28 desde a API 6
+  // (D-guia-1). Este número ficou em 24 quando a API 4 trouxe o 25º capítulo,
+  // e o teste reprovou calado até a revisão seguinte.
+  assert.equal((html.match(/<article /g)||[]).length,29);
   assert.ok(html.includes('Content-Security-Policy'));
   assert.ok(html.includes('guia-criacao-mods.md'));
   // Uma frase do penúltimo capítulo: um `##` que o gerador não reconhecesse
