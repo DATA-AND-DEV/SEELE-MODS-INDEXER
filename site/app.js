@@ -10,7 +10,7 @@
 import { cruzarRevogacoes, filtrar, ordenar } from "./catalogo.js";
 import { CONSULTANDO, carregarRevogacoes } from "./revogacoes.js";
 import { analisar, paraHash } from "./rotas.js";
-import { desenhar, desenharAviso } from "./tela.js?v=0174";
+import { desenhar, desenharAviso } from "./tela.js?v=novo-design";
 import { temEd25519, verificar } from "./verificar.js";
 
 const estado = {
@@ -162,10 +162,12 @@ function aoTrocarRota() {
   // Nada a zerar ao trocar de MOD: a escolha mora sob o id de quem a fez, e
   // por isso não alcança o vizinho. Era o que a limpeza daqui existia para
   // impedir, e ela cobrava o preço de a escolha sumir ao voltar para a lista.
+  const mudou = estado.tela !== rota.tela || estado.id !== rota.id;
   estado.tela = rota.tela;
   document.querySelector(".catalogo-intro").hidden = rota.tela !== "catalogo";
   estado.id = rota.id;
   redesenhar();
+  if (mudou) window.scrollTo({ top: 0, behavior: "instant" });
 }
 
 busca.addEventListener("input", () => {
@@ -174,6 +176,11 @@ busca.addEventListener("input", () => {
   // digitado. Ela acontece aqui, sobre o que já foi baixado.
   if (estado.tela !== "catalogo") location.hash = paraHash({ tela: "catalogo", id: null });
   else redesenhar();
+});
+
+document.querySelector(".pular").addEventListener("click", (evento) => {
+  evento.preventDefault();
+  corpo.focus();
 });
 
 window.addEventListener("hashchange", aoTrocarRota);

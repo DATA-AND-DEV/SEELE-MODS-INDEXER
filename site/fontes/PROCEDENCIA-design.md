@@ -1,0 +1,1 @@
+Fontes WOFF2 variáveis extraídas do HTML de referência fornecido pelo usuário, SEELE — novo design.html. Subconjunto latino; sem consultas a serviços de fontes. Pesos preservados: Inter e Inter Tight 100–900, JetBrains Mono 400–800. Licença SIL OFL 1.1 em LICENCAS-design.txt; metadados originais preservados nos arquivos.

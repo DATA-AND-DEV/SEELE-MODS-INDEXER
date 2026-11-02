@@ -21,6 +21,7 @@ import {
   avaliacaoDaVersao,
   versaoEscolhida,
 } from "./catalogo.js";
+import { criarPrevia } from "./previa.js";
 import { frase } from "./frases.js";
 import { foiConferida, paraTela } from "./revogacoes.js";
 
@@ -190,28 +191,15 @@ function cartao(mod, numeroEscolhido, agora, aoAbrir) {
     elemento("span", "numero-rotulo", "PUBLICADA"),
   );
 
-  const previa = elemento("span", "mod-previa");
-  previa.dataset.mod = mod.id.split("/").pop();
-  previa.setAttribute("aria-hidden", "true");
-  if (mod.id === "seele/estilo") {
-    previa.append(elemento("span", "previa-label", "APARÊNCIA"));
-    const cores = elemento("span", "previa-cores");
-    for (let i = 0; i < 4; i++) cores.append(elemento("i", ""));
-    previa.append(cores, elemento("span", "previa-legenda", "Tema · Cantos · Densidade · Fonte"));
-  } else if (mod.id === "seele/mesa") {
-    previa.append(elemento("span", "previa-label", "MESA"), elemento("span", "previa-tabuleiro", "○    □    △"), elemento("span", "previa-legenda", "Tabuleiro · Fichas · Iniciativa"));
-  } else if (mod.id === "seele/perfis") {
-    previa.append(elemento("span", "previa-label", "PERFIL DO SERVIDOR"), elemento("span", "previa-perfil", "Nome e biografia"), elemento("span", "previa-legenda", "Uma aparência para cada servidor"));
-  }
-  if (previa.childNodes.length) {
-    previa.append(elemento("span", "previa-aviso", "Ilustração dos recursos"));
-    botao.append(previa);
-  }
+  botao.append(criarPrevia(mod));
   botao.append(topo);
   if (dados.descontinuado) {
     botao.append(elemento("span", "selo-descontinuado", dados.descontinuado.toUpperCase()));
   }
-  botao.append(elemento("span", "cartao-resumo", mod.resumo), numeros, elemento("span", "cartao-detalhes", "Ver detalhes →"));
+  botao.append(elemento("span", "cartao-resumo", mod.resumo));
+  const escolhida = versaoEscolhida(mod, numeroEscolhido);
+  botao.append(elemento("span", "cartao-api", `API ${escolhida.api}`));
+  botao.append(numeros, elemento("span", "cartao-detalhes", "Ver detalhes →"));
   if (dados.outraRevogada) {
     botao.append(elemento("span", "cartao-retirada", "OUTRA VERSÃO DESTE MOD FOI RETIRADA"));
   }
@@ -348,11 +336,23 @@ function telaMod(estado, acoes) {
 
   const versao = versaoEscolhida(mod, escolhaDe(estado, mod.id));
   const avaliacao = avaliacaoDaVersao(mod, versao);
-  painel.append(elemento("h1", null, mod.titulo));
-  painel.append(elemento("span", "resumo-da-lista", `${mod.id} · ${mod.repo}`));
+  painel.classList.add("mod-detalhe");
+  const trilha = elemento("nav", "mod-trilha");
+  trilha.setAttribute("aria-label", "Trilha");
+  const voltar = elemento("a", null, "← Catálogo");
+  voltar.href = "#/";
+  trilha.append(voltar, elemento("span", null, mod.id));
+  const hero = elemento("section", "mod-hero");
+  const apresentacao = elemento("div", "mod-apresentacao");
+  const etiquetas = elemento("div", "mod-etiquetas");
+  etiquetas.append(selo(versao.revogada ? "revogada" : avaliacao.nivel), elemento("span", "selo", `API ${versao.api}`));
+  apresentacao.append(etiquetas, elemento("h1", null, mod.titulo));
   const descontinuado = textoDaDescontinuacao(mod);
-  if (descontinuado) painel.append(elemento("p", "selo-descontinuado", descontinuado));
-  painel.append(elemento("p", "cartao-resumo", mod.resumo));
+  if (descontinuado) apresentacao.append(elemento("p", "selo-descontinuado", descontinuado));
+  apresentacao.append(elemento("p", "mod-lead", mod.resumo));
+  apresentacao.append(elemento("span", "mod-meta", `${mod.id} · versão ${versao.versao}`));
+  hero.append(apresentacao, criarPrevia(mod, true));
+  painel.append(trilha, hero);
 
   // A escolha vem ANTES de tudo o que ela muda: notas, ficha e arquivos falam
   // da versão escolhida, e uma tela que só revelasse isso depois faria a
@@ -613,7 +613,7 @@ export function desenhar(raiz, estado, acoes) {
 
   // Os itens da trilha são links com `href="#/…"`: quem navega é o próprio
   // link, e aqui só se marca qual deles é a tela atual.
-  for (const aba of document.querySelectorAll(".cabecalho__link")) {
+  for (const aba of document.querySelectorAll(".catalogo-nav [data-ir]")) {
     const alvo = aba.dataset.ir;
     const ativa = alvo === estado.tela || (alvo === "catalogo" && estado.tela === "mod");
     if (ativa) aba.setAttribute("aria-current", "page");

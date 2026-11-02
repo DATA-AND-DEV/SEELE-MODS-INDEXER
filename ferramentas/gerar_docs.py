@@ -24,7 +24,7 @@ RAIZ = Path(__file__).resolve().parents[1]
 SITE = RAIZ / 'site'
 INDEXADOR = 'https://mods.seele.sh'
 COMPARTILHADOS = ['casca.css', 'estilo.css', 'tokens.css', 'fontes.css', 'fontes',
-                  'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'docs.css', 'docs.js']
+                  'favicon.ico', 'favicon.svg', 'apple-touch-icon.png', 'docs.css', 'docs.js', 'visual.css', 'docs-visual.css']
 CABECALHOS = """# docs.seele.sh: páginas estáticas da documentação. Sem catálogo e sem MOD servido daqui.
 /*
   X-Content-Type-Options: nosniff
@@ -165,11 +165,11 @@ def casca(titulo: str, corpo: str, raiz: str) -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{html.escape(titulo)} · Documentação do SEELE</title>
 <link rel="icon" href="{raiz}favicon.svg" type="image/svg+xml">
-<link rel="stylesheet" href="{raiz}tokens.css"><link rel="stylesheet" href="{raiz}fontes.css"><link rel="stylesheet" href="{raiz}casca.css"><link rel="stylesheet" href="{raiz}estilo.css"><link rel="stylesheet" href="{raiz}docs.css">
+<link rel="stylesheet" href="{raiz}tokens.css"><link rel="stylesheet" href="{raiz}fontes.css"><link rel="stylesheet" href="{raiz}casca.css"><link rel="stylesheet" href="{raiz}estilo.css"><link rel="stylesheet" href="{raiz}docs.css"><link rel="stylesheet" href="{raiz}visual.css"><link rel="stylesheet" href="{raiz}docs-visual.css">
 </head>
 <body>
 <a href="#conteudo" class="pular">Pular para o conteúdo</a>
-<header class="cabecalho"><a class="cabecalho__marca" href="https://get.seele.sh/"><span class="cabecalho__nome">SEELE</span></a><nav class="cabecalho__nav" aria-label="Sites SEELE"><a class="cabecalho__link" href="https://get.seele.sh/">Produto</a><a class="cabecalho__link" href="https://get.seele.sh/#baixar">Downloads</a><a class="cabecalho__link" href="{raiz or './'}" aria-current="page">Documentação</a><a class="cabecalho__link" href="https://mods.seele.sh/">MODs</a></nav><a class="cabecalho__acao" href="https://get.seele.sh/#baixar">Baixar</a></header>
+<header class="cabecalho"><a class="cabecalho__marca" href="https://get.seele.sh/"><svg viewBox="0 0 96 96" width="30" height="30" aria-hidden="true"><path d="M34 34L62 62" stroke="#EAE3CF" stroke-width="4"></path><rect x="12" y="12" width="24" height="24" fill="#F47732"></rect><rect x="62" y="62" width="20" height="20" fill="none" stroke="#F47732" stroke-width="4"></rect></svg><span class="cabecalho__nome">SEELE</span><span class="cabecalho__sub">/ docs</span></a><nav class="cabecalho__nav" aria-label="Sites SEELE"><a class="cabecalho__link" href="https://get.seele.sh/">Produto</a><a class="cabecalho__link" href="https://get.seele.sh/#baixar">Downloads</a><a class="cabecalho__link" href="{raiz or './'}" aria-current="page">Documentação</a><a class="cabecalho__link" href="https://mods.seele.sh/">MODs</a></nav><a class="cabecalho__acao" href="https://get.seele.sh/#baixar">Baixar</a></header>
 <div class="docs">
 <aside class="docs-lateral"><label class="docs-busca">Buscar na documentação <input id="docs-busca" type="search" placeholder="Buscar…  /" autocomplete="off" aria-controls="busca-resultados"></label><div id="busca-resultados" role="region" aria-label="Resultados da busca" hidden><p id="busca-status" role="status" aria-live="polite"></p><ul></ul></div><details class="docs-menu" open><summary>Navegar na documentação</summary><nav class="docs-nav" aria-label="Documentação"><a href="{raiz or './'}">Visão geral</a><div class="docs-tarefas"><span class="rotulo">Caminho rápido · 0.19</span><a href="{raiz}{guia}/#instalar">Versão e instalação</a><a href="{raiz}{guia}/#conversar-pelo-codigo">Chamar pelo código</a><a href="{raiz}{guia}/#amigos-e-contatos">Amigos e contatos</a><a href="{raiz}{guia}/#entrar-num-servidor">Entrar em um servidor</a><a href="{raiz}{guia}/#hospedar">Hospedar um espaço</a><a href="{raiz}{guia}/#voz-e-tela">Ajustar voz e tela</a><a href="{raiz}{guia}/#jogos-multiplayer-api-8">Jogos multiplayer</a></div><ul>{nav}<li><span class="rotulo">MODs</span><ul><li><a href="{raiz}mods/">Criar um MOD (o guia)</a></li><li><a href="{INDEXADOR}/">O índice de MODs</a></li></ul></li></ul></nav></details></aside>
 <main id="conteudo" class="painel docs-artigo">{corpo}</main><aside class="docs-sumario"><details open><summary>Nesta página</summary><nav id="docs-sumario" aria-label="Nesta página"></nav></details></aside>
@@ -185,15 +185,22 @@ def pagina_inicial(pendentes: dict[str, list[str]] | None = None) -> str:
     def estado(p):
         return RASCUNHO[0] if p['slug'] in pendentes else ESTADOS[p['estado']][0]
     secoes = ''.join(
-        f'<h2>{html.escape(s["titulo"])}</h2><ul>'
-        + ''.join(f'<li><a href="{p["slug"]}/">{html.escape(p["titulo"])}</a> <span class="rotulo">{estado(p)}</span></li>' for p in s['paginas'])
-        + '</ul>' for s in manifesto()['secoes'])
+        f'<section class="docs-secao"><h2>{html.escape(s["titulo"])}</h2><ul class="docs-documentos">'
+        + ''.join(f'<li><a href="{p["slug"]}/"><span>{html.escape(p["titulo"])}</span><span class="rotulo">{estado(p)}</span><span aria-hidden="true">↗</span></a></li>' for p in s['paginas'])
+        + '</ul></section>' for s in manifesto()['secoes'])
     previa = ('<aside class="painel aviso condicao" role="note"><p><strong>PRÉVIA.</strong> Há páginas com afirmações ainda não '
               'comprovadas (marcadas RASCUNHO). Esta montagem não é a de produção.</p></aside>') if pendentes else ''
-    corpo = ('<h1>Documentação do SEELE</h1>' + previa +
+    guia = html.escape(manifesto().get('guia_de_tarefas', 'usar-a-0-19'), quote=True)
+    passos = (
+        '<div class="docs-passos">'
+        f'<a class="web-painel docs-passo" href="{guia}/#instalar"><span class="web-rotulo">01 · INSTALAR</span><strong>Seu primeiro clique.</strong><span>Escolha o download e abra o SEELE no computador.</span><span class="docs-seta" aria-hidden="true">↗</span></a>'
+        f'<a class="web-painel docs-passo" href="{guia}/#hospedar"><span class="web-rotulo">02 · HOSPEDAR</span><strong>Um lugar para o grupo.</strong><span>Suba seu espaço e entenda o caminho pela rede.</span><span class="docs-seta" aria-hidden="true">↗</span></a>'
+        '<a class="web-painel docs-passo" href="mods/"><span class="web-rotulo">03 · CRIAR</span><strong>Faça do seu jeito.</strong><span>Conheça os contratos e escreva seu primeiro MOD.</span><span class="docs-seta" aria-hidden="true">↗</span></a></div>')
+    corpo = ('<div class="docs-abertura"><span class="web-rotulo">MANUAL DE BORDO</span><h1>Documentação<br>do SEELE.</h1>'
+             '<p>Do primeiro convite ao seu próprio MOD. Escolha um caminho e entenda o que acontece na sua máquina.</p></div>' + previa +
              '<aside class="painel aviso" role="note"><p><strong>SEELE 0.19.</strong> '
-             'O guia descreve a 0.19. Confira os downloads disponíveis e os limites de cada novidade, que o guia diz quais foram testados. '
-             '</p></aside>' + secoes)
+             'O guia de uso descreve a 0.19 e informa os limites de cada novidade. Os downloads acompanham a última release; '
+             'confira as notas de versão antes de atualizar.</p><p><a href="https://github.com/DATA-AND-DEV/SEELE-RELEASES/releases/latest">Notas da última versão →</a></p></aside>' + passos + secoes)
     return casca('Início', corpo, '')
 
 
