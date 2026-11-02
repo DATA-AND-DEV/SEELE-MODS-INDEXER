@@ -1,0 +1,29 @@
+[
+ {
+  "id": "u8pHPXJl",
+  "project_id": "gvQqBUqZ",
+  "name": "Lithium 0.15.3 for Fabric",
+  "version_number": "mc1.21.4-0.15.3-fabric",
+  "game_versions": [
+   "1.21.4"
+  ],
+  "loaders": [
+   "fabric",
+   "quilt"
+  ],
+  "date_published": "2025-04-09T00:36:52.818932Z",
+  "dependencies": [],
+  "files": [
+   {
+    "hashes": {
+     "sha512": "b8b541c0e968571c8972872b342e34b92573bc9210d455dc1349589f30a67a90d930dbfd99b176ab9b110350ceb53e11118378dc13a35e83a9090826627bdac0",
+     "sha1": "b7100505d1178b0f9a1dac4a24472ad1293b890c"
+    },
+    "url": "https://cdn.modrinth.com/data/gvQqBUqZ/versions/u8pHPXJl/lithium-fabric-0.15.3%2Bmc1.21.4.jar",
+    "filename": "lithium-fabric-0.15.3+mc1.21.4.jar",
+    "primary": true,
+    "size": 797555
+   }
+  ]
+ }
+]

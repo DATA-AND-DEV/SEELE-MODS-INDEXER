@@ -1,0 +1,295 @@
+{
+  "formato": 1,
+  "id": "minecraft",
+  "nome": "Minecraft",
+  "edicao": "Java Edition",
+  "icone": "MC",
+  "versao": "1.0.0",
+  "descricao": "O servidor oficial da Mojang, com o Java que cada versão pede.",
+  "variantes": {
+    "vanilla": {
+      "nome": "Vanilla",
+      "descricao": "Minecraft puro, sem mods. Você escolhe só a versão."
+    },
+    "com-mods": {
+      "nome": "Com mods",
+      "descricao": "Um modpack do Modrinth define a versão, o loader e os mods."
+    }
+  },
+  "versoes": {
+    "fonte": "mojang",
+    "manifesto": "https://piston-meta.mojang.com/mc/game/version_manifest_v2.json",
+    "tipos": ["release"],
+    "quantas": 24
+  },
+  "artefatos": [
+    {
+      "id": "servidor",
+      "fonte": "mojang-servidor",
+      "destino": "server.jar"
+    },
+    {
+      "id": "java",
+      "fonte": "adoptium",
+      "destino": "java",
+      "consulta": "https://api.adoptium.net/v3/assets/latest/{major}/hotspot?image_type=jre&vendor=eclipse",
+      "majorPadrao": 8,
+      "plataformas": [
+        { "plataforma": "windows-x64", "os": "windows", "arquitetura": "x64", "raiz": "{release}-jre" },
+        { "plataforma": "mac-aarch64", "os": "mac", "arquitetura": "aarch64", "raiz": "{release}-jre/Contents/Home", "senaoHouver": "mac-x64" },
+        { "plataforma": "mac-x64", "os": "mac", "arquitetura": "x64", "raiz": "{release}-jre/Contents/Home" },
+        { "plataforma": "linux-x64", "os": "linux", "arquitetura": "x64", "raiz": "{release}-jre" },
+        { "plataforma": "linux-aarch64", "os": "linux", "arquitetura": "aarch64", "raiz": "{release}-jre" }
+      ]
+    }
+  ],
+  "origens": [
+    "piston-data.mojang.com",
+    "github.com",
+    "objects.githubusercontent.com",
+    "release-assets.githubusercontent.com"
+  ],
+  "dominiosDoJogo": [
+    "sessionserver.mojang.com",
+    "api.minecraftservices.com",
+    "api.mojang.com"
+  ],
+  "rodar": {
+    "comando": "java/bin/java",
+    "argumentos": ["-Xms1G", "-Xmx2G", "-jar", "server.jar", "nogui"]
+  },
+  "rede": {
+    "protocolo": "tcp",
+    "portaPadrao": 25565
+  },
+  "disco": {
+    "mundoMaximo": 8589934592
+  },
+  "termos": [
+    {
+      "id": "eula",
+      "titulo": "EULA do Minecraft (Mojang)",
+      "url": "https://aka.ms/MinecraftEULA",
+      "arquivo": "eula.txt",
+      "conteudo": "eula=true\n"
+    }
+  ],
+  "configuracao": {
+    "arquivo": "server.properties",
+    "formato": "properties",
+    "campos": [
+      {
+        "chave": "nome",
+        "aba": "geral",
+        "forma": "segmentos",
+        "rotulo": "Nome que aparece na lista do jogo",
+        "ajuda": "Cada palavra tem a sua cor, entre as 16 do Minecraft.",
+        "padrao": [{ "texto": "Servidor do SEELE", "cor": "aqua" }],
+        "tamanhoMaximo": 59,
+        "maximoSegmentos": 6,
+        "opcoes": [
+          { "valor": "white", "rotulo": "Branco", "amostra": "#FFFFFF", "codigo": "f" },
+          { "valor": "gray", "rotulo": "Cinza", "amostra": "#AAAAAA", "codigo": "7" },
+          { "valor": "dark_gray", "rotulo": "Cinza-escuro", "amostra": "#555555", "codigo": "8" },
+          { "valor": "black", "rotulo": "Preto", "amostra": "#000000", "codigo": "0" },
+          { "valor": "yellow", "rotulo": "Amarelo", "amostra": "#FFFF55", "codigo": "e" },
+          { "valor": "gold", "rotulo": "Dourado", "amostra": "#FFAA00", "codigo": "6" },
+          { "valor": "red", "rotulo": "Vermelho", "amostra": "#FF5555", "codigo": "c" },
+          { "valor": "dark_red", "rotulo": "Vermelho-escuro", "amostra": "#AA0000", "codigo": "4" },
+          { "valor": "light_purple", "rotulo": "Rosa", "amostra": "#FF55FF", "codigo": "d" },
+          { "valor": "dark_purple", "rotulo": "Roxo", "amostra": "#AA00AA", "codigo": "5" },
+          { "valor": "blue", "rotulo": "Azul", "amostra": "#5555FF", "codigo": "9" },
+          { "valor": "dark_blue", "rotulo": "Azul-escuro", "amostra": "#0000AA", "codigo": "1" },
+          { "valor": "aqua", "rotulo": "Ciano", "amostra": "#55FFFF", "codigo": "b" },
+          { "valor": "dark_aqua", "rotulo": "Ciano-escuro", "amostra": "#00AAAA", "codigo": "3" },
+          { "valor": "green", "rotulo": "Verde", "amostra": "#55FF55", "codigo": "a" },
+          { "valor": "dark_green", "rotulo": "Verde-escuro", "amostra": "#00AA00", "codigo": "2" }
+        ]
+      },
+      {
+        "chave": "maximo",
+        "aba": "geral",
+        "grupo": "regras",
+        "forma": "numero",
+        "rotulo": "Máx. jogadores",
+        "padrao": 10,
+        "minimo": 1,
+        "maximo": 100
+      },
+      {
+        "chave": "dificuldade",
+        "aba": "geral",
+        "grupo": "regras",
+        "forma": "escolha",
+        "rotulo": "Dificuldade",
+        "padrao": "normal",
+        "opcoes": [
+          { "valor": "peaceful", "rotulo": "Pacífica" },
+          { "valor": "easy", "rotulo": "Fácil" },
+          { "valor": "normal", "rotulo": "Normal" },
+          { "valor": "hard", "rotulo": "Difícil" }
+        ]
+      },
+      {
+        "chave": "modo",
+        "aba": "geral",
+        "grupo": "regras",
+        "forma": "escolha",
+        "rotulo": "Modo",
+        "padrao": "survival",
+        "opcoes": [
+          { "valor": "survival", "rotulo": "Sobrevivência" },
+          { "valor": "creative", "rotulo": "Criativo" },
+          { "valor": "adventure", "rotulo": "Aventura" },
+          { "valor": "spectator", "rotulo": "Espectador" }
+        ]
+      },
+      {
+        "chave": "pvp",
+        "aba": "geral",
+        "forma": "interruptor",
+        "rotulo": "PvP",
+        "padrao": true
+      },
+      {
+        "chave": "hardcore",
+        "aba": "jogadores",
+        "forma": "interruptor",
+        "rotulo": "Hardcore",
+        "ajuda": "Quem morre vira espectador até o mundo acabar.",
+        "padrao": false
+      },
+      {
+        "chave": "protecao",
+        "aba": "jogadores",
+        "grupo": "convivio",
+        "forma": "numero",
+        "rotulo": "Proteção em volta do nascimento",
+        "ajuda": "Em blocos. Só quem é operador constrói ali.",
+        "padrao": 16,
+        "minimo": 0,
+        "maximo": 64
+      },
+      {
+        "chave": "inativo",
+        "aba": "jogadores",
+        "grupo": "convivio",
+        "forma": "numero",
+        "rotulo": "Tirar quem fica parado",
+        "ajuda": "Em minutos. Zero é nunca.",
+        "padrao": 0,
+        "minimo": 0,
+        "maximo": 120
+      }
+    ],
+    "propriedades": {
+      "motd": "{nome}",
+      "max-players": "{maximo}",
+      "difficulty": "{dificuldade}",
+      "gamemode": "{modo}",
+      "pvp": "{pvp}",
+      "hardcore": "{hardcore}",
+      "spawn-protection": "{protecao}",
+      "player-idle-timeout": "{inativo}",
+      "server-ip": "127.0.0.1",
+      "server-port": "{porta}",
+      "online-mode": "true",
+      "white-list": "false",
+      "enforce-whitelist": "false",
+      "enable-rcon": "false",
+      "enable-query": "false"
+    }
+  },
+  "modpack": {
+    "formato": "modrinth",
+    "teto": 67108864,
+    "api": "https://api.modrinth.com/v2",
+    "pagina": "https://modrinth.com/modpack/",
+    "cdn": "cdn.modrinth.com",
+    "dominios": ["cdn.modrinth.com", "github.com", "raw.githubusercontent.com", "gitlab.com"],
+    "configuracoesDoPack": ["default-server.properties"],
+    "loaders": {
+      "fabric-loader": {
+        "nome": "Fabric",
+        "medido": true,
+        "instalador": {
+          "fonte": "fixo",
+          "destino": "fabric-installer.jar",
+          "url": "https://maven.fabricmc.net/net/fabricmc/fabric-installer/1.1.2/fabric-installer-1.1.2.jar",
+          "hash": { "algoritmo": "sha512", "hex": "3cbe7b69498c44d814fc95e71cd9ce9c12c45a9e1dcf01085cb3e9aaf6fe63134b701065167be1fa6e4c2df19dfa5400bc5b6b1b7fb5e99e334d24dcdca55c20" },
+          "tamanho": 212123
+        },
+        "instalar": ["-jar", "fabric-installer.jar", "server", "-mcversion", "{mc}", "-loader", "{loader}"],
+        "rodar": ["-Xms1G", "-Xmx2G", "-jar", "fabric-server-launch.jar", "nogui"],
+        "dominiosDoJogo": ["meta.fabricmc.net", "maven.fabricmc.net"],
+        "disco": 134217728
+      },
+      "quilt-loader": {
+        "nome": "Quilt",
+        "medido": false,
+        "instalador": {
+          "fonte": "fixo",
+          "destino": "quilt-installer.jar",
+          "url": "https://maven.quiltmc.org/repository/release/org/quiltmc/quilt-installer/0.15.1/quilt-installer-0.15.1.jar",
+          "hash": { "algoritmo": "sha512", "hex": "f001e6e5ee5bed04e8f51a5519fae03874ecf8c7ece0db390896b5a6ea5fdb4a5b43abd77d0c6be5902d846d90cf032167d86af09253e3965be6480181fe07eb" },
+          "tamanho": 8734533
+        },
+        "instalar": ["-jar", "quilt-installer.jar", "install", "server", "{mc}", "{loader}", "--install-dir=."],
+        "rodar": ["-Xms1G", "-Xmx2G", "-jar", "quilt-server-launch.jar", "nogui"],
+        "dominiosDoJogo": ["meta.quiltmc.org", "maven.quiltmc.org", "maven.fabricmc.net"],
+        "disco": 134217728
+      },
+      "forge": {
+        "nome": "Forge",
+        "medido": true,
+        "instalador": {
+          "fonte": "reposilite",
+          "destino": "forge-installer.jar",
+          "url": "https://maven.minecraftforge.net/net/minecraftforge/forge/{mc}-{loader}/forge-{mc}-{loader}-installer.jar",
+          "detalhes": "https://maven.minecraftforge.net/api/maven/details/releases/net/minecraftforge/forge/{mc}-{loader}/forge-{mc}-{loader}-installer.jar",
+          "algoritmo": "sha256"
+        },
+        "instalar": ["-jar", "forge-installer.jar", "--installServer"],
+        "rodar": ["-Xms1G", "-Xmx2G", "@libraries/net/minecraftforge/forge/{mc}-{loader}/unix_args.txt", "nogui"],
+        "porSistema": [
+          { "plataformas": ["windows-x64"], "comando": "java/bin/java.exe", "rodar": ["-Xms1G", "-Xmx2G", "@libraries/net/minecraftforge/forge/{mc}-{loader}/win_args.txt", "nogui"] }
+        ],
+        "dominiosDoJogo": ["maven.minecraftforge.net", "libraries.minecraft.net", "piston-data.mojang.com", "piston-meta.mojang.com", "launchermeta.mojang.com"],
+        "disco": 536870912
+      },
+      "neoforge": {
+        "nome": "NeoForge",
+        "medido": true,
+        "instalador": {
+          "fonte": "reposilite",
+          "destino": "neoforge-installer.jar",
+          "url": "https://maven.neoforged.net/releases/net/neoforged/neoforge/{loader}/neoforge-{loader}-installer.jar",
+          "detalhes": "https://maven.neoforged.net/api/maven/details/releases/net/neoforged/neoforge/{loader}/neoforge-{loader}-installer.jar",
+          "algoritmo": "sha256"
+        },
+        "instalar": ["-jar", "neoforge-installer.jar", "--install-server"],
+        "rodar": ["-Xms1G", "-Xmx2G", "@libraries/net/neoforged/neoforge/{loader}/unix_args.txt", "nogui"],
+        "porSistema": [
+          { "plataformas": ["windows-x64"], "comando": "java/bin/java.exe", "rodar": ["-Xms1G", "-Xmx2G", "@libraries/net/neoforged/neoforge/{loader}/win_args.txt", "nogui"] }
+        ],
+        "dominiosDoJogo": ["maven.neoforged.net", "libraries.minecraft.net", "piston-data.mojang.com", "piston-meta.mojang.com", "launchermeta.mojang.com"],
+        "disco": 536870912
+      }
+    }
+  },
+  "mundo": {
+    "pasta": "world",
+    "salvar": [
+      { "console": "save-off" },
+      { "console": "save-all flush", "esperar": "^\\[[0-9:.]+\\] \\[Server thread/INFO\\](?: \\[[^\\]]+\\])?: Saved the game", "prazo": 60 },
+      { "copiar": "world" },
+      { "console": "save-on" }
+    ]
+  },
+  "saida": {
+    "pronto": "^\\[[0-9:.]+\\] \\[Server thread/INFO\\](?: \\[[^\\]]+\\])?: Done \\(",
+    "entrou": "^\\[[0-9:.]+\\] \\[Server thread/INFO\\](?: \\[[^\\]]+\\])?: ([A-Za-z0-9_]{1,16}) joined the game$",
+    "saiu": "^\\[[0-9:.]+\\] \\[Server thread/INFO\\](?: \\[[^\\]]+\\])?: ([A-Za-z0-9_]{1,16}) left the game$",
+    "parar": { "console": "stop", "esperar": "^\\[[0-9:.]+\\] \\[Server thread/INFO\\](?: \\[[^\\]]+\\])?: Stopping the server", "prazo": 60 }
+  }
+}

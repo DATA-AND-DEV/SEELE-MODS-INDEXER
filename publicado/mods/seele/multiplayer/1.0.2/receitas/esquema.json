@@ -1,0 +1,318 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/DATA-AND-DEV/SEELE-MOD-MULTIPLAYER/receitas/esquema.json",
+  "title": "Receita de jogo do MOD de multiplayer do SEELE",
+  "description": "Uma receita diz como um jogo é hospedado: o que baixar, o que rodar, a configuração e como ela vira o arquivo do jogo, os termos, como salvar o mundo com segurança e o que a saída do jogo quer dizer. É dado, e não código. Toda chave desconhecida é recusada pelo nome (additionalProperties: false em todo objeto).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["formato", "id", "nome", "icone", "versao", "descricao", "variantes", "versoes", "artefatos", "origens", "dominiosDoJogo", "rodar", "rede", "disco", "termos", "configuracao", "mundo", "saida"],
+  "properties": {
+    "formato": { "description": "A versão deste formato. Hoje, 1.", "const": 1 },
+    "id": { "description": "O nome da receita: vira o começo do nome de cada servidor de jogo (minecraft-1) e do túnel.", "type": "string", "pattern": "^[a-z0-9]+(-[a-z0-9]+)*$", "maxLength": 24 },
+    "nome": { "type": "string", "minLength": 1, "maxLength": 40 },
+    "edicao": { "type": "string", "minLength": 1, "maxLength": 40 },
+    "icone": { "description": "Um ou dois caracteres que a tela mostra no cartão do jogo.", "type": "string", "minLength": 1, "maxLength": 8 },
+    "versao": { "description": "A versão da receita: vai na oferta que a pessoa da máquina aceita.", "type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$" },
+    "descricao": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "variantes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["vanilla"],
+      "properties": {
+        "vanilla": { "$ref": "#/$defs/variante" },
+        "com-mods": { "$ref": "#/$defs/variante" }
+      }
+    },
+    "versoes": {
+      "description": "De onde vem a lista de versões do jogo. mojang: o version_manifest_v2.json. fixo: a lista escrita aqui.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["fonte"],
+      "properties": {
+        "fonte": { "enum": ["mojang", "fixo"] },
+        "manifesto": { "$ref": "#/$defs/url" },
+        "tipos": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["release", "snapshot", "old_beta", "old_alpha"] } },
+        "quantas": { "type": "integer", "minimum": 1, "maximum": 40 },
+        "lista": { "type": "array", "minItems": 1, "maxItems": 40, "items": { "$ref": "#/$defs/versaoFixa" } }
+      }
+    },
+    "artefatos": {
+      "description": "O que a máquina baixa. mojang-servidor: o downloads.server da versão (sha1). adoptium: o Java que a versão pede (javaVersion.majorVersion), um por plataforma (sha256). fixo: url, hash e tamanho por versão, escritos aqui.",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "items": { "$ref": "#/$defs/artefato" }
+    },
+    "origens": { "description": "Os domínios de onde a máquina pode baixar. Toda URL de artefato tem de cair num deles.", "type": "array", "minItems": 1, "maxItems": 16, "uniqueItems": true, "items": { "$ref": "#/$defs/host" } },
+    "dominiosDoJogo": { "description": "Os domínios com que o jogo fala por conta própria, sem o SEELE conferir. O aceite os mostra.", "type": "array", "maxItems": 16, "uniqueItems": true, "items": { "$ref": "#/$defs/host" } },
+    "rodar": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["comando", "argumentos"],
+      "properties": {
+        "comando": { "$ref": "#/$defs/caminho" },
+        "argumentos": { "type": "array", "maxItems": 64, "items": { "type": "string", "maxLength": 256 } }
+      }
+    },
+    "rede": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protocolo", "portaPadrao"],
+      "properties": {
+        "protocolo": { "enum": ["tcp", "udp"] },
+        "portaPadrao": { "type": "integer", "minimum": 1024, "maximum": 65535 }
+      }
+    },
+    "disco": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mundoMaximo"],
+      "properties": {
+        "mundoMaximo": { "description": "Quanto o mundo pode ocupar, em bytes, além do que se baixa.", "type": "integer", "minimum": 1, "maximum": 34359738368 }
+      }
+    },
+    "termos": { "type": "array", "maxItems": 4, "items": { "$ref": "#/$defs/termo" } },
+    "configuracao": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["arquivo", "formato", "campos", "propriedades"],
+      "properties": {
+        "arquivo": { "$ref": "#/$defs/caminho" },
+        "formato": { "enum": ["properties"] },
+        "campos": { "type": "array", "minItems": 1, "maxItems": 24, "items": { "$ref": "#/$defs/campo" } },
+        "propriedades": {
+          "description": "Cada propriedade do arquivo do jogo e o modelo do valor. {chave} é o valor de um campo; {porta} é a porta que o MOD escolheu.",
+          "type": "object",
+          "additionalProperties": { "type": "string", "maxLength": 256 }
+        }
+      }
+    },
+    "modpack": {
+      "description": "Com mods (API 8 parte 6): o formato do modpack (o .mrpack do Modrinth), o teto do envio, a API e a página do Modrinth, os domínios de onde um arquivo do pack pode vir e o instalador de cada loader. Opcional: sem ela, a variante com-mods não existe.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["formato", "teto", "api", "pagina", "cdn", "dominios", "loaders"],
+      "properties": {
+        "formato": { "const": "modrinth" },
+        "teto": { "type": "integer", "minimum": 1, "maximum": 67108864 },
+        "api": { "$ref": "#/$defs/url" },
+        "pagina": { "$ref": "#/$defs/url" },
+        "cdn": { "$ref": "#/$defs/host" },
+        "dominios": { "type": "array", "minItems": 1, "maxItems": 8, "uniqueItems": true, "items": { "$ref": "#/$defs/host" } },
+        "configuracoesDoPack": {
+          "description": "Arquivos que um pack pode trazer e que um mod copia por cima do arquivo de configuração na primeira subida (o default-server.properties do mod Default Server Properties). A máquina escreve neles as chaves que a tela promete; o resto do pack fica. Opcional.",
+          "type": "array", "maxItems": 4, "uniqueItems": true, "items": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,64}$" }
+        },
+        "loaders": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "fabric-loader": { "$ref": "#/$defs/loader" },
+            "quilt-loader": { "$ref": "#/$defs/loader" },
+            "forge": { "$ref": "#/$defs/loader" },
+            "neoforge": { "$ref": "#/$defs/loader" }
+          }
+        }
+      }
+    },
+    "mundo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pasta", "salvar"],
+      "properties": {
+        "pasta": { "$ref": "#/$defs/caminho" },
+        "salvar": { "description": "O salvamento seguro, passo a passo. Obrigatório: é o que torna a reserva possível.", "type": "array", "minItems": 1, "maxItems": 8, "items": { "$ref": "#/$defs/passo" } }
+      }
+    },
+    "saida": {
+      "description": "Expressões regulares sobre cada linha da saída do jogo. entrou e saiu têm um grupo de captura: o nome de quem joga.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["pronto", "entrou", "saiu", "parar"],
+      "properties": {
+        "pronto": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "entrou": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "saiu": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "parar": { "$ref": "#/$defs/passo" }
+      }
+    }
+  },
+  "$defs": {
+    "loader": {
+      "description": "Um loader de servidor: o instalador (baixado com o hash: fixo, ou lido de um Maven Reposilite), os argumentos do passo de instalar e os de rodar ({mc} e {loader} são as versões que o pack pede; o comando é o de rodar da receita), os sistemas em que ele roda (ausente: todos), os comandos de alguns sistemas (porSistema: o comando e os argumentos de rodar e, se diferem, de instalar, que viram uma entrada de por_sistema na oferta — o win_args.txt do Forge e do NeoForge no Windows), os domínios de onde ele baixa sozinho e o disco que ele ocupa.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nome", "medido", "instalador", "instalar", "rodar", "dominiosDoJogo", "disco"],
+      "properties": {
+        "nome": { "type": "string", "minLength": 1, "maxLength": 24 },
+        "medido": { "type": "boolean" },
+        "sistemas": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["windows-x64", "mac-aarch64", "mac-x64", "linux-x64", "linux-aarch64"] } },
+        "instalador": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["fonte", "destino", "url"],
+          "properties": {
+            "fonte": { "enum": ["fixo", "reposilite"] },
+            "destino": { "$ref": "#/$defs/caminho" },
+            "url": { "type": "string", "pattern": "^https://[^\\s]+$", "maxLength": 512 },
+            "hash": { "$ref": "#/$defs/hash" },
+            "tamanho": { "type": "integer", "minimum": 1 },
+            "detalhes": { "type": "string", "pattern": "^https://[^\\s]+$", "maxLength": 512 },
+            "algoritmo": { "enum": ["sha1", "sha256", "sha512"] }
+          }
+        },
+        "instalar": { "type": "array", "maxItems": 32, "items": { "type": "string", "maxLength": 256 } },
+        "rodar": { "type": "array", "maxItems": 32, "items": { "type": "string", "maxLength": 256 } },
+        "porSistema": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["plataformas", "comando", "rodar"],
+            "properties": {
+              "plataformas": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["windows-x64", "mac-aarch64", "mac-x64", "linux-x64", "linux-aarch64"] } },
+              "comando": { "$ref": "#/$defs/caminho" },
+              "instalar": { "type": "array", "maxItems": 32, "items": { "type": "string", "maxLength": 256 } },
+              "rodar": { "type": "array", "maxItems": 32, "items": { "type": "string", "maxLength": 256 } }
+            }
+          }
+        },
+        "dominiosDoJogo": { "type": "array", "maxItems": 8, "uniqueItems": true, "items": { "$ref": "#/$defs/host" } },
+        "disco": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "variante": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["nome", "descricao"],
+      "properties": {
+        "nome": { "type": "string", "minLength": 1, "maxLength": 24 },
+        "descricao": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "disponivel": { "type": "boolean" },
+        "porque": { "type": "string", "minLength": 1, "maxLength": 120 }
+      }
+    },
+    "url": { "type": "string", "pattern": "^https://[^\\s]+$", "maxLength": 512 },
+    "host": { "type": "string", "pattern": "^(\\*\\.)?[a-z0-9]([a-z0-9-]*[a-z0-9])?(\\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$", "maxLength": 253 },
+    "caminho": { "description": "Relativo à pasta do servidor de jogo, sem .. e sem começar por /.", "type": "string", "pattern": "^(?!/)(?!.*(^|/)\\.\\.(/|$))[A-Za-z0-9._/-]+$", "maxLength": 200 },
+    "hex": { "type": "string", "pattern": "^[0-9a-f]+$" },
+    "hash": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["algoritmo", "hex"],
+      "properties": {
+        "algoritmo": { "enum": ["sha1", "sha256", "sha512"] },
+        "hex": { "$ref": "#/$defs/hex" }
+      }
+    },
+    "baixavel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "hash", "tamanho"],
+      "properties": {
+        "url": { "$ref": "#/$defs/url" },
+        "hash": { "$ref": "#/$defs/hash" },
+        "tamanho": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "versaoFixa": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[A-Za-z0-9._+-]{1,64}$" }
+      }
+    },
+    "plataforma": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["plataforma", "os", "arquitetura", "raiz"],
+      "properties": {
+        "plataforma": { "enum": ["windows-x64", "windows-aarch64", "mac-aarch64", "mac-x64", "linux-x64", "linux-aarch64"] },
+        "os": { "type": "string", "pattern": "^[a-z-]+$" },
+        "arquitetura": { "type": "string", "pattern": "^[a-z0-9_]+$" },
+        "raiz": { "description": "A pasta do pacote que vira o destino; {release} é o release_name da Adoptium.", "type": "string", "minLength": 1, "maxLength": 120 },
+        "senaoHouver": { "description": "A plataforma cujo Java serve quando a Adoptium não publica para esta.", "enum": ["windows-x64", "windows-aarch64", "mac-aarch64", "mac-x64", "linux-x64", "linux-aarch64"] }
+      }
+    },
+    "artefato": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "fonte", "destino"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9-]{1,24}$" },
+        "fonte": { "enum": ["mojang-servidor", "adoptium", "fixo"] },
+        "destino": { "$ref": "#/$defs/caminho" },
+        "consulta": { "$ref": "#/$defs/url" },
+        "majorPadrao": { "type": "integer", "minimum": 8, "maximum": 99 },
+        "plataformas": { "type": "array", "minItems": 1, "maxItems": 6, "items": { "$ref": "#/$defs/plataforma" } },
+        "porVersao": { "type": "object", "additionalProperties": { "$ref": "#/$defs/baixavel" } }
+      }
+    },
+    "termo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "titulo", "url"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9-]{1,24}$" },
+        "titulo": { "type": "string", "minLength": 1, "maxLength": 120 },
+        "url": { "$ref": "#/$defs/url" },
+        "arquivo": { "$ref": "#/$defs/caminho" },
+        "conteudo": { "description": "O que se escreve no arquivo, e só depois do aceite.", "type": "string", "maxLength": 256 }
+      }
+    },
+    "opcao": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["valor", "rotulo"],
+      "properties": {
+        "valor": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "rotulo": { "type": "string", "minLength": 1, "maxLength": 40 },
+        "amostra": { "description": "Uma cor #rrggbb que a tela mostra ao lado.", "type": "string", "pattern": "^#[0-9a-fA-F]{6}$" },
+        "codigo": { "description": "O caractere depois do § no jogo (as 16 cores do Minecraft: 0-9 e a-f).", "type": "string", "pattern": "^[0-9a-f]$" }
+      }
+    },
+    "segmento": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["texto", "cor"],
+      "properties": {
+        "texto": { "type": "string", "minLength": 1, "maxLength": 64 },
+        "cor": { "type": "string", "minLength": 1, "maxLength": 64 }
+      }
+    },
+    "campo": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["chave", "aba", "forma", "rotulo", "padrao"],
+      "properties": {
+        "chave": { "type": "string", "pattern": "^[a-z][a-zA-Z0-9]{0,23}$" },
+        "aba": { "enum": ["geral", "jogadores"] },
+        "grupo": { "description": "Campos com o mesmo grupo ficam lado a lado.", "type": "string", "pattern": "^[a-z0-9-]{1,24}$" },
+        "forma": { "enum": ["campo", "numero", "escolha", "interruptor", "segmentos"] },
+        "rotulo": { "type": "string", "minLength": 1, "maxLength": 80 },
+        "ajuda": { "type": "string", "minLength": 1, "maxLength": 160 },
+        "padrao": { "description": "Uma lista de palavras ({texto, cor}) é o padrão de uma forma «segmentos».", "type": ["string", "integer", "boolean", "array"], "items": { "$ref": "#/$defs/segmento" } },
+        "obrigatorio": { "type": "boolean" },
+        "tamanhoMaximo": { "description": "Em caracteres; numa lista de palavras, o nome todo com um espaço entre as palavras.", "type": "integer", "minimum": 1, "maximum": 256 },
+        "maximoSegmentos": { "description": "O teto de palavras de uma forma «segmentos».", "type": "integer", "minimum": 1, "maximum": 16 },
+        "minimo": { "type": "integer" },
+        "maximo": { "type": "integer" },
+        "opcoes": { "type": "array", "minItems": 1, "maxItems": 24, "items": { "$ref": "#/$defs/opcao" } }
+      }
+    },
+    "passo": {
+      "description": "Um passo: mandar uma linha ao console (e, se quiser, esperar uma linha na saída, com prazo em segundos), ou copiar uma pasta do servidor de jogo.",
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "console": { "type": "string", "minLength": 1, "maxLength": 200, "pattern": "^[^\\n\\r]+$" },
+        "esperar": { "type": "string", "minLength": 1, "maxLength": 200 },
+        "prazo": { "type": "integer", "minimum": 1, "maximum": 600 },
+        "copiar": { "$ref": "#/$defs/caminho" }
+      }
+    }
+  }
+}

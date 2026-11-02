@@ -1,0 +1,12 @@
+{
+  "name": "seele-mod-multiplayer",
+  "version": "1.0.2",
+  "private": true,
+  "scripts": {
+    "test": "node --test test/*.test.cjs",
+    "check": "node --check cliente/main.js && node --check servidor/main.js && node --check maquina/main.js",
+    "build": "node ferramentas/build.mjs",
+    "package": "node ferramentas/package.mjs",
+    "quickjs": "cargo run --quiet --manifest-path ferramentas/quickjs-check/Cargo.toml"
+  }
+}
