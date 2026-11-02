@@ -81,3 +81,23 @@ commit = "c8e7933eef154fcf26bc99219d293915b57e73d1"
 nivel = "oficial"
 notas = ["roda-no-servidor", "guarda-dados-na-maquina", "fala-com-terceiro"]
 avaliado_em = 1793565684
+
+# 1.0.2 — a lista de convidados do Minecraft desligada (`white-list=false`,
+# `enforce-whitelist=false`): o 26.x a liga quando a chave falta, e ela
+# nascia vazia — o primeiro amigo pelo túnel ouvia «You are not
+# white-listed». Reconferida no diff c8e7933..5fff4b0: só `receitas/
+# minecraft.json` (duas chaves) e a receita embutida nas três metades; nada
+# de rede, `eval`, `import()` ou armazenamento novo; `fonte/` igual. Build
+# reprodutível de um clone limpo; `npm test` passa os 231 testes; QuickJS
+# 0.12.2 com o prelúdio da API 8 passa as três metades. Mesmas notas.
+#
+# Hash do conteúdo da 1.0.2, tirado do GitHub pelo mesmo caminho (que reproduz
+# o `158f418e…` da 1.0.1):
+# 1752b58d84503007c67d890d13908b95360d88b94793a55f25b6ffd68f6a172a
+
+[[versoes]]
+versao = "1.0.2"
+commit = "5fff4b0671ea45cb12ce51452187b05fd451e15d"
+nivel = "oficial"
+notas = ["roda-no-servidor", "guarda-dados-na-maquina", "fala-com-terceiro"]
+avaliado_em = 1793584949
